@@ -47,7 +47,6 @@ function AccessIcon({ paidOnly }: { paidOnly?: boolean }) {
     ) : (
         <SproutIcon className="polli:h-3.5 polli:w-3.5 polli:shrink-0" />
     );
->>>>>>> 41244fc5de (play: bigger model menu with descriptions, official models only)
 }
 
 export function ModelSelector({
