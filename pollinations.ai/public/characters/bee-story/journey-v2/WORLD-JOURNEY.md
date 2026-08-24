@@ -70,11 +70,14 @@ Current phase-title grammar:
 - The persistent Pollen wallet is exactly two free-standing honey pots with no island, platform, shelf, or floor: Paid is gold/amber with a card symbol; Quest is mint/green with a sprout symbol.
 - The two-pot wallet stays close to the bottom-left edge so later developer earnings can reuse it. It does not open, close, fade, or change position between chapters; only pot levels and circulating Pollen animate.
 - The wallet pops in with `EARN YOUR FIRST POLLEN`, not before or after it. Start Free then sends Quest Pollen into the green pot.
+- Quest rewards use a five-grain first burst, followed by a denser fourteen-grain burst for continued Quests.
 - During the Generate AI Media parade, the Paid and Quest pots continuously send their matching gold and green Pollen upward toward the capability friends. The stream begins only as the first friend arrives and ends with the final friend. Airborne Pollen is always transient animation and is never baked into a wallet state image.
+- More precisely, media spending begins when the first capability friend reaches the screen center and ends when the last friend reaches the center. No Pollen may continue after that event window.
+- Spent Pollen terminates inside the capability friends' body-and-prop zone. It never flies into empty sky.
 - `@pollinations/ui` wallet tokens and icons are the canonical source for wallet identity. Older generated-media prompts must not override them.
 - `GENERATE AI MEDIA` replaces `GEN API` and remains for the entire capability sequence.
 - The Generate AI Media banner exits only after Text, Image, Audio, Video, Real-time, Embeddings, and Agents have passed.
-- Polli walks through the Welcome and Start Free sections. She flies only during the Generate AI Media procession, above the capability friends, then lands back on the road.
+- Polli walks through the Welcome and Start Free sections. She begins flying out only when the first Generate AI Media friend reaches the frame, remains offscreen through the parade, and returns after the final friend has entered. Her landing follows the final friend's center crossing.
 - These seven items form one capability parade, not seven separate slides.
 - Capability names are integrated into carried placards and props.
 - Pollinations-universe characters carry the capabilities toward Polli from the right while the world keeps its constant speed.
@@ -301,9 +304,9 @@ It does not yet validate:
 
 Opening sequence:
 
-1. Welcome: `WELCOME TO POLLINATIONS` followed by `LET'S GET STARTED`, integrated into one joyful garden landmark that Polli can enter through.
+1. Welcome: `WELCOME TO POLLINATIONS` is integrated into one joyful garden gateway at the far-left edge. Both posts flank a visible feeder path that comes from the distant world, passes through the gate, and curves into the horizontal journey road. Polli begins smaller inside the gate, follows that curve, and reaches the shared walking line. A portal without a physically connected road is invalid.
 2. Start Free: the phase banner introduces one compact floating-island message that changes quickly through `COMPLETE A QUEST`, `EARN YOUR FIRST POLLEN`, then `COMPLETE MORE QUESTS / KEEP EARNING POLLEN`.
-3. The first reward sends one green Quest Pollen grain into the Quest honey pot. The final message sends a short stream of additional grains into the same pot.
+3. The first reward sends five green Quest Pollen grains into the Quest honey pot. The final message sends a denser fourteen-grain stream into the same pot.
 4. Only the mint/green Quest pot activates here. The gold/amber Paid pot remains empty until BYOP and developer earnings.
 
 The message island crosses the open sky and leaves physically. The two free-standing Pollen pots pop into the bottom-left and remain there as a stable visual anchor for later chapters. They never open, close, or fade.

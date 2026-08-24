@@ -19,13 +19,13 @@
 
             :root {
                 --preview: 41s;
-                --start-free-start: 4s;
+                --start-free-start: 2.2s;
                 --start-free-duration: 16s;
-                --gen-start: 21.8s;
+                --gen-start: 17.8s;
                 --gen-duration: 18s;
                 --friend-duration: 9s;
-                --media-flight-start: 22.4s;
-                --media-flight-duration: 17.2s;
+                --media-flight-start: 21.4s;
+                --media-flight-duration: 10.4s;
                 color-scheme: dark;
                 background: #110518;
                 font-family: "Geist Pixel Square", ui-monospace, monospace;
@@ -85,14 +85,21 @@
             }
 
             .polli {
+                --polli-entry-left: 19%;
+                --polli-entry-bottom: 32%;
+                --polli-entry-width: 8%;
+                --polli-rest-left: 38%;
+                --polli-rest-bottom: 25.5%;
+                --polli-rest-width: clamp(72px, 11.5%, 128px);
                 position: absolute;
                 z-index: 11;
-                left: 38%;
-                bottom: 25.5%;
-                width: clamp(72px, 11.5%, 128px);
+                left: var(--polli-entry-left);
+                bottom: var(--polli-entry-bottom);
+                width: var(--polli-entry-width);
                 aspect-ratio: 160 / 200;
                 image-rendering: pixelated;
                 filter: drop-shadow(4px 6px 0 rgb(17 5 24 / 18%));
+                visibility: hidden;
             }
 
             .polli::after {
@@ -145,8 +152,10 @@
             }
 
             .playing .polli {
-                animation: polli-media-flight var(--media-flight-duration) linear
-                    var(--media-flight-start) both;
+                animation:
+                    polli-entry 2.6s ease-out both,
+                    polli-media-flight var(--media-flight-duration) linear
+                        var(--media-flight-start) both;
             }
 
             .playing .polli__ground {
@@ -266,8 +275,8 @@
             }
 
             .pollen-grain {
-                --pollen-drop: 23vh;
-                --pollen-end-x: -29vw;
+                --pollen-drop: 13vw;
+                --pollen-end-x: -46vw;
                 position: absolute;
                 z-index: 11;
                 top: 55%;
@@ -328,8 +337,8 @@
             .pollen-grain--out {
                 --pollen-mid-x: 20vw;
                 --pollen-target-x: 42vw;
-                --pollen-mid-y: -12vh;
-                --pollen-target-y: -27vh;
+                --pollen-mid-y: -7vw;
+                --pollen-target-y: -15vw;
                 top: 80%;
                 left: var(--pollen-source);
                 width: clamp(12px, 2.2%, 22px);
@@ -440,34 +449,42 @@
                 }
             }
 
+            @keyframes polli-entry {
+                0% {
+                    visibility: hidden;
+                    left: var(--polli-entry-left);
+                    bottom: var(--polli-entry-bottom);
+                    width: var(--polli-entry-width);
+                }
+                0.1% {
+                    visibility: visible;
+                }
+                45% {
+                    left: 26%;
+                    bottom: 29%;
+                    width: clamp(64px, 9.5%, 104px);
+                }
+                100% {
+                    visibility: visible;
+                    left: var(--polli-rest-left);
+                    bottom: var(--polli-rest-bottom);
+                    width: var(--polli-rest-width);
+                }
+            }
+
             @keyframes polli-media-flight {
                 0%,
-                4% {
+                5% {
                     transform: translate(0, 0) rotate(0);
                 }
-                10% {
-                    transform: translate(0, -88px) rotate(-5deg);
+                25% {
+                    transform: translate(0, -72vh) rotate(-4deg);
                 }
-                17% {
-                    transform: translate(0, -165px) rotate(-2deg);
+                72% {
+                    transform: translate(0, -72vh) rotate(2deg);
                 }
-                30% {
-                    transform: translate(0, -155px) rotate(2deg);
-                }
-                43% {
-                    transform: translate(0, -172px) rotate(-2deg);
-                }
-                56% {
-                    transform: translate(0, -157px) rotate(2deg);
-                }
-                69% {
-                    transform: translate(0, -174px) rotate(-2deg);
-                }
-                84% {
-                    transform: translate(0, -162px) rotate(0);
-                }
-                95% {
-                    transform: translate(0, -55px) rotate(4deg);
+                88% {
+                    transform: translate(0, -28vh) rotate(4deg);
                 }
                 100% {
                     transform: translate(0, 0) rotate(0);
@@ -683,11 +700,19 @@
                     transform: translate(0, 0) scale(0.8) rotate(45deg);
                 }
                 38% {
-                    transform: translate(calc(-8vw + var(--arc-x)), 3vh) scale(1.05)
+                    transform: translate(
+                            calc(-14vw + var(--arc-x)),
+                            calc(4vw + var(--arc-y, 0vw))
+                        )
+                        scale(1.05)
                         rotate(180deg);
                 }
                 62% {
-                    transform: translate(calc(-19vw + var(--arc-x)), 15vh) scale(0.92)
+                    transform: translate(
+                            calc(-31vw + var(--arc-x)),
+                            calc(8vw + var(--arc-y, 0vw))
+                        )
+                        scale(0.92)
                         rotate(290deg);
                 }
                 88% {
@@ -733,7 +758,7 @@
                 90% {
                     transform: translate(
                             calc(var(--pollen-target-x) + 2vw),
-                            calc(var(--pollen-target-y) - 2vh)
+                            calc(var(--pollen-target-y) - 1vw)
                         )
                         scale(0.5)
                         rotate(430deg);
@@ -743,7 +768,7 @@
                     visibility: hidden;
                     transform: translate(
                             calc(var(--pollen-target-x) + 3vw),
-                            calc(var(--pollen-target-y) - 3vh)
+                            calc(var(--pollen-target-y) - 2vw)
                         )
                         scale(0.08)
                         rotate(470deg);
@@ -868,8 +893,11 @@
 
             @media (max-width: 600px) {
                 .polli {
-                    left: 30%;
-                    width: 18%;
+                    --polli-entry-left: 16%;
+                    --polli-entry-bottom: 31%;
+                    --polli-entry-width: 12%;
+                    --polli-rest-left: 30%;
+                    --polli-rest-width: 18%;
                 }
 
                 .quest-board {
@@ -885,8 +913,7 @@
                 }
 
                 .pollen-grain {
-                    --pollen-drop: 14vh;
-                    --pollen-end-x: -28vw;
+                    --pollen-end-x: -36vw;
                     top: 56%;
                     left: 69%;
                 }
@@ -958,31 +985,7 @@
                         alt="Quest Pollen pot filled with green Pollen"
                     />
                 </div>
-                <i
-                    class="pollen-grain pollen-grain--in"
-                    style="--pollen-delay: calc(var(--start-free-start) + 7s); --arc-x: -2vw"
-                    aria-hidden="true"
-                ></i>
-                <i
-                    class="pollen-grain pollen-grain--in"
-                    style="--pollen-delay: calc(var(--start-free-start) + 9s); --arc-x: -4vw"
-                    aria-hidden="true"
-                ></i>
-                <i
-                    class="pollen-grain pollen-grain--in"
-                    style="--pollen-delay: calc(var(--start-free-start) + 9.25s); --arc-x: 0vw"
-                    aria-hidden="true"
-                ></i>
-                <i
-                    class="pollen-grain pollen-grain--in"
-                    style="--pollen-delay: calc(var(--start-free-start) + 9.5s); --arc-x: -2vw"
-                    aria-hidden="true"
-                ></i>
-                <i
-                    class="pollen-grain pollen-grain--in"
-                    style="--pollen-delay: calc(var(--start-free-start) + 9.75s); --arc-x: 2vw"
-                    aria-hidden="true"
-                ></i>
+                <div class="pollen-stream" id="quest-pollen-stream" aria-hidden="true"></div>
                 <div class="pollen-stream" id="pollen-stream" aria-hidden="true"></div>
                 <i class="spark" style="--x: 17%; --y: 37%; --spark-delay: -0.08s"></i>
                 <i class="spark" style="--x: 23%; --y: 42%; --spark-delay: 0.08s"></i>
@@ -998,7 +1001,7 @@
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 24s;
+                        --friend-start: 20.8s;
                         --friend-size: 21%;
                         --friend-ground-offset: 0.25vw;
                     "
@@ -1023,7 +1026,7 @@
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 24.85s;
+                        --friend-start: 21.65s;
                         --friend-size: 22%;
                         --friend-ground-offset: 0.8vw;
                     "
@@ -1047,7 +1050,7 @@
                 </div>
                 <div
                     class="capability-friend"
-                    style="--friend-start: 25.7s; --friend-size: 20%"
+                    style="--friend-start: 22.5s; --friend-size: 20%"
                     aria-label="Audio capability character walking toward Polli"
                 >
                     <img
@@ -1069,7 +1072,7 @@
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 26.55s;
+                        --friend-start: 23.35s;
                         --friend-size: 19%;
                         --friend-ground-offset: -0.2vw;
                     "
@@ -1094,7 +1097,7 @@
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 27.4s;
+                        --friend-start: 24.2s;
                         --friend-size: 20%;
                         --friend-ground-offset: 1vw;
                     "
@@ -1118,7 +1121,7 @@
                 </div>
                 <div
                     class="capability-friend"
-                    style="--friend-start: 28.25s; --friend-size: 21%"
+                    style="--friend-start: 25.05s; --friend-size: 21%"
                     aria-label="Embeddings capability character walking toward Polli"
                 >
                     <img
@@ -1140,7 +1143,7 @@
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 29.1s;
+                        --friend-start: 25.9s;
                         --friend-size: 21%;
                         --friend-ground-offset: 0.75vw;
                     "
@@ -1180,12 +1183,40 @@
             const world = document.querySelector("#world");
             const replay = document.querySelector("#replay");
             const pollenStream = document.querySelector("#pollen-stream");
+            const questPollenStream = document.querySelector("#quest-pollen-stream");
             const fullJourneySeconds = 65;
             const previewSeconds = 41;
-            const arrivalHoldMs = 1200;
+            const arrivalHoldMs = 450;
             let arrivalTimer;
 
-            for (let index = 0; index < 18; index += 1) {
+            const questRewardBursts = [
+                { start: 7, count: 5, spacing: 0.14 },
+                { start: 9, count: 14, spacing: 0.1 },
+            ];
+
+            for (const burst of questRewardBursts) {
+                for (let index = 0; index < burst.count; index += 1) {
+                    const grain = document.createElement("i");
+                    grain.className = "pollen-grain pollen-grain--in";
+                    grain.style.setProperty(
+                        "--pollen-delay",
+                        `calc(var(--start-free-start) + ${burst.start + index * burst.spacing}s)`,
+                    );
+                    grain.style.setProperty("--arc-x", `${((index % 7) - 3) * 0.9}vw`);
+                    grain.style.setProperty("--arc-y", `${((index % 5) - 2) * 0.75}vw`);
+                    questPollenStream.append(grain);
+                }
+            }
+
+            const mediaFirstCenter = 25.1;
+            const mediaLastCenter = 30.2;
+            const pollenSpendDuration = 2.1;
+            const pollenStep = 0.55;
+            const pollenBursts = Math.floor(
+                (mediaLastCenter - mediaFirstCenter - pollenSpendDuration) / pollenStep,
+            );
+
+            for (let index = 0; index <= pollenBursts; index += 1) {
                 for (const account of ["paid", "quest"]) {
                     const grain = document.createElement("i");
                     grain.className = `pollen-grain pollen-grain--out${
@@ -1193,7 +1224,7 @@
                     }`;
                     grain.style.setProperty(
                         "--pollen-delay",
-                        `${24.5 + index * 0.67 + (account === "quest" ? 0.18 : 0)}s`,
+                        `${mediaFirstCenter + index * pollenStep + (account === "quest" ? 0.16 : 0)}s`,
                     );
                     grain.style.setProperty("--pollen-source", account === "paid" ? "14%" : "26%");
                     grain.style.setProperty(
@@ -1206,7 +1237,7 @@
                     grain.style.setProperty("--pollen-target-x", `${targetX}vw`);
                     grain.style.setProperty(
                         "--pollen-target-y",
-                        `${-25 - (index % 3) * 2}vh`,
+                        `${-14 - (index % 3) * 0.8}vw`,
                     );
                     pollenStream.append(grain);
                 }
