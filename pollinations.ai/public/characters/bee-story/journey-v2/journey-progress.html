@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Pollinations — Journey progress</title>
+        <style>
+            @font-face {
+                font-family: "Geist Pixel Square";
+                src: url("fonts/geist-pixel-square.woff2") format("woff2");
+                font-display: swap;
+            }
+
+            @font-face {
+                font-family: "LCT Mogi";
+                src: url("fonts/lct-mogi-a.woff2") format("woff2");
+                font-display: swap;
+            }
+
+            :root {
+                --preview: 41s;
+                --start-free-start: 4s;
+                --start-free-duration: 16s;
+                --gen-start: 21.8s;
+                --gen-duration: 18s;
+                --friend-duration: 9s;
+                --media-flight-start: 22.4s;
+                --media-flight-duration: 17.2s;
+                color-scheme: dark;
+                background: #110518;
+                font-family: "Geist Pixel Square", ui-monospace, monospace;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                min-height: 100vh;
+                margin: 0;
+                display: grid;
+                place-items: center;
+                padding: 16px;
+                background: #110518;
+            }
+
+            main {
+                width: min(100%, 960px);
+            }
+
+            .viewport {
+                position: relative;
+                width: 100%;
+                aspect-ratio: 3 / 2;
+                overflow: hidden;
+                border: 2px solid #ecf874;
+                border-radius: 18px;
+                background: #fff9e9;
+                isolation: isolate;
+            }
+
+            .world {
+                position: absolute;
+                top: 0;
+                left: 0;
+                z-index: 0;
+                width: auto;
+                max-width: none;
+                height: 100%;
+                image-rendering: pixelated;
+                will-change: transform;
+            }
+
+            .playing .world {
+                animation: world-travel var(--preview) linear forwards;
+            }
+
+            .light {
+                position: absolute;
+                inset: 0;
+                z-index: 1;
+                pointer-events: none;
+                background: linear-gradient(115deg, rgb(255 244 190 / 6%), rgb(236 248 116 / 7%));
+                mix-blend-mode: soft-light;
+            }
+
+            .polli {
+                position: absolute;
+                z-index: 11;
+                left: 38%;
+                bottom: 25.5%;
+                width: clamp(72px, 11.5%, 128px);
+                aspect-ratio: 160 / 200;
+                image-rendering: pixelated;
+                filter: drop-shadow(4px 6px 0 rgb(17 5 24 / 18%));
+            }
+
+            .polli::after {
+                content: "";
+                position: absolute;
+                right: 18%;
+                bottom: -3%;
+                left: 18%;
+                z-index: -1;
+                height: 8%;
+                border-radius: 50%;
+                background: rgb(17 5 24 / 16%);
+                filter: blur(2px);
+            }
+
+            .polli__ground,
+            .polli__flight {
+                position: absolute;
+                inset: 0;
+                transform-origin: 50% 60%;
+            }
+
+            .polli__ground {
+                transform: scale(1);
+            }
+
+            .polli__sprite {
+                width: 100%;
+                height: 100%;
+                background: url("polli-walk-frame.png") center / contain no-repeat;
+            }
+
+            .polli__flight {
+                transform: scale(0);
+            }
+
+            .polli__flight-frame {
+                position: absolute;
+                top: 0;
+                left: 50%;
+                width: auto;
+                max-width: none;
+                height: 100%;
+                image-rendering: pixelated;
+                transform: translateX(-50%) scale(1);
+            }
+
+            .polli__flight-frame:last-child {
+                transform: translateX(-50%) scale(0);
+            }
+
+            .playing .polli {
+                animation: polli-media-flight var(--media-flight-duration) linear
+                    var(--media-flight-start) both;
+            }
+
+            .playing .polli__ground {
+                animation: ground-layer var(--media-flight-duration) linear
+                    var(--media-flight-start) both;
+            }
+
+            .playing .polli__sprite {
+                animation: walk-cycle 460ms steps(2, end) infinite;
+            }
+
+            .playing .polli__flight {
+                animation: flight-layer var(--media-flight-duration) linear
+                    var(--media-flight-start) both;
+            }
+
+            .playing .polli::after {
+                animation: shadow-layer var(--media-flight-duration) linear
+                    var(--media-flight-start) both;
+            }
+
+            .playing .polli__flight-frame:first-child {
+                animation: flight-up 150ms steps(1, end) infinite;
+            }
+
+            .playing .polli__flight-frame:last-child {
+                animation: flight-down 150ms steps(1, end) infinite;
+            }
+
+            .quest-board {
+                position: absolute;
+                z-index: 9;
+                top: 32%;
+                left: 72%;
+                width: min(42%, 400px);
+                aspect-ratio: 2 / 1;
+                image-rendering: pixelated;
+                filter: drop-shadow(4px 6px 0 rgb(17 5 24 / 16%));
+                visibility: hidden;
+                transform: translateX(140%) scale(0.9);
+                transform-origin: 50% 50%;
+            }
+
+            .quest-board__face {
+                position: absolute;
+                inset: 0;
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                visibility: hidden;
+                transform: scaleY(0);
+            }
+
+            .playing .quest-board {
+                animation: quest-board-sequence var(--start-free-duration) linear both;
+                animation-delay: var(--start-free-start);
+            }
+
+            .playing .quest-board__face--one {
+                animation: quest-face-one var(--start-free-duration) linear both;
+                animation-delay: var(--start-free-start);
+            }
+
+            .playing .quest-board__face--two {
+                animation: quest-face-two var(--start-free-duration) linear both;
+                animation-delay: var(--start-free-start);
+            }
+
+            .playing .quest-board__face--three {
+                animation: quest-face-three var(--start-free-duration) linear both;
+                animation-delay: var(--start-free-start);
+            }
+
+            .quest-wallet {
+                position: absolute;
+                z-index: 10;
+                bottom: 4%;
+                left: 2.5%;
+                width: min(32%, 320px);
+                aspect-ratio: 2 / 1;
+                image-rendering: pixelated;
+                filter: drop-shadow(3px 5px 0 rgb(17 5 24 / 16%));
+                visibility: hidden;
+                transform: translateY(20px) scale(0.08, 0.03) rotate(-4deg);
+                transform-origin: 50% 100%;
+            }
+
+            .quest-wallet__state {
+                position: absolute;
+                inset: 0;
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                visibility: hidden;
+            }
+
+            .playing .quest-wallet {
+                animation: quest-wallet-sequence var(--start-free-duration) linear both;
+                animation-delay: var(--start-free-start);
+            }
+
+            .playing .quest-wallet__state--empty {
+                animation: wallet-state-empty var(--start-free-duration) linear both;
+                animation-delay: var(--start-free-start);
+            }
+
+            .playing .quest-wallet__state--low {
+                animation: wallet-state-low var(--start-free-duration) linear both;
+                animation-delay: var(--start-free-start);
+            }
+
+            .playing .quest-wallet__state--high {
+                animation: wallet-state-high var(--start-free-duration) linear both;
+                animation-delay: var(--start-free-start);
+            }
+
+            .pollen-grain {
+                --pollen-drop: 23vh;
+                --pollen-end-x: -29vw;
+                position: absolute;
+                z-index: 11;
+                top: 55%;
+                left: 70%;
+                width: clamp(10px, 1.8%, 18px);
+                aspect-ratio: 1;
+                background: #ecf874;
+                border: max(1px, 0.18vw) solid #015d2d;
+                border-radius: 42% 58% 46% 54%;
+                box-shadow: inset 0 0 0 max(1px, 0.18vw) #61c380;
+                filter: drop-shadow(1px 2px 0 rgb(17 5 24 / 24%));
+                visibility: hidden;
+                pointer-events: none;
+            }
+
+            .pollen-grain::before,
+            .pollen-grain::after {
+                content: "";
+                position: absolute;
+                aspect-ratio: 1;
+            }
+
+            .pollen-grain::before {
+                top: -42%;
+                right: -18%;
+                width: 34%;
+                background: #d7f9de;
+                border: 1px solid #61c380;
+            }
+
+            .pollen-grain::after {
+                top: 70%;
+                left: -22%;
+                width: 22%;
+                background: #fff9c7;
+            }
+
+            .pollen-grain--paid {
+                background: #fff0c1;
+                border-color: #6c4800;
+                box-shadow: inset 0 0 0 max(1px, 0.18vw) #eabf13;
+            }
+
+            .pollen-grain--paid::before {
+                background: #fff0c1;
+                border-color: #eabf13;
+            }
+
+            .pollen-grain--paid::after {
+                background: #fff9e9;
+            }
+
+            .playing .pollen-grain--in {
+                animation: pollen-flight 1.4s cubic-bezier(0.28, 0.74, 0.32, 1)
+                    var(--pollen-delay) both;
+            }
+
+            .pollen-grain--out {
+                --pollen-mid-x: 20vw;
+                --pollen-target-x: 42vw;
+                --pollen-mid-y: -12vh;
+                --pollen-target-y: -27vh;
+                top: 80%;
+                left: var(--pollen-source);
+                width: clamp(12px, 2.2%, 22px);
+            }
+
+            .playing .pollen-grain--out {
+                animation: pollen-spend 2.1s cubic-bezier(0.3, 0.65, 0.32, 1)
+                    var(--pollen-delay) both;
+            }
+
+            .pollen-stream {
+                display: contents;
+            }
+
+            .spark {
+                position: absolute;
+                z-index: 11;
+                left: var(--x);
+                bottom: var(--y);
+                width: clamp(7px, 1.35%, 14px);
+                aspect-ratio: 1;
+                background: #ecf874;
+                box-shadow: 0 -100% #fff9c7, 100% 0 #fff9c7, 0 100% #fff9c7,
+                    -100% 0 #fff9c7;
+                filter: drop-shadow(1px 2px 0 rgb(17 5 24 / 48%));
+                visibility: hidden;
+            }
+
+            .playing .spark {
+                animation: wallet-spark var(--start-free-duration) linear both;
+                animation-delay: calc(var(--start-free-start) + var(--spark-delay));
+            }
+
+            .phase-banner {
+                position: absolute;
+                z-index: 12;
+                top: -6%;
+                left: 50%;
+                width: min(88%, 860px);
+                image-rendering: pixelated;
+                filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 18%));
+                visibility: hidden;
+                transform: translate(-50%, -145%) rotate(-2deg);
+                transform-origin: 50% 0;
+            }
+
+            .playing .phase-banner {
+                animation: phase-banner var(--phase-duration) linear var(--phase-start) both;
+            }
+
+            .capability-friend {
+                position: absolute;
+                z-index: 10;
+                bottom: calc(27.5% - var(--friend-ground-offset, 0vw));
+                left: 0;
+                width: clamp(150px, var(--friend-size, 21%), 250px);
+                aspect-ratio: 1;
+                image-rendering: pixelated;
+                filter: drop-shadow(5px 7px 0 rgb(17 5 24 / 18%));
+                visibility: hidden;
+                transform: translateX(110vw);
+                pointer-events: none;
+            }
+
+            .capability-friend__frame {
+                position: absolute;
+                inset: 0;
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                visibility: hidden;
+            }
+
+            .playing .capability-friend {
+                animation: capability-cross var(--friend-duration) linear var(--friend-start) both;
+            }
+
+            .playing .capability-friend__frame--one {
+                animation: capability-frame-one 560ms steps(1, end) var(--friend-start) infinite;
+            }
+
+            .playing .capability-friend__frame--two {
+                animation: capability-frame-two 560ms steps(1, end) var(--friend-start) infinite;
+            }
+
+            .playing .capability-friend__frame--three {
+                animation: capability-frame-three 560ms steps(1, end) var(--friend-start) infinite;
+            }
+
+            button {
+                margin-top: 14px;
+                border: 1px solid #ecf874;
+                border-radius: 999px;
+                padding: 10px 16px;
+                color: #ecf874;
+                background: #110518;
+                font: inherit;
+                cursor: pointer;
+            }
+
+            @keyframes world-travel {
+                from {
+                    transform: translateX(0);
+                }
+                to {
+                    transform: translateX(var(--world-end));
+                }
+            }
+
+            @keyframes polli-media-flight {
+                0%,
+                4% {
+                    transform: translate(0, 0) rotate(0);
+                }
+                10% {
+                    transform: translate(0, -88px) rotate(-5deg);
+                }
+                17% {
+                    transform: translate(0, -165px) rotate(-2deg);
+                }
+                30% {
+                    transform: translate(0, -155px) rotate(2deg);
+                }
+                43% {
+                    transform: translate(0, -172px) rotate(-2deg);
+                }
+                56% {
+                    transform: translate(0, -157px) rotate(2deg);
+                }
+                69% {
+                    transform: translate(0, -174px) rotate(-2deg);
+                }
+                84% {
+                    transform: translate(0, -162px) rotate(0);
+                }
+                95% {
+                    transform: translate(0, -55px) rotate(4deg);
+                }
+                100% {
+                    transform: translate(0, 0) rotate(0);
+                }
+            }
+
+            @keyframes ground-layer {
+                0%,
+                4% {
+                    transform: scale(1);
+                }
+                4.01%,
+                94.99% {
+                    transform: scale(0);
+                }
+                95%,
+                100% {
+                    transform: scale(1);
+                }
+            }
+
+            @keyframes flight-layer {
+                0%,
+                4% {
+                    transform: scale(0);
+                }
+                4.01%,
+                94.99% {
+                    transform: scale(1);
+                }
+                95%,
+                100% {
+                    transform: scale(0);
+                }
+            }
+
+            @keyframes shadow-layer {
+                0%,
+                4%,
+                95%,
+                100% {
+                    visibility: visible;
+                }
+                4.01%,
+                94.99% {
+                    visibility: hidden;
+                }
+            }
+
+            @keyframes flight-up {
+                0%,
+                49% {
+                    transform: translateX(-50%) scale(1);
+                }
+                50%,
+                100% {
+                    transform: translateX(-50%) scale(0);
+                }
+            }
+
+            @keyframes flight-down {
+                0%,
+                49% {
+                    transform: translateX(-50%) scale(0);
+                }
+                50%,
+                100% {
+                    transform: translateX(-50%) scale(1);
+                }
+            }
+
+            @keyframes quest-board-sequence {
+                0%,
+                13% {
+                    visibility: hidden;
+                    transform: translateX(140%) translateY(0) scale(0.9) rotate(2deg);
+                }
+                13.1% {
+                    visibility: visible;
+                }
+                20% {
+                    transform: translateX(-50%) translateY(-5px) scale(1.03) rotate(-1deg);
+                }
+                24%,
+                74% {
+                    visibility: visible;
+                    transform: translateX(-50%) translateY(0) scale(1) rotate(0);
+                }
+                78% {
+                    visibility: visible;
+                    transform: translateX(-62%) translateY(-4px) scale(1) rotate(-1deg);
+                }
+                92% {
+                    visibility: visible;
+                    transform: translateX(-190%) translateY(2px) scale(0.96) rotate(-3deg);
+                }
+                92.1%,
+                100% {
+                    visibility: hidden;
+                    transform: translateX(-190%) translateY(2px) scale(0.96) rotate(-3deg);
+                }
+            }
+
+            @keyframes quest-face-one {
+                0%,
+                17.99%,
+                35.01%,
+                100% {
+                    visibility: hidden;
+                    transform: scaleY(0);
+                }
+                18%,
+                34% {
+                    visibility: visible;
+                    transform: scaleY(1);
+                }
+            }
+
+            @keyframes quest-face-two {
+                0%,
+                34.99%,
+                52.01%,
+                100% {
+                    visibility: hidden;
+                    transform: scaleY(0);
+                }
+                35%,
+                51% {
+                    visibility: visible;
+                    transform: scaleY(1);
+                }
+            }
+
+            @keyframes quest-face-three {
+                0%,
+                51.99%,
+                81.01%,
+                100% {
+                    visibility: hidden;
+                    transform: scaleY(0);
+                }
+                52%,
+                80% {
+                    visibility: visible;
+                    transform: scaleY(1);
+                }
+            }
+
+            @keyframes quest-wallet-sequence {
+                0%,
+                34.49% {
+                    visibility: hidden;
+                    transform: translateY(22px) scale(0.08, 0.03) rotate(-4deg);
+                }
+                35% {
+                    visibility: visible;
+                    transform: translateY(-5px) scale(1.06) rotate(2deg);
+                }
+                38%,
+                100% {
+                    visibility: visible;
+                    transform: translateY(0) scale(1) rotate(0);
+                }
+            }
+
+            @keyframes wallet-state-empty {
+                0%,
+                34.99%,
+                53.01%,
+                100% {
+                    visibility: hidden;
+                }
+                35%,
+                53% {
+                    visibility: visible;
+                }
+            }
+
+            @keyframes wallet-state-low {
+                0%,
+                52.99%,
+                68.01%,
+                100% {
+                    visibility: hidden;
+                }
+                53%,
+                68% {
+                    visibility: visible;
+                }
+            }
+
+            @keyframes wallet-state-high {
+                0%,
+                67.99% {
+                    visibility: hidden;
+                }
+                68%,
+                100% {
+                    visibility: visible;
+                }
+            }
+
+            @keyframes pollen-flight {
+                0% {
+                    visibility: hidden;
+                    transform: translate(0, 12px) scale(0.12) rotate(0);
+                }
+                6%,
+                88% {
+                    visibility: visible;
+                }
+                14% {
+                    transform: translate(0, 0) scale(0.8) rotate(45deg);
+                }
+                38% {
+                    transform: translate(calc(-8vw + var(--arc-x)), 3vh) scale(1.05)
+                        rotate(180deg);
+                }
+                62% {
+                    transform: translate(calc(-19vw + var(--arc-x)), 15vh) scale(0.92)
+                        rotate(290deg);
+                }
+                88% {
+                    transform: translate(
+                            calc(var(--pollen-end-x) + var(--arc-x)),
+                            var(--pollen-drop)
+                        )
+                        scale(0.5)
+                        rotate(405deg);
+                }
+                88.1%,
+                100% {
+                    visibility: hidden;
+                    transform: translate(
+                            calc(var(--pollen-end-x) + var(--arc-x)),
+                            var(--pollen-drop)
+                        )
+                        scale(0.08)
+                        rotate(450deg);
+                }
+            }
+
+            @keyframes pollen-spend {
+                0% {
+                    visibility: hidden;
+                    transform: translate(0, 4px) scale(0.1) rotate(0);
+                }
+                5%,
+                90% {
+                    visibility: visible;
+                }
+                14% {
+                    transform: translate(0, -3vh) scale(0.82) rotate(55deg);
+                }
+                40% {
+                    transform: translate(var(--pollen-mid-x), var(--pollen-mid-y)) scale(1.02)
+                        rotate(190deg);
+                }
+                68% {
+                    transform: translate(var(--pollen-target-x), var(--pollen-target-y)) scale(0.84)
+                        rotate(315deg);
+                }
+                90% {
+                    transform: translate(
+                            calc(var(--pollen-target-x) + 2vw),
+                            calc(var(--pollen-target-y) - 2vh)
+                        )
+                        scale(0.5)
+                        rotate(430deg);
+                }
+                90.1%,
+                100% {
+                    visibility: hidden;
+                    transform: translate(
+                            calc(var(--pollen-target-x) + 3vw),
+                            calc(var(--pollen-target-y) - 3vh)
+                        )
+                        scale(0.08)
+                        rotate(470deg);
+                }
+            }
+
+            @keyframes wallet-spark {
+                0%,
+                83% {
+                    visibility: hidden;
+                    transform: translateY(10px) scale(0.3) rotate(0);
+                }
+                84.5% {
+                    visibility: visible;
+                    transform: translateY(-5px) scale(1.15) rotate(45deg);
+                }
+                89%,
+                100% {
+                    visibility: hidden;
+                    transform: translateY(-34px) scale(0.12) rotate(180deg);
+                }
+            }
+
+            @keyframes phase-banner {
+                0%,
+                2% {
+                    visibility: hidden;
+                    transform: translate(-50%, -145%) rotate(-2deg);
+                }
+                2.1% {
+                    visibility: visible;
+                    transform: translate(-50%, -145%) rotate(-2deg);
+                }
+                7% {
+                    transform: translate(-50%, 14px) rotate(2deg);
+                }
+                10% {
+                    transform: translate(-50%, -6px) rotate(-1deg);
+                }
+                13%,
+                89% {
+                    visibility: visible;
+                    transform: translate(-50%, 0) rotate(0);
+                }
+                94% {
+                    visibility: visible;
+                    transform: translate(-50%, -10px) rotate(1deg);
+                }
+                99% {
+                    visibility: visible;
+                    transform: translate(-50%, -145%) rotate(-2deg);
+                }
+                100% {
+                    visibility: hidden;
+                    transform: translate(-50%, -145%) rotate(-2deg);
+                }
+            }
+
+            @keyframes capability-cross {
+                0% {
+                    visibility: hidden;
+                    transform: translateX(110vw);
+                }
+                0.1%,
+                99.9% {
+                    visibility: visible;
+                }
+                100% {
+                    visibility: hidden;
+                    transform: translateX(-36vw);
+                }
+            }
+
+            @keyframes capability-frame-one {
+                0%,
+                24.99% {
+                    visibility: visible;
+                }
+                25%,
+                100% {
+                    visibility: hidden;
+                }
+            }
+
+            @keyframes capability-frame-two {
+                0%,
+                24.99%,
+                50%,
+                74.99% {
+                    visibility: hidden;
+                }
+                25%,
+                49.99%,
+                75%,
+                100% {
+                    visibility: visible;
+                }
+            }
+
+            @keyframes capability-frame-three {
+                0%,
+                49.99%,
+                75%,
+                100% {
+                    visibility: hidden;
+                }
+                50%,
+                74.99% {
+                    visibility: visible;
+                }
+            }
+
+            @keyframes walk-cycle {
+                0%,
+                100% {
+                    transform: translateY(0) rotate(-1deg) scaleY(0.99);
+                }
+                50% {
+                    transform: translateY(-5px) rotate(1deg) scaleY(1.015);
+                }
+            }
+
+            @media (max-width: 600px) {
+                .polli {
+                    left: 30%;
+                    width: 18%;
+                }
+
+                .quest-board {
+                    top: 32%;
+                    left: 70%;
+                    width: 62%;
+                }
+
+                .quest-wallet {
+                    bottom: 3%;
+                    left: 2%;
+                    width: 44%;
+                }
+
+                .pollen-grain {
+                    --pollen-drop: 14vh;
+                    --pollen-end-x: -28vw;
+                    top: 56%;
+                    left: 69%;
+                }
+
+                .pollen-grain--out {
+                    top: 79%;
+                    left: var(--pollen-source-mobile, var(--pollen-source));
+                }
+
+                .phase-banner {
+                    top: -5%;
+                    width: 94%;
+                }
+
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <div class="viewport" id="viewport">
+                <img
+                    class="world"
+                    id="world"
+                    src="phase-refactor-v1/worlds-panorama-with-welcome.png"
+                    alt="Polli walks continuously through the Pollinations worlds"
+                />
+                <div class="light"></div>
+
+                <img
+                    class="phase-banner"
+                    style="
+                        --phase-start: var(--start-free-start);
+                        --phase-duration: var(--start-free-duration);
+                    "
+                    src="phase-refactor-v1/everyone-starts-free-banner.png"
+                    alt="Everyone starts free"
+                />
+                <div class="quest-board" aria-label="Quest reward instructions">
+                    <img
+                        class="quest-board__face quest-board__face--one"
+                        src="start-free-v3/message-complete-quest.png"
+                        alt="Complete a Quest"
+                    />
+                    <img
+                        class="quest-board__face quest-board__face--two"
+                        src="start-free-v3/message-first-pollen.png"
+                        alt="Earn your first Pollen"
+                    />
+                    <img
+                        class="quest-board__face quest-board__face--three"
+                        src="start-free-v3/message-more-quests.png"
+                        alt="Complete more Quests, keep earning Pollen"
+                    />
+                </div>
+                <div class="quest-wallet" aria-label="Pollen wallet receiving Quest Pollen">
+                    <img
+                        class="quest-wallet__state quest-wallet__state--empty"
+                        src="start-free-v4/wallet-empty.png"
+                        alt="Paid and Quest Pollen pots"
+                    />
+                    <img
+                        class="quest-wallet__state quest-wallet__state--low"
+                        src="start-free-v4/wallet-quest-low.png"
+                        alt="Quest Pollen pot beginning to fill"
+                    />
+                    <img
+                        class="quest-wallet__state quest-wallet__state--high"
+                        src="start-free-v4/wallet-quest-high-clean.png"
+                        alt="Quest Pollen pot filled with green Pollen"
+                    />
+                </div>
+                <i
+                    class="pollen-grain pollen-grain--in"
+                    style="--pollen-delay: calc(var(--start-free-start) + 7s); --arc-x: -2vw"
+                    aria-hidden="true"
+                ></i>
+                <i
+                    class="pollen-grain pollen-grain--in"
+                    style="--pollen-delay: calc(var(--start-free-start) + 9s); --arc-x: -4vw"
+                    aria-hidden="true"
+                ></i>
+                <i
+                    class="pollen-grain pollen-grain--in"
+                    style="--pollen-delay: calc(var(--start-free-start) + 9.25s); --arc-x: 0vw"
+                    aria-hidden="true"
+                ></i>
+                <i
+                    class="pollen-grain pollen-grain--in"
+                    style="--pollen-delay: calc(var(--start-free-start) + 9.5s); --arc-x: -2vw"
+                    aria-hidden="true"
+                ></i>
+                <i
+                    class="pollen-grain pollen-grain--in"
+                    style="--pollen-delay: calc(var(--start-free-start) + 9.75s); --arc-x: 2vw"
+                    aria-hidden="true"
+                ></i>
+                <div class="pollen-stream" id="pollen-stream" aria-hidden="true"></div>
+                <i class="spark" style="--x: 17%; --y: 37%; --spark-delay: -0.08s"></i>
+                <i class="spark" style="--x: 23%; --y: 42%; --spark-delay: 0.08s"></i>
+                <i class="spark" style="--x: 29%; --y: 34%; --spark-delay: 0.18s"></i>
+                <i class="spark" style="--x: 13%; --y: 31%; --spark-delay: 0.28s"></i>
+
+                <img
+                    class="phase-banner"
+                    style="--phase-start: var(--gen-start); --phase-duration: var(--gen-duration)"
+                    src="phase-refactor-v1/generate-ai-media-banner.png"
+                    alt="Generate AI Media"
+                />
+                <div
+                    class="capability-friend"
+                    style="
+                        --friend-start: 24s;
+                        --friend-size: 21%;
+                        --friend-ground-offset: 0.25vw;
+                    "
+                    aria-label="Text capability character walking toward Polli"
+                >
+                    <img
+                        class="capability-friend__frame capability-friend__frame--one"
+                        src="capability-parade-v2/text-frame-1-left-step.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--two"
+                        src="capability-parade-v2/text-frame-2-passing.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--three"
+                        src="capability-parade-v2/text-frame-3-right-step.png"
+                        alt=""
+                    />
+                </div>
+                <div
+                    class="capability-friend"
+                    style="
+                        --friend-start: 24.85s;
+                        --friend-size: 22%;
+                        --friend-ground-offset: 0.8vw;
+                    "
+                    aria-label="Image capability character walking toward Polli"
+                >
+                    <img
+                        class="capability-friend__frame capability-friend__frame--one"
+                        src="capability-parade-v2/image-frame-1-left-step.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--two"
+                        src="capability-parade-v2/image-frame-2-passing.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--three"
+                        src="capability-parade-v2/image-frame-3-right-step.png"
+                        alt=""
+                    />
+                </div>
+                <div
+                    class="capability-friend"
+                    style="--friend-start: 25.7s; --friend-size: 20%"
+                    aria-label="Audio capability character walking toward Polli"
+                >
+                    <img
+                        class="capability-friend__frame capability-friend__frame--one"
+                        src="capability-parade-v2/audio-frame-1-left-step.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--two"
+                        src="capability-parade-v2/audio-frame-2-passing.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--three"
+                        src="capability-parade-v2/audio-frame-3-right-step.png"
+                        alt=""
+                    />
+                </div>
+                <div
+                    class="capability-friend"
+                    style="
+                        --friend-start: 26.55s;
+                        --friend-size: 19%;
+                        --friend-ground-offset: -0.2vw;
+                    "
+                    aria-label="Video capability character walking toward Polli"
+                >
+                    <img
+                        class="capability-friend__frame capability-friend__frame--one"
+                        src="capability-parade-v2/video-frame-1-left-step.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--two"
+                        src="capability-parade-v2/video-frame-2-passing.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--three"
+                        src="capability-parade-v2/video-frame-3-right-step.png"
+                        alt=""
+                    />
+                </div>
+                <div
+                    class="capability-friend"
+                    style="
+                        --friend-start: 27.4s;
+                        --friend-size: 20%;
+                        --friend-ground-offset: 1vw;
+                    "
+                    aria-label="Real-time capability character walking toward Polli"
+                >
+                    <img
+                        class="capability-friend__frame capability-friend__frame--one"
+                        src="capability-parade-v2/realtime-frame-1-left-step.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--two"
+                        src="capability-parade-v2/realtime-frame-2-passing.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--three"
+                        src="capability-parade-v2/realtime-frame-3-right-step.png"
+                        alt=""
+                    />
+                </div>
+                <div
+                    class="capability-friend"
+                    style="--friend-start: 28.25s; --friend-size: 21%"
+                    aria-label="Embeddings capability character walking toward Polli"
+                >
+                    <img
+                        class="capability-friend__frame capability-friend__frame--one"
+                        src="capability-parade-v2/embeddings-frame-1-left-step.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--two"
+                        src="capability-parade-v2/embeddings-frame-2-passing.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--three"
+                        src="capability-parade-v2/embeddings-frame-3-right-step.png"
+                        alt=""
+                    />
+                </div>
+                <div
+                    class="capability-friend"
+                    style="
+                        --friend-start: 29.1s;
+                        --friend-size: 21%;
+                        --friend-ground-offset: 0.75vw;
+                    "
+                    aria-label="Agents capability character walking toward Polli"
+                >
+                    <img
+                        class="capability-friend__frame capability-friend__frame--one"
+                        src="capability-parade-v2/agents-frame-1-left-step.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--two"
+                        src="capability-parade-v2/agents-frame-2-passing.png"
+                        alt=""
+                    />
+                    <img
+                        class="capability-friend__frame capability-friend__frame--three"
+                        src="capability-parade-v2/agents-frame-3-right-step.png"
+                        alt=""
+                    />
+                </div>
+                <div class="polli" aria-label="Polli walking">
+                    <div class="polli__ground">
+                        <div class="polli__sprite"></div>
+                    </div>
+                    <div class="polli__flight" aria-hidden="true">
+                        <img class="polli__flight-frame" src="overlays/polli-flight-up.png" alt="" />
+                        <img class="polli__flight-frame" src="overlays/polli-flight-down.png?v=3" alt="" />
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="replay">Replay progress</button>
+        </main>
+
+        <script>
+            const viewport = document.querySelector("#viewport");
+            const world = document.querySelector("#world");
+            const replay = document.querySelector("#replay");
+            const pollenStream = document.querySelector("#pollen-stream");
+            const fullJourneySeconds = 65;
+            const previewSeconds = 41;
+            const arrivalHoldMs = 1200;
+            let arrivalTimer;
+
+            for (let index = 0; index < 18; index += 1) {
+                for (const account of ["paid", "quest"]) {
+                    const grain = document.createElement("i");
+                    grain.className = `pollen-grain pollen-grain--out${
+                        account === "paid" ? " pollen-grain--paid" : ""
+                    }`;
+                    grain.style.setProperty(
+                        "--pollen-delay",
+                        `${24.5 + index * 0.67 + (account === "quest" ? 0.18 : 0)}s`,
+                    );
+                    grain.style.setProperty("--pollen-source", account === "paid" ? "14%" : "26%");
+                    grain.style.setProperty(
+                        "--pollen-source-mobile",
+                        account === "paid" ? "14%" : "35%",
+                    );
+                    const targetX =
+                        (account === "paid" ? 40 : 32) + ((index % 4) - 1.5) * 3;
+                    grain.style.setProperty("--pollen-mid-x", `${targetX * 0.46}vw`);
+                    grain.style.setProperty("--pollen-target-x", `${targetX}vw`);
+                    grain.style.setProperty(
+                        "--pollen-target-y",
+                        `${-25 - (index % 3) * 2}vh`,
+                    );
+                    pollenStream.append(grain);
+                }
+            }
+
+            function setJourney() {
+                const viewportWidth = viewport.getBoundingClientRect().width;
+                const worldWidth = world.getBoundingClientRect().width;
+                const maximumTravel = Math.max(0, worldWidth - viewportWidth);
+                const pixelsPerSecond = maximumTravel / fullJourneySeconds;
+
+                viewport.style.setProperty(
+                    "--world-end",
+                    `${-(pixelsPerSecond * previewSeconds)}px`,
+                );
+            }
+
+            function play() {
+                viewport.classList.remove("playing");
+                void viewport.offsetWidth;
+                viewport.classList.add("playing");
+            }
+
+            function begin() {
+                window.clearTimeout(arrivalTimer);
+                viewport.classList.remove("playing");
+                setJourney();
+                arrivalTimer = window.setTimeout(play, arrivalHoldMs);
+            }
+
+            if (world.complete) {
+                begin();
+            } else {
+                world.addEventListener("load", begin);
+            }
+            window.addEventListener("resize", setJourney);
+            replay.addEventListener("click", begin);
+        </script>
+    </body>
+</html>
