@@ -11,7 +11,7 @@ const TINYBIRD = "https://api.europe-west2.gcp.tinybird.co/v0/pipes";
 const PUBLIC_READ_TOKEN =
     "p.eyJ1IjogImFjYTYzZjc5LThjNTYtNDhlNC05NWJjLWEyYmFjMTY0NmJkMyIsICJpZCI6ICI5ZWZmMGM3Ni1kOTZkLTQwYjgtYWQwOC1mNDFlMmRiYjBmYTIiLCAiaG9zdCI6ICJnY3AtZXVyb3BlLXdlc3QyIn0.6VnVkAQ5h_fkcDZVDUoU38dzTxaw0xo3DnmKkhECbA8";
 
-/** One row of the community app directory synced from apps/catalog.json. */
+/** One row of the community app directory synced from app.json. */
 export type DirectoryApp = {
     emoji: string;
     name: string;
@@ -50,13 +50,6 @@ export const platformsOf = (app: DirectoryApp): string[] =>
         .map((p) => p.trim().toLowerCase())
         .filter(Boolean);
 
-/** "⭐1.2k" -> 1200. 0 when unrated. */
-function starsOf(raw: string): number {
-    const m = raw?.match(/([\d.]+)\s*([kK])?/);
-    if (!m) return 0;
-    return Number.parseFloat(m[1]) * (m[2] ? 1000 : 1);
-}
-
 /** "⭐1.2k" -> "1.2k" for display; "" when unrated. */
 export function formatStars(raw: string): string {
     const m = raw?.match(/([\d.]+)\s*([kK])?/);
@@ -69,24 +62,7 @@ export const githubProfileUrl = (username: string): string => {
     return handle ? `https://github.com/${handle}` : "";
 };
 
-/**
- * Same order as .github/scripts/app-update-greenhouse.js: busy first, then
- * BYOP, then stars, then newest. Without this the grid was in whatever order
- * the directory happened to return.
- */
-export function sortApps(a: DirectoryApp, b: DirectoryApp): number {
-    const buzz = Number(isBuzz(b)) - Number(isBuzz(a));
-    if (buzz) return buzz;
-    if (isPollen(a) !== isPollen(b)) return isPollen(a) ? -1 : 1;
-    // starsOf, not the display string: parsing "1.2k" as a float gave 1.2, so
-    // a 900-star repo outranked a 1.2k one.
-    const stars =
-        starsOf(b.github_repository_stars) - starsOf(a.github_repository_stars);
-    if (stars) return stars;
-    return (b.approved_date || "").localeCompare(a.approved_date || "");
-}
-
-/** Badge rules, matching .github/scripts/app-update-greenhouse.js exactly. */
+/** Automatic card signals derived from traffic, BYOP support, and recency. */
 export const isBuzz = (app: DirectoryApp) => Number(app.requests_24h) >= 100;
 export const isPollen = (app: DirectoryApp) =>
     app.byop === true || app.byop === 1 || app.byop === "true";
@@ -113,11 +89,21 @@ export function useAppDirectory() {
     }, []);
 }
 
+export type ShowcaseApp = DirectoryApp & { total_apps: number };
+
+/** Eight active apps plus the complete directory count for lightweight pages. */
+export function useAppShowcase() {
+    return useAsync<ShowcaseApp[]>(
+        () => tinybird<ShowcaseApp>("app_showcase_public", "&limit=8"),
+        [],
+    );
+}
+
 type PlatformStats = {
     /** Requests in the most recent week. */
     requestsWeek: number;
     /** 2xx / (2xx + 5xx), cache excluded. */
-    availability: number;
+    availability: number | null;
     /** Models callable right now, community models included. */
     models: number;
     /** Count per category, e.g. { text: 141, image: 51 }. */
@@ -146,6 +132,7 @@ type WeeklyHealthRow = {
     week: string;
     total_requests: number;
     availability: number;
+    official_availability: number;
 };
 
 /**
@@ -182,7 +169,7 @@ function currentWeekStart(now = new Date()): string {
  * Shared across callers. The hero and the dev kit both want these numbers, and
  * without this each mount fires its own 113 KB /models request — two in
  * flight at once, and the second came back empty, which showed up as a
- * catalogue of 0 models.
+ * catalog of 0 models.
  */
 let platformStats: Promise<PlatformStats | null> | null = null;
 
@@ -212,7 +199,7 @@ function loadPlatformStats(): Promise<PlatformStats | null> {
         const catalog: CatalogModel[] = Array.isArray(models) ? models : [];
         return {
             requestsWeek: latest?.total_requests ?? 0,
-            availability: latest?.availability ?? 0,
+            availability: latest?.official_availability ?? null,
             models: catalog.length,
             ...summariseCatalog(catalog),
         };

@@ -1,8 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { isBuzz, sortApps, useAppDirectory } from "../../data/publicStats";
+import { useAppShowcase } from "../../data/publicStats";
 import { AppTile } from "../apps/cards";
-import { ArrowLink, CardGrid, ScrollStrip, SectionHeader } from "../site/kit";
+import { ArrowLink, ScrollStrip, SectionHeader } from "../site/kit";
 
 /**
  * A wide shelf you skim sideways — the same strip the Apps spotlight uses, so
@@ -11,17 +10,8 @@ import { ArrowLink, CardGrid, ScrollStrip, SectionHeader } from "../site/kit";
  * visual without pretending generated art is the real app.
  */
 export function LiveApps() {
-    const { data: apps, loading, failed } = useAppDirectory();
-
-    const featured = useMemo(
-        () =>
-            apps
-                .filter((app) => isBuzz(app) && Boolean(app.description))
-                .slice()
-                .sort(sortApps)
-                .slice(0, 8),
-        [apps],
-    );
+    const { data: featured, loading, failed } = useAppShowcase();
+    const totalApps = featured[0]?.total_apps ?? 0;
 
     // Only disappears when the directory loaded fine and genuinely had
     // nothing to show — a failure gets a line, not a silent hole.
@@ -30,11 +20,11 @@ export function LiveApps() {
     return (
         <section className="flex flex-col gap-5">
             <SectionHeader
-                eyebrow="Built on Pollinations"
+                eyebrow="Live now"
                 title={
-                    loading
+                    loading || failed
                         ? "Apps built on Pollinations."
-                        : `${apps.length} apps built on Pollinations.`
+                        : `${totalApps} apps built on Pollinations.`
                 }
                 action={
                     <ArrowLink as={Link} to="/apps">
@@ -43,15 +33,15 @@ export function LiveApps() {
                 }
             />
             {loading ? (
-                <CardGrid gap="gap-4">
+                <ScrollStrip ariaLabel="Loading apps built on Pollinations">
                     {[0, 1, 2].map((i) => (
                         <div
                             key={`skeleton-${i}`}
                             aria-hidden="true"
-                            className="h-64 animate-pulse rounded-2xl bg-theme-bg-subtle"
+                            className="h-64 w-59 flex-none animate-pulse rounded-2xl bg-theme-bg-subtle"
                         />
                     ))}
-                </CardGrid>
+                </ScrollStrip>
             ) : failed ? (
                 <p className="rounded-2xl border border-theme-border border-dashed px-5 py-6 text-sm text-theme-text-muted">
                     The app directory couldn’t be loaded right now.
