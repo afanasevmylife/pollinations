@@ -7,11 +7,14 @@
  * API proxying — it only serves assets and rewrites SEO metadata.
  */
 
+import { NOT_FOUND_META, ROUTE_META } from "./routeMeta";
+
 // Cloudflare Workers types (minimal, avoids conflicts with DOM types)
 interface CfElement {
     setAttribute(name: string, value: string): void;
     setInnerContent(content: string): void;
     append(content: string, options?: { html: boolean }): void;
+    remove(): void;
 }
 interface CfElementHandler {
     element(el: CfElement): void;
@@ -24,38 +27,6 @@ declare class HTMLRewriter {
 interface Env {
     ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
-
-const ROUTE_META: Record<string, { title: string; description: string }> = {
-    "/": {
-        title: "pollinations.ai — Every model, one wallet.",
-        description:
-            "Open infrastructure for text, image, audio and video generation, with one wallet and one API.",
-    },
-    "/play": {
-        title: "Play | pollinations.ai",
-        description: "Generate images, text, audio and video with AI models",
-    },
-    "/apps": {
-        title: "Apps | pollinations.ai",
-        description: "Community-built apps powered by Pollinations AI",
-    },
-    "/community": {
-        title: "Community | pollinations.ai",
-        description: "Contributors, voting, and build diary",
-    },
-    "/terms": {
-        title: "Terms | pollinations.ai",
-        description: "Terms of service for pollinations.ai",
-    },
-    "/privacy": {
-        title: "Privacy | pollinations.ai",
-        description: "Privacy policy for pollinations.ai",
-    },
-    "/refunds": {
-        title: "Refunds | pollinations.ai",
-        description: "Refunds and cancellations policy for pollinations.ai",
-    },
-};
 
 const JSON_LD_HOME = JSON.stringify({
     "@context": "https://schema.org",
@@ -104,9 +75,18 @@ export default {
         // Normalize: strip trailing slash (except root)
         const normalizedPath =
             path !== "/" && path.endsWith("/") ? path.slice(0, -1) : path;
-        const meta = ROUTE_META[normalizedPath] || ROUTE_META["/"];
+        const knownRoute = normalizedPath in ROUTE_META;
+        const meta = knownRoute ? ROUTE_META[normalizedPath] : NOT_FOUND_META;
         const canonical = `https://pollinations.ai${normalizedPath === "/" ? "" : normalizedPath}`;
         const jsonLd = getJsonLd(normalizedPath);
+
+        const htmlResponse = knownRoute
+            ? response
+            : new Response(response.body, {
+                  status: 404,
+                  statusText: "Not Found",
+                  headers: response.headers,
+              });
 
         return new HTMLRewriter()
             .on("title", {
@@ -116,7 +96,8 @@ export default {
             })
             .on('link[rel="canonical"]', {
                 element(el) {
-                    el.setAttribute("href", canonical);
+                    if (knownRoute) el.setAttribute("href", canonical);
+                    else el.remove();
                 },
             })
             .on('meta[name="description"]', {
@@ -136,7 +117,8 @@ export default {
             })
             .on('meta[property="og:url"]', {
                 element(el) {
-                    el.setAttribute("content", canonical);
+                    if (knownRoute) el.setAttribute("content", canonical);
+                    else el.remove();
                 },
             })
             .on('meta[name="twitter:title"]', {
@@ -159,6 +141,6 @@ export default {
                     }
                 },
             })
-            .transform(response);
+            .transform(htmlResponse);
     },
 };

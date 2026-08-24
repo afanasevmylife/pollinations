@@ -9,7 +9,8 @@ import {
     useRepoStars,
     useVotingIssues,
 } from "../data/community";
-import { compact, useAppDirectory } from "../data/publicStats";
+import { compact, useAppShowcase } from "../data/publicStats";
+import { routeHead } from "../routeMeta";
 import {
     ActionButton,
     ArrowLink,
@@ -25,6 +26,7 @@ import {
 } from "../ui/site/kit";
 
 export const Route = createFileRoute("/community")({
+    head: () => routeHead("/community"),
     component: CommunityPage,
 });
 
@@ -53,6 +55,8 @@ const WAYS_IN = [
     },
 ];
 
+const FEED_SKELETON_KEYS = ["first", "second", "third", "fourth"];
+
 /**
  * Every feed on this page can fail — GitHub is rate-limited per visitor IP and
  * Discord's widget can be off. Returning null on failure quietly deleted whole
@@ -73,9 +77,9 @@ function FeedState({
     if (loading) {
         return (
             <div className="flex flex-col gap-3" aria-busy="true">
-                {Array.from({ length: rows }, (_, i) => (
+                {FEED_SKELETON_KEYS.slice(0, rows).map((key) => (
                     <div
-                        key={`row-${i}`}
+                        key={key}
                         aria-hidden="true"
                         className="h-14 animate-pulse rounded-2xl bg-theme-bg-subtle"
                     />
@@ -235,7 +239,8 @@ function Contributors() {
 function CommunityPage() {
     const { data: stars } = useRepoStars();
     const { data: online } = useDiscordPresence();
-    const { data: apps } = useAppDirectory();
+    const { data: apps } = useAppShowcase();
+    const totalApps = apps[0]?.total_apps ?? 0;
 
     /** Only what we can actually measure — a missing feed drops its stat. */
     const stats = [
@@ -244,8 +249,8 @@ function CommunityPage() {
             label: "online in Discord now",
         },
         stars !== null && { value: compact(stars), label: "GitHub stars" },
-        apps.length > 0 && {
-            value: String(apps.length),
+        totalApps > 0 && {
+            value: String(totalApps),
             label: "apps built",
         },
     ].filter((stat): stat is { value: string; label: string } => Boolean(stat));

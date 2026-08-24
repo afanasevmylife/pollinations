@@ -2,19 +2,12 @@ import { CardGrid, SectionHeader } from "../site/kit";
 
 const UPCOMING = [
     {
-        title: "Pollinations Login",
-        // The OAuth and device flows shipped 2026-07-03 (#12165); only the
-        // drop-in React components are still alpha. Saying "coming soon"
-        // would understate what's already live.
-        body: "OAuth and device flow are live today. The drop-in React components are alpha.",
+        title: "More Quests",
+        body: "More ways to earn free Pollen by building and contributing.",
     },
     {
-        title: "App Hosting",
-        body: "Push your app to our infra. No deploy setup, no separate bill.",
-    },
-    {
-        title: "BYOA — Bring Your Own Agent",
-        body: "Publish an agent others can call. Earns like a model.",
+        title: "App Discovery",
+        body: "A clearer way for people to find useful community apps.",
     },
     {
         title: "Ads SDK",

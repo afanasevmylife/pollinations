@@ -36,7 +36,7 @@ function modelSummary(
     const tail = rest
         ? `, plus ${rest} for embeddings, 3D and realtime voice`
         : "";
-    return `${named}${tail}. ${community} of them are community models published through BYOM — a catalogue that grows without us.`;
+    return `${named}${tail}. ${community} are community models published through bring your own model (BYOM), so the catalog grows with its community.`;
 }
 
 /**
@@ -51,14 +51,14 @@ const TOOLS: Tool[] = [
         label: "Generate",
         // Counted live — see modelSummary() below. The old copy said "69 text,
         // 28 image … 86 more" against a real 141/51/95, so it understated the
-        // catalogue by half while publicStats.ts claimed nothing was hardcoded.
+        // catalog by half while publicStats.ts claimed nothing was hardcoded.
         title: "All the models",
         body: null,
         linkLabel: "Browse the model list",
         href: "https://gen.pollinations.ai/models",
     },
     {
-        label: "Connect",
+        label: "Sign in",
         title: "Sign in with Pollinations",
         body: "OAuth 2.1 with PKCE, plus device flow for CLIs and desktop apps. Users approve once and spend from their own wallet — with a budget and expiry they set, revocable any time.",
         linkLabel: "Read the BYOP guide",
@@ -78,7 +78,7 @@ const TOOLS: Tool[] = [
             <>
                 <code className="font-pixel">@pollinations/sdk</code> covers
                 every modality, plus balance, keys and OAuth. React hooks for
-                auth, balance and the model catalogue.
+                auth, balance and the model catalog.
             </>
         ),
         linkLabel: "Read the SDK docs",
@@ -90,9 +90,9 @@ const TOOLS: Tool[] = [
         body: (
             <>
                 <code className="font-pixel">polli</code> does every modality,
-                plus keys, usage and quests.{" "}
-                <code className="font-pixel">--json</code> on stdout and a
-                shipped SKILL.md, so agents can drive it.
+                plus keys, usage and Quests.{" "}
+                <code className="font-pixel">--json</code> on stdout and
+                built-in agent instructions, so coding agents can drive it.
             </>
         ),
         linkLabel: "Install polli CLI",
@@ -142,7 +142,7 @@ export function DevKit() {
                                           data.byCategory,
                                           data.community,
                                       )
-                                    : "Text, image, video and audio models, plus embeddings, 3D and realtime voice — with more brought by the community through BYOM.")}
+                                    : "Text, image, video and audio models, plus embeddings, 3D and realtime voice — with more published through bring your own model (BYOM).")}
                         </p>
                         <ArrowLink href={tool.href} className="mt-auto pt-2">
                             {tool.linkLabel}

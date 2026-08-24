@@ -60,7 +60,7 @@ main > * {
 }
 
 /* ── Home / bee story ─────────────────────────────────────────────────
-   An eleven-beat product tour. React owns timing and audio; CSS stages each
+   A nine-beat product tour. React owns timing and audio; CSS stages each
    scene inside one full-frame garden. */
 .bee-story-stage {
     --bee-story-blue: var(--polli-color-modality-image-bg);
@@ -166,6 +166,15 @@ main > * {
     gap: 0.28rem;
 }
 
+.bee-story-chapter {
+    color: var(--polli-color-text-soft);
+    font-family: var(--polli-font-pixel);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
 .bee-story-copy strong {
     font-family: var(--polli-font-subheading);
     font-size: clamp(1.25rem, 2.6vw, 1.75rem);
@@ -267,7 +276,7 @@ main > * {
 .bee-story-stage[data-phase="1"] .bee-story-terminal {
     opacity: 1;
     transform: translateX(-50%) scale(1);
-    animation: bee-story-terminal-exit 7.8s ease forwards;
+    animation: bee-story-terminal-exit 9.75s ease forwards;
 }
 
 .bee-story-visual {
@@ -284,14 +293,12 @@ main > * {
 
 .bee-story-stage[data-phase="1"] .bee-story-generation,
 .bee-story-stage[data-phase="2"] .bee-story-catalogue,
-.bee-story-stage[data-phase="3"] .bee-story-tool-cli,
-.bee-story-stage[data-phase="4"] .bee-story-tool-sdk,
-.bee-story-stage[data-phase="5"] .bee-story-tool-mcp,
-.bee-story-stage[data-phase="6"] .bee-story-quest,
-.bee-story-stage[data-phase="7"] .bee-story-byop,
-.bee-story-stage[data-phase="8"] .bee-story-publish-model,
-.bee-story-stage[data-phase="9"] .bee-story-publish-agent,
-.bee-story-stage[data-phase="10"] .bee-story-community {
+.bee-story-stage[data-phase="3"] .bee-story-tool-cycle,
+.bee-story-stage[data-phase="4"] .bee-story-quest,
+.bee-story-stage[data-phase="5"] .bee-story-login,
+.bee-story-stage[data-phase="6"] .bee-story-byop,
+.bee-story-stage[data-phase="7"] .bee-story-publish,
+.bee-story-stage[data-phase="8"] .bee-story-community {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
     animation: bee-story-scene-enter 260ms steps(3, end) both;
@@ -832,11 +839,6 @@ main > * {
     transform: scale(0.75);
 }
 
-.bee-story-stage[data-phase="9"] .bee-story-scene > .bee-story-sprite {
-    opacity: 0;
-    transform: scale(0.75);
-}
-
 .bee-story-stage[data-phase="1"] .bee-story-scene > .bee-story-sprite {
     opacity: 0;
     transform: scale(0.75);
@@ -1022,7 +1024,7 @@ main > * {
     transform: scale(1.04);
 }
 
-.bee-story-stage[data-phase="10"] .bee-story-community {
+.bee-story-stage[data-phase="8"] .bee-story-community {
     transform: scale(1);
     animation: bee-story-community-enter 260ms steps(3, end) both;
 }
@@ -1142,6 +1144,40 @@ main > * {
         bee-story-catalogue-hum 1.2s steps(3, end) infinite alternate;
 }
 
+.bee-story-hosting > img:last-of-type {
+    position: relative;
+    inset: auto;
+    opacity: 1;
+    filter: drop-shadow(0 1rem 0.8rem rgb(66 40 78 / 16%));
+    animation: bee-story-catalogue-hum 1.8s steps(3, end) infinite alternate;
+}
+
+.bee-story-hosting {
+    top: 39%;
+    width: min(44rem, calc(100% - 3rem));
+}
+
+.bee-story-hosting-polli,
+.bee-story-login-polli,
+.bee-story-login-nomnom {
+    position: absolute;
+    z-index: 4;
+    display: block;
+    width: 6rem;
+    aspect-ratio: 4 / 5;
+    background-repeat: no-repeat;
+    background-size: 400% 100%;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0.6rem 0.35rem rgb(66 40 78 / 20%));
+    animation: bee-story-four-frames 2.4s steps(1, end) infinite;
+}
+
+.bee-story-hosting-polli {
+    top: 4rem;
+    left: 2%;
+    background-image: url("/characters/bee-story/polli-strip.png");
+}
+
 .bee-story-catalogue-label {
     display: flex;
     flex-direction: column;
@@ -1193,7 +1229,6 @@ main > * {
 .bee-story-tool-art {
     position: relative;
     width: min(27rem, 100%);
-    filter: drop-shadow(0 1rem 0.8rem rgb(66 40 78 / 18%));
     animation: bee-story-tool-float 1.8s ease-in-out infinite alternate;
 }
 
@@ -1219,6 +1254,69 @@ main > * {
     filter: brightness(1.1) saturate(1.1)
         drop-shadow(0 0 1rem rgb(236 248 116 / 40%));
     animation: bee-story-tool-active 3s steps(2, end) infinite;
+}
+
+.bee-story-tool-cycle {
+    width: min(36rem, calc(100% - 3rem));
+    height: 26rem;
+}
+
+.bee-story-tool-cycle-item {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    opacity: 0;
+    animation: bee-story-tool-cycle 9.75s ease forwards;
+}
+
+.bee-story-tool-cycle-item:nth-child(2) {
+    animation-delay: 3.25s;
+}
+
+.bee-story-tool-cycle-item:nth-child(3) {
+    animation-delay: 6.5s;
+}
+
+.bee-story-login {
+    top: 42%;
+    width: min(45rem, calc(100% - 3rem));
+    height: 24rem;
+}
+
+.bee-story-login > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: auto;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0.85rem 0.7rem rgb(66 40 78 / 20%));
+    animation: bee-story-catalogue-hum 1.8s steps(3, end) infinite alternate;
+}
+
+.bee-story-login > img:nth-child(2) {
+    opacity: 0;
+    filter: brightness(1.04) saturate(1.08)
+        drop-shadow(0 0 1rem rgb(236 248 116 / 38%));
+    animation:
+        bee-story-login-connected 4.8s steps(2, end) infinite,
+        bee-story-catalogue-hum 1.8s steps(3, end) infinite alternate;
+}
+
+.bee-story-login-polli {
+    top: 0;
+    right: 2%;
+    background-image: url("/characters/bee-story/polli-strip.png");
+}
+
+.bee-story-login-nomnom {
+    top: 5rem;
+    left: 2%;
+    background-image: url("/characters/bee-story/nomnom-strip.png");
 }
 
 .bee-story-tool-object {
@@ -1463,6 +1561,14 @@ main > * {
     animation: bee-story-wallet-receive 1.35s ease-in-out infinite alternate;
 }
 
+.bee-story-publish-cycle-model {
+    animation: bee-story-publish-model-cycle 9.75s ease both;
+}
+
+.bee-story-publish-cycle-agent {
+    animation: bee-story-publish-agent-cycle 9.75s ease both;
+}
+
 .bee-story-publish-wallet-art img:nth-child(n + 2),
 .bee-story-publish-agent-wallet img:nth-child(n + 2) {
     position: absolute;
@@ -1634,8 +1740,7 @@ main > * {
 }
 
 .bee-story-stage[data-phase="3"] .bee-story-polli,
-.bee-story-stage[data-phase="6"] .bee-story-polli,
-.bee-story-stage[data-phase="9"] .bee-story-polli {
+.bee-story-stage[data-phase="6"] .bee-story-polli {
     background-position: 100% 0;
 }
 
@@ -1662,7 +1767,7 @@ main > * {
     left: 80%;
 }
 
-.bee-story-stage[data-phase="10"] .bee-story-sprite {
+.bee-story-stage[data-phase="8"] .bee-story-sprite {
     opacity: 0;
     transform: scale(0.8);
 }
@@ -1812,6 +1917,53 @@ main > * {
     }
     52%,
     90% {
+        opacity: 1;
+    }
+}
+
+@keyframes bee-story-tool-cycle {
+    0%,
+    28% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    34%,
+    100% {
+        opacity: 0;
+        transform: translateY(-0.5rem) scale(0.96);
+    }
+}
+
+@keyframes bee-story-login-connected {
+    0%,
+    36%,
+    100% {
+        opacity: 0;
+    }
+    46%,
+    88% {
+        opacity: 1;
+    }
+}
+
+@keyframes bee-story-publish-model-cycle {
+    0%,
+    45% {
+        opacity: 1;
+    }
+    52%,
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes bee-story-publish-agent-cycle {
+    0%,
+    47% {
+        opacity: 0;
+    }
+    54%,
+    100% {
         opacity: 1;
     }
 }
@@ -2096,7 +2248,7 @@ main > * {
     }
 }
 
-@media (max-width: 40rem) {
+@media (max-width: 39.999rem) {
     .bee-story-stage {
         height: 36rem;
         min-height: 36rem;
@@ -2113,6 +2265,10 @@ main > * {
         left: 0.65rem;
         width: calc(100% - 1.3rem);
         padding: 0.8rem 1.35rem 0.8rem 0.8rem;
+    }
+
+    .bee-story-chapter {
+        font-size: 0.5rem;
     }
 
     .bee-story-copy strong {
@@ -2457,6 +2613,19 @@ main > * {
         transform: translateX(-50%);
     }
 
+    .bee-story-hosting {
+        top: 37%;
+        width: calc(100% - 0.5rem);
+    }
+
+    .bee-story-hosting > img:last-of-type {
+        position: absolute;
+        top: 3rem;
+        left: 50%;
+        width: 20rem;
+        transform: translateX(-50%);
+    }
+
     .bee-story-catalogue-label {
         padding: 0.3rem 0.38rem;
         font-size: 0.38rem;
@@ -2489,6 +2658,11 @@ main > * {
         justify-content: center;
     }
 
+    .bee-story-tool-cycle {
+        width: calc(100% - 1rem);
+        height: 19rem;
+    }
+
     .bee-story-tool-cli .bee-story-tool-art {
         width: 18rem;
         max-width: none;
@@ -2506,6 +2680,41 @@ main > * {
 
     .bee-story-tool-object > code {
         font-size: 0.58rem;
+    }
+
+    .bee-story-login {
+        top: 40%;
+        width: calc(100% - 1rem);
+        height: 19.5rem;
+    }
+
+    .bee-story-login > img {
+        top: 2.25rem;
+        left: 50%;
+        width: 22rem;
+        max-width: none;
+        transform: translateX(-50%);
+    }
+
+    .bee-story-hosting-polli,
+    .bee-story-login-polli,
+    .bee-story-login-nomnom {
+        width: 4.3rem;
+    }
+
+    .bee-story-hosting-polli {
+        top: 3.5rem;
+        left: -1%;
+    }
+
+    .bee-story-login-polli {
+        top: 1rem;
+        right: -1%;
+    }
+
+    .bee-story-login-nomnom {
+        top: 4rem;
+        left: -1%;
     }
 
     .bee-story-publish {
@@ -2587,7 +2796,7 @@ main > * {
     .bee-story-community > img {
         object-position: 16% center;
         animation:
-            bee-story-community-pan 7.8s ease-in-out infinite alternate,
+            bee-story-community-pan 9.75s ease-in-out infinite alternate,
             bee-story-community-breathe 5s ease-in-out infinite alternate;
     }
 
@@ -2605,6 +2814,206 @@ main > * {
         animation: none !important;
         transition: none !important;
     }
+}
+
+/* Five-part animatic: each environment carries its own copy while the exact
+   official cast and a slow side-scroll establish the eventual game movement. */
+.bee-story-stage--storyboard {
+    background: var(--polli-color-bg-pale);
+}
+
+.bee-story-world,
+.bee-story-cast {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.bee-story-world > img {
+    position: absolute;
+    top: 0;
+    left: var(--camera-x, 0%);
+    display: block;
+    width: 600%;
+    max-width: none;
+    height: 100%;
+    image-rendering: pixelated;
+    transition: left 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bee-story-cast {
+    z-index: 12;
+    overflow: visible;
+}
+
+.bee-story-stage--storyboard .bee-story-sprite {
+    z-index: 12;
+    bottom: 4%;
+    width: clamp(5.5rem, 12vw, 8.5rem);
+    opacity: 0 !important;
+    visibility: hidden;
+    filter: drop-shadow(0.25rem 0.35rem 0 rgb(17 5 24 / 18%));
+    animation: none;
+    --entrance-x: -80%;
+}
+
+.bee-story-stage--storyboard .bee-story-polli {
+    left: 45%;
+    background-position: 0 0;
+    animation-delay: 450ms, 1.35s;
+}
+
+.bee-story-stage--storyboard .bee-story-robot {
+    left: 75%;
+    background-position: 0 0;
+    --entrance-x: 70%;
+    animation-delay: 700ms, 1.6s;
+}
+
+.bee-story-stage--storyboard .bee-story-nomnom {
+    left: 12%;
+    background-position: 0 0;
+    animation-delay: 850ms, 1.75s;
+}
+
+.bee-story-stage--storyboard:is(
+        [data-phase="0"],
+        [data-phase="1"],
+        [data-phase="2"],
+        [data-phase="3"],
+        [data-phase="4"],
+        [data-phase="5"]
+    )
+    .bee-story-polli,
+.bee-story-stage--storyboard:is(
+        [data-phase="2"],
+        [data-phase="3"],
+        [data-phase="4"],
+        [data-phase="5"]
+    )
+    .bee-story-robot,
+.bee-story-stage--storyboard:is(
+        [data-phase="1"],
+        [data-phase="2"],
+        [data-phase="5"]
+    )
+    .bee-story-nomnom {
+    opacity: 1 !important;
+    visibility: visible;
+    animation-name: bee-story-character-arrive, bee-story-character-idle;
+    animation-duration: 850ms, 760ms;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1.15), ease-in-out;
+    animation-iteration-count: 1, infinite;
+    animation-direction: normal, alternate;
+    animation-fill-mode: both, both;
+}
+
+.bee-story-stage--storyboard[data-phase="0"] .bee-story-polli {
+    bottom: 2%;
+    left: 22%;
+}
+
+.bee-story-stage--storyboard[data-phase="1"] .bee-story-polli {
+    bottom: 3%;
+    left: 38%;
+    background-position: 33.333% 0;
+}
+
+.bee-story-stage--storyboard[data-phase="1"] .bee-story-nomnom {
+    left: 16%;
+}
+
+.bee-story-stage--storyboard[data-phase="2"] .bee-story-polli {
+    bottom: 4%;
+    left: 36%;
+    background-position: 66.667% 0;
+}
+
+.bee-story-stage--storyboard[data-phase="2"] .bee-story-robot {
+    left: 76%;
+}
+
+.bee-story-stage--storyboard[data-phase="2"] .bee-story-nomnom {
+    left: 12%;
+}
+
+.bee-story-stage--storyboard[data-phase="3"] .bee-story-polli {
+    bottom: 5%;
+    left: 38%;
+    background-position: 100% 0;
+}
+
+.bee-story-stage--storyboard[data-phase="3"] .bee-story-robot {
+    bottom: 6%;
+    left: 74%;
+}
+
+.bee-story-stage--storyboard[data-phase="4"] .bee-story-polli {
+    bottom: 5%;
+    left: 44%;
+    background-position: 0 0;
+}
+
+.bee-story-stage--storyboard[data-phase="4"] .bee-story-robot {
+    bottom: 5%;
+    left: 76%;
+}
+
+.bee-story-stage--storyboard[data-phase="5"] .bee-story-polli {
+    bottom: 5%;
+    left: 18%;
+    background-position: 33.333% 0;
+}
+
+.bee-story-stage--storyboard[data-phase="5"] .bee-story-robot {
+    bottom: 5%;
+    left: 50%;
+}
+
+.bee-story-stage--storyboard[data-phase="5"] .bee-story-nomnom {
+    bottom: 5%;
+    left: 76%;
+}
+
+@keyframes bee-story-character-arrive {
+    from {
+        translate: var(--entrance-x) 12%;
+        scale: 0.82;
+    }
+    to {
+        translate: 0 0;
+        scale: 1;
+    }
+}
+
+@keyframes bee-story-character-idle {
+    from {
+        transform: translateY(0) rotate(-1deg);
+    }
+    to {
+        transform: translateY(-5%) rotate(1deg);
+    }
+}
+
+@media (max-width: 39.999rem) {
+    .bee-story-stage--storyboard {
+        height: auto;
+        min-height: 0;
+        aspect-ratio: 3 / 2;
+    }
+
+    .bee-story-stage--storyboard .bee-story-sound {
+        top: 0.45rem;
+        right: 0.45rem;
+        min-height: 2rem;
+        padding: 0.38rem 0.55rem;
+        font-size: 0.48rem;
+    }
+
+    .bee-story-stage--storyboard .bee-story-sprite {
+        width: clamp(2.8rem, 14vw, 3.6rem);
+    }
+
 }
 
 /* ── /play ─────────────────────────────────────────────────────────────
@@ -2647,7 +3056,7 @@ body.polli-ui-shell #root {
     }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
     .polli-playground-main-grid {
         align-items: stretch;
         grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.95fr);

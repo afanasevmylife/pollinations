@@ -312,7 +312,7 @@ function ModalityModelPicker({
                             // the open one.
                             !open ? null : isLoading ? (
                                 <p className="m-0 px-2 py-2 text-sm text-theme-text-soft">
-                                    Loading models...
+                                    Loading models…
                                 </p>
                             ) : (
                                 <ScrollArea className="max-h-80 pr-2">
@@ -480,7 +480,7 @@ function ResultPanel({
 
             {isLoading ? (
                 <MediaPlaceholder
-                    label="Generating..."
+                    label="Generating…"
                     detail="Hang tight while your result is created."
                     className="flex-1"
                 />
@@ -741,7 +741,7 @@ export function Playground() {
         const audioFile = audioFiles[0];
 
         if (!apiKey) {
-            setError("Connect before generating.");
+            setError("Sign in before generating.");
             return;
         }
         if (!currentModel) {
@@ -871,13 +871,13 @@ export function Playground() {
                 : "Generate image";
 
     // Signed out is a step, not a fault — handled by the button itself.
-    const needsConnect = isHydrated && !apiKey;
+    const needsSignIn = isHydrated && !apiKey;
     const missingInput = isAudioTranscription
         ? audioFiles.length === 0
         : !prompt.trim();
 
     /** Why the button cannot fire, or null when it can. Drives the tooltip. */
-    const blockedReason = needsConnect
+    const blockedReason = needsSignIn
         ? null
         : missingInput
           ? isAudioTranscription
@@ -1173,7 +1173,7 @@ export function Playground() {
 
                         {/* Not connected is not a broken state, so the button
                             does not sit there disabled under a 🚫 cursor with
-                            no explanation — it becomes the connect action. The
+                            no explanation — it becomes the sign-in action. The
                             tooltip covers the cases that genuinely are blocked
                             (nothing typed, model not on this key). */}
                         {blockedReason ? (
@@ -1198,15 +1198,13 @@ export function Playground() {
                                 // Wrapped: login() takes an optional request
                                 // object, so passing the ref directly would
                                 // hand it the click event.
-                                onClick={
-                                    needsConnect ? () => login() : generate
-                                }
+                                onClick={needsSignIn ? () => login() : generate}
                                 className="w-full"
                             >
                                 {isGenerating
-                                    ? "Generating..."
-                                    : needsConnect
-                                      ? "Connect to generate"
+                                    ? "Generating…"
+                                    : needsSignIn
+                                      ? "Sign in to generate"
                                       : generateLabel}
                             </ActionButton>
                         )}

@@ -1,17 +1,15 @@
 /**
  * Search-param contract for /apps.
  *
- * Three independent multi-select axes, ported from the filter work on
- * pr-05-website — an app has one category but several platforms, and the
- * signals are orthogonal to both, so single-select on one axis was losing
- * most of the useful combinations.
+ * Category and platform are independent multi-select filters. Ranking is a
+ * separate single-select choice: it changes order without hiding apps.
  *
  * Same shape as enter's `model-search.ts` (PR #12458): `as const` whitelists,
  * a typed guard, and empty selections elided so a default view has a clean
  * URL. Lists round-trip as comma-separated values.
  */
 
-/** Mirrors the Category column in apps/APPS.md. */
+/** Mirrors the category field in operations/app-management/app.json. */
 export const APP_CATEGORIES = [
     "image",
     "chat",
@@ -75,19 +73,8 @@ export const PLATFORM_LABELS: Record<AppPlatform, string> = {
     api: "API",
 };
 
-/**
- * All three computed in .github/scripts/app-update-greenhouse.js — traffic
- * and recency, never editorial. The Spotlight above the grid is the editorial
- * counterpart.
- */
-export const APP_SIGNALS = ["buzz", "pollen", "fresh"] as const;
-type AppSignal = (typeof APP_SIGNALS)[number];
-
-export const SIGNAL_LABELS: Record<AppSignal, string> = {
-    buzz: "🐝 Busy",
-    pollen: "🏵️ BYOP",
-    fresh: "🫧 Fresh",
-};
+export const APP_SORTS = ["fresh", "buzz", "byop"] as const;
+export type AppSort = (typeof APP_SORTS)[number];
 
 /**
  * Axes are stored comma-joined, not as arrays. TanStack serialises an array
@@ -98,7 +85,7 @@ export const SIGNAL_LABELS: Record<AppSignal, string> = {
 export type AppSearch = {
     category?: string;
     platform?: string;
-    signal?: string;
+    sort?: AppSort;
     q?: string;
 };
 
@@ -133,10 +120,16 @@ export function listOf<T extends string>(
 
 export function validateAppSearch(search: Record<string, unknown>): AppSearch {
     const q = typeof search.q === "string" ? search.q.trim() : "";
+    const requestedSort =
+        typeof search.sort === "string" &&
+        APP_SORTS.includes(search.sort as AppSort)
+            ? (search.sort as AppSort)
+            : "fresh";
     return {
         category: cleanList(APP_CATEGORIES, search.category),
         platform: cleanList(APP_PLATFORMS, search.platform),
-        signal: cleanList(APP_SIGNALS, search.signal),
+        // Fresh is the default, so keep the default URL clean.
+        sort: requestedSort === "fresh" ? undefined : requestedSort,
         q: q === "" ? undefined : q,
     };
 }

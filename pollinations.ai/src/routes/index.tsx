@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { compact, usePlatformStats } from "../data/publicStats";
+import { routeHead } from "../routeMeta";
 import { DevKit } from "../ui/home/DevKit";
 import { LiveApps } from "../ui/home/LiveApps";
 import { MoneyMoves } from "../ui/home/MoneyMoves";
@@ -15,6 +16,7 @@ import {
 } from "../ui/site/kit";
 
 export const Route = createFileRoute("/")({
+    head: () => routeHead("/"),
     component: HelloPage,
 });
 
@@ -30,15 +32,17 @@ function useHeroStats() {
     if (!data) return [];
     return [
         { value: compact(data.requestsWeek), label: "requests last week" },
-        {
-            value: `${data.availability.toFixed(1)}%`,
-            label: "availability",
-        },
+        data.availability === null
+            ? null
+            : {
+                  value: `${data.availability.toFixed(1)}%`,
+                  label: "official model availability",
+              },
         {
             value: String(data.models),
-            label: "models, community included",
+            label: "models",
         },
-    ];
+    ].filter((stat): stat is { value: string; label: string } => stat !== null);
 }
 
 function HelloPage() {
@@ -56,9 +60,9 @@ function HelloPage() {
                             Text, image, audio and video from a single endpoint,
                             with{" "}
                             <strong>a Pollen balance behind every call</strong>.
-                            Pay as you go, let your users bring their own, or
-                            publish a model and earn every time it&rsquo;s
-                            called.
+                            Pay as you go, let your users bring their own
+                            Pollen, or publish a model and earn every time
+                            it&rsquo;s called.
                         </>
                     }
                 />

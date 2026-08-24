@@ -1,10 +1,4 @@
-import {
-    Chip,
-    CopyButton,
-    cn,
-    Surface,
-    type SurfaceProps,
-} from "@pollinations/ui";
+import { Chip, cn, Surface, type SurfaceProps } from "@pollinations/ui";
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
 /**
@@ -334,9 +328,13 @@ export function SectionHeader({
  * shadow painted outside it, so every visible pixel has one cursor owner and
  * receives clicks.
  */
+const FOCUS_RING =
+    "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-theme-border " +
+    "focus-visible:ring-offset-2 focus-visible:ring-offset-theme-bg-pale";
+
 const ACTION_BASE =
     "inline-flex cursor-pointer items-center justify-center rounded-xl " +
-    "border-solid font-semibold disabled:cursor-not-allowed disabled:opacity-50";
+    `border-solid font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`;
 
 const ACTION_SIZE = {
     md: "border-r-4 border-b-4 px-7 py-3.5 text-base",
@@ -442,7 +440,8 @@ export function ArrowLink<T extends ElementType = "a">({
         <Component
             {...rest}
             className={cn(
-                "text-sm font-semibold text-theme-text-soft hover:text-theme-text-strong",
+                "rounded-sm text-sm font-semibold text-theme-text-soft hover:text-theme-text-strong",
+                FOCUS_RING,
                 className,
             )}
         >
@@ -472,7 +471,7 @@ export function Card<T extends ElementType = "div">({
         ...rest,
         as: as || "div",
         variant: "card",
-        className: cn("flex flex-col", HOVER_LIFT, className),
+        className: cn("flex flex-col", HOVER_LIFT, FOCUS_RING, className),
     } as SurfaceProps<ElementType>;
 
     return <Surface {...props}>{children}</Surface>;
@@ -530,87 +529,20 @@ export function CalloutPanel({
  * reachable by mouse and trackpad only.
  */
 export function ScrollStrip({
-    label,
     ariaLabel,
     children,
 }: {
-    /** Omit when a SectionHeader above already names the strip. */
-    label?: string;
-    /** Required when label is omitted — the scroller still needs a name. */
-    ariaLabel?: string;
+    ariaLabel: string;
     children: ReactNode;
 }) {
     return (
-        <div className="flex flex-col gap-3.5">
-            {label && (
-                <div className="flex items-center justify-between gap-4">
-                    <PixelLabel variant="eyebrow">{label}</PixelLabel>
-                    <span className="text-sm text-theme-text-muted">
-                        scroll →
-                    </span>
-                </div>
-            )}
-            <section
-                // biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll container needs focus to be keyboard-scrollable
-                tabIndex={0}
-                aria-label={label ?? ariaLabel}
-                className="flex gap-4 overflow-x-auto pb-2.5"
-            >
-                {children}
-            </section>
-        </div>
-    );
-}
-
-/**
- * Terminal panel: dark, elevated, with three little squares and the filename
- * in the pixel face. The squares are 2px-radius, not circles — a small thing
- * that keeps it from looking like a generic macOS window.
- *
- * Named Terminal, not CodeBlock: @pollinations/ui exports a CodeBlock already,
- * and it is a different thing (a bordered pale <pre> for docs).
- *
- * `dark` is a plain class in tokens.css, so it re-binds every `--polli-*`
- * token for this subtree and the normal theme utilities resolve to their
- * on-dark values. Writing `text-white` here does NOT work — app.css starts
- * with `--color-*: initial`, so `white` is not a colour this project has.
- */
-export function Terminal({
-    filename,
-    code,
-}: {
-    filename: string;
-    code: string;
-}) {
-    // What Copy puts on the clipboard: the runnable commands — no "$ "
-    // prompts, no comment lines. Copying the decoration would be a small
-    // betrayal of the one thing a developer takes from this page.
-    const copyValue = code
-        .split("\n")
-        .filter((line) => !line.trimStart().startsWith("#"))
-        .map((line) => line.replace(/^\$ /, ""))
-        .join("\n");
-
-    return (
-        <div className="dark flex flex-col overflow-hidden rounded-2xl bg-brand-dark shadow-[0_12px_26px_-12px_rgba(17,5,24,0.45)]">
-            <div className="flex items-center gap-2 bg-theme-bg-subtle px-4 py-2.5">
-                <span className="size-2 rounded-[2px] bg-theme-bg-active" />
-                <span className="size-2 rounded-[2px] bg-theme-text-muted/50" />
-                <span className="size-2 rounded-[2px] bg-theme-text-muted/50" />
-                <span className="ml-1 font-pixel text-xs text-theme-text-muted">
-                    {filename}
-                </span>
-                <CopyButton
-                    value={copyValue}
-                    tooltip={null}
-                    className="ml-auto cursor-pointer font-pixel text-xs text-theme-text-muted uppercase hover:text-theme-text-strong"
-                >
-                    {(copied) => (copied ? "Copied" : "Copy")}
-                </CopyButton>
-            </div>
-            <pre className="overflow-x-auto px-5 py-4 text-[13px] leading-relaxed whitespace-pre-wrap text-theme-text-base">
-                <code>{code}</code>
-            </pre>
-        </div>
+        <section
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll container needs focus to be keyboard-scrollable
+            tabIndex={0}
+            aria-label={ariaLabel}
+            className="flex gap-4 overflow-x-auto pb-2.5"
+        >
+            {children}
+        </section>
     );
 }

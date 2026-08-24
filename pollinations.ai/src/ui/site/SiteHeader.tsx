@@ -129,7 +129,7 @@ export function SiteHeader() {
                                 href={item.href}
                                 variant="ghost"
                                 active={false}
-                                className="hidden xl:inline-flex"
+                                className="hidden lg:inline-flex"
                             >
                                 {item.label} ↗
                             </TabButton>
@@ -172,7 +172,7 @@ export function SiteHeader() {
                             is harder to trust than one that lists all. */}
                         <nav
                             id="site-menu"
-                            className="mt-4 flex flex-col gap-1 rounded-2xl bg-surface-opaque p-3 shadow-well"
+                            className="mt-4 flex max-h-[calc(100dvh-6rem)] flex-col gap-1 overflow-y-auto rounded-2xl bg-surface-opaque p-3 shadow-well"
                         >
                             {NAV.map((item) => (
                                 <TabButton

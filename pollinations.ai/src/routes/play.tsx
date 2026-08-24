@@ -6,28 +6,30 @@ import {
 import { AppUserMenu } from "@pollinations/ui/app-user-menu/sdk";
 import { createFileRoute } from "@tanstack/react-router";
 import { ENTER_URL, POLLI_APP_KEY } from "../config";
+import { routeHead } from "../routeMeta";
 import { Playground } from "../ui/play/Playground";
 import { ActionButton, Hero, PageHeader } from "../ui/site/kit";
 
 export const Route = createFileRoute("/play")({
+    head: () => routeHead("/play"),
     component: PlayPage,
 });
 
 /**
- * Connect, in the hero CTA row like every other page's primary action, and in
+ * Sign in, in the hero CTA row like every other page's primary action, and in
  * the site's button style rather than the dashboard pill AppUserMenu ships —
  * the playground lives on the marketing site now, so its actions speak the
  * site's language. Once signed in the slot becomes the account menu, which
  * stays a pill because it's an account chip, not an action.
  */
-function ConnectAction() {
+function SignInAction() {
     const { isLoggedIn, isHydrated } = useAuthState();
     const { login } = useAuthActions();
     return isHydrated && isLoggedIn ? (
         <AppUserMenu dashboardHref={ENTER_URL} />
     ) : (
         <ActionButton as="button" onClick={() => login()}>
-            Connect
+            Sign in
         </ActionButton>
     );
 }
@@ -70,7 +72,7 @@ function PlayPage() {
                     }
                 />
                 <div className="flex flex-wrap gap-3">
-                    <ConnectAction />
+                    <SignInAction />
                 </div>
             </Hero>
             <Playground />

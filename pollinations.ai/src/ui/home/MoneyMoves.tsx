@@ -30,7 +30,7 @@ export function MoneyMoves() {
                 <SectionHeader
                     eyebrow="How the money moves"
                     title={<>Your app doesn&rsquo;t need a budget to launch.</>}
-                    subtitle="Most platforms charge you for every user you win. With Pollinations, users spend their own Pollen — bought or earned through Quests. As usage grows, your bill doesn’t; 20% of what they spend comes back to you."
+                    subtitle="Most platforms charge you for every user you win. With Pollinations, users spend their own Pollen — the platform credit ($1 ≈ 1 Pollen), bought or earned through Quests. As usage grows, your bill doesn’t; 20% of what they spend comes back to you."
                 />
                 <div className="mt-1 flex flex-wrap items-center gap-5">
                     {/* `bright`, not `accent` — see the tone table in kit.tsx:

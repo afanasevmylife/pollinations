@@ -1,13 +1,18 @@
-import { Input, TabButton } from "@pollinations/ui";
+import {
+    Button,
+    ChevronIcon,
+    Dropdown,
+    Input,
+    MultiSelect,
+    TabButton,
+} from "@pollinations/ui";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
     type DirectoryApp,
     isBuzz,
-    isFresh,
     isPollen,
     platformsOf,
-    sortApps,
     useAppDirectory,
 } from "../data/publicStats";
 // Hand-picked, and the only editorial thing on the page — every badge in
@@ -15,6 +20,7 @@ import {
 // think this is good". JSON because scripts/generate-app-art.mjs reads the
 // same list to decide which apps get cover art.
 import SPOTLIGHT from "../data/spotlight.json";
+import { routeHead } from "../routeMeta";
 import { AppCard, AppHero, AppTile } from "../ui/apps/cards";
 import { appCover } from "../ui/apps/cover";
 import {
@@ -30,22 +36,42 @@ import {
 import {
     APP_CATEGORIES,
     APP_PLATFORMS,
-    APP_SIGNALS,
-    type AppSearch,
+    type AppSort,
     CATEGORY_LABELS,
     listOf,
     PLATFORM_LABELS,
-    SIGNAL_LABELS,
     toggle,
     validateAppSearch,
 } from "./-app-search";
 
 export const Route = createFileRoute("/apps")({
+    head: () => routeHead("/apps"),
     validateSearch: validateAppSearch,
     component: AppsPage,
 });
 
-const SIGNAL_TEST = { buzz: isBuzz, pollen: isPollen, fresh: isFresh } as const;
+const SORT_LABELS: Record<AppSort, string> = {
+    fresh: "Fresh",
+    buzz: "Buzz",
+    byop: "BYOP",
+};
+
+const newestFirst = (a: DirectoryApp, b: DirectoryApp) =>
+    (b.approved_date || "").localeCompare(a.approved_date || "");
+
+/** Every ranking falls back to freshness, then name for a stable final order. */
+function compareApps(sort: AppSort) {
+    return (a: DirectoryApp, b: DirectoryApp) => {
+        if (sort === "buzz") {
+            const traffic = Number(b.requests_24h) - Number(a.requests_24h);
+            if (traffic) return traffic;
+        }
+        if (sort === "byop" && isPollen(a) !== isPollen(b)) {
+            return isPollen(a) ? -1 : 1;
+        }
+        return newestFirst(a, b) || a.name.localeCompare(b.name);
+    };
+}
 
 /** A small filled pill, for the one official card on the page. */
 function OpenPill({ children }: { children: string }) {
@@ -82,7 +108,7 @@ function FilterAxis<T extends string>({
                     size={size}
                     active={selected.includes(value)}
                     onClick={() => onToggle(value)}
-                    className={size === "sm" ? "min-h-9" : "min-h-11"}
+                    className="min-h-11"
                 >
                     {labels[value]}
                 </TabButton>
@@ -96,7 +122,7 @@ function AppsPage() {
     const { q } = search;
     const category = listOf(APP_CATEGORIES, search.category);
     const platform = listOf(APP_PLATFORMS, search.platform);
-    const signal = listOf(APP_SIGNALS, search.signal);
+    const sort = search.sort ?? "fresh";
     const navigate = useNavigate({ from: Route.fullPath });
     const { data: apps, loading, failed } = useAppDirectory();
 
@@ -123,9 +149,6 @@ function AppsPage() {
                     const own = platformsOf(app);
                     if (!platform.some((p) => own.includes(p))) return false;
                 }
-                if (signal.length && !signal.some((s) => SIGNAL_TEST[s](app))) {
-                    return false;
-                }
                 if (
                     needle &&
                     !`${app.name} ${app.description}`
@@ -137,19 +160,24 @@ function AppsPage() {
                 return true;
             })
             .slice()
-            .sort(sortApps);
-    }, [apps, category, platform, signal, q]);
+            .sort(compareApps(sort));
+    }, [apps, category, platform, q, sort]);
 
-    const hasFilters = Boolean(
-        category.length || platform.length || signal.length || q,
-    );
+    const hasFilters = Boolean(category.length || platform.length || q);
     // resetScroll: false — the filters sit halfway down, and jumping to the
     // top on every pill click made combining them unusable.
-    const clear = () => navigate({ resetScroll: false, search: {} });
-    const toggleAxis = (key: keyof AppSearch, value: string) =>
+    const clear = () =>
         navigate({
             resetScroll: false,
-            search: (prev) => ({ ...prev, [key]: toggle(prev[key], value) }),
+            search: search.sort ? { sort: search.sort } : {},
+        });
+    const toggleCategory = (value: string) =>
+        navigate({
+            resetScroll: false,
+            search: (prev) => ({
+                ...prev,
+                category: toggle(prev.category, value),
+            }),
         });
 
     const [lead, ...strip] = spotlight;
@@ -251,92 +279,133 @@ function AppsPage() {
                 <SectionHeader
                     eyebrow="Browse"
                     title="Everything else."
-                    subtitle="Filters stack. Badges are automatic — 🐝 100+ requests in the last 24 hours, 🏵️ runs on your Pollen, 🫧 new this month."
+                    subtitle="Browse by category or platform, then sort by what’s fresh, buzzing or built with BYOP."
                 />
 
                 <div className="flex flex-col gap-3">
+                    <Input
+                        type="search"
+                        value={q ?? ""}
+                        placeholder="Search by name or description…"
+                        aria-label="Search apps"
+                        onChange={(event) =>
+                            navigate({
+                                resetScroll: false,
+                                search: (prev) => ({
+                                    ...prev,
+                                    q: event.target.value.trim() || undefined,
+                                }),
+                            })
+                        }
+                        className="mb-2 min-h-11 w-full max-w-xl"
+                    />
                     <FilterAxis
                         ariaLabel="Categories"
                         values={APP_CATEGORIES}
                         labels={CATEGORY_LABELS}
                         selected={category}
-                        onToggle={(value) => toggleAxis("category", value)}
+                        onToggle={toggleCategory}
                         size="lg"
                     />
-                    <hr className="border-divider" />
-                    <FilterAxis
-                        ariaLabel="Badges"
-                        values={APP_SIGNALS}
-                        labels={SIGNAL_LABELS}
-                        selected={signal}
-                        onToggle={(value) => toggleAxis("signal", value)}
-                    />
-                    <hr className="border-divider" />
-                    <FilterAxis
-                        ariaLabel="Platforms"
-                        values={APP_PLATFORMS}
-                        labels={PLATFORM_LABELS}
-                        selected={platform}
-                        onToggle={(value) => toggleAxis("platform", value)}
-                    />
-
-                    <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
-                        <Input
-                            type="search"
-                            value={q ?? ""}
-                            placeholder="Name or description…"
-                            aria-label="Search apps"
-                            onChange={(event) =>
+                    <div className="flex flex-wrap items-center gap-3 pt-1">
+                        <MultiSelect
+                            label="Platform"
+                            placeholder="All platforms"
+                            options={APP_PLATFORMS.map((value) => ({
+                                value,
+                                label: PLATFORM_LABELS[value],
+                            }))}
+                            selected={platform}
+                            onChange={(next) =>
                                 navigate({
                                     resetScroll: false,
                                     search: (prev) => ({
                                         ...prev,
-                                        q:
-                                            event.target.value.trim() ||
-                                            undefined,
+                                        platform:
+                                            next.length > 0
+                                                ? next.join(",")
+                                                : undefined,
                                     }),
                                 })
                             }
-                            className="min-h-11 w-full max-w-sm"
                         />
-                        <div className="flex min-h-9 items-center gap-3">
-                            {hasFilters && (
-                                <button
-                                    type="button"
-                                    className="text-sm font-semibold text-theme-text-soft underline"
-                                    onClick={clear}
-                                >
-                                    Clear filters
-                                </button>
-                            )}
+
+                        {hasFilters && (
+                            <Button size="sm" type="button" onClick={clear}>
+                                Clear filters
+                            </Button>
+                        )}
+
+                        <div className="ml-auto flex min-h-11 items-center gap-3">
                             {!loading && (
-                                <PixelLabel
-                                    variant="eyebrow"
-                                    className="ml-auto"
-                                >
+                                <PixelLabel variant="eyebrow">
                                     {filtered.length} of {apps.length}
                                 </PixelLabel>
                             )}
+                            <Dropdown
+                                align="end"
+                                className="polli:min-w-40 polli:p-1"
+                                trigger={(open) => (
+                                    <Button
+                                        type="button"
+                                        aria-label={`Sort apps: ${SORT_LABELS[sort]}`}
+                                        className="polli:gap-2"
+                                    >
+                                        Sort: {SORT_LABELS[sort]}
+                                        <ChevronIcon expanded={open} />
+                                    </Button>
+                                )}
+                            >
+                                {(close) => (
+                                    <div className="polli:flex polli:flex-col polli:gap-1">
+                                        {(
+                                            Object.keys(
+                                                SORT_LABELS,
+                                            ) as AppSort[]
+                                        ).map((value) => (
+                                            <TabButton
+                                                key={value}
+                                                active={sort === value}
+                                                size="sm"
+                                                variant="ghost"
+                                                className="polli:w-full polli:justify-start"
+                                                onClick={() => {
+                                                    navigate({
+                                                        resetScroll: false,
+                                                        search: (prev) => ({
+                                                            ...prev,
+                                                            sort:
+                                                                value ===
+                                                                "fresh"
+                                                                    ? undefined
+                                                                    : value,
+                                                        }),
+                                                    });
+                                                    close();
+                                                }}
+                                            >
+                                                {SORT_LABELS[value]}
+                                            </TabButton>
+                                        ))}
+                                    </div>
+                                )}
+                            </Dropdown>
                         </div>
                     </div>
                 </div>
 
                 {failed ? (
                     <p className="text-theme-text-base">
-                        The app catalogue could not be loaded. Please try again.
+                        The app directory couldn’t be loaded right now.
                     </p>
                 ) : loading ? (
                     <p className="text-theme-text-muted">Loading apps…</p>
                 ) : filtered.length === 0 ? (
                     <div className="rounded-2xl border border-theme-border border-dashed p-12 text-center text-theme-text-muted">
                         No apps match that combination yet.{" "}
-                        <button
-                            type="button"
-                            className="font-semibold text-theme-text-soft underline"
-                            onClick={clear}
-                        >
+                        <Button size="sm" type="button" onClick={clear}>
                             Clear filters
-                        </button>
+                        </Button>
                     </div>
                 ) : (
                     <>
