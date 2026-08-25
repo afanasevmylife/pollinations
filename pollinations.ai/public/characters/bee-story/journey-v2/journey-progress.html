@@ -11,14 +11,9 @@
                 font-display: swap;
             }
 
-            @font-face {
-                font-family: "LCT Mogi";
-                src: url("fonts/lct-mogi-a.woff2") format("woff2");
-                font-display: swap;
-            }
-
             :root {
-                --preview: 58s;
+                --preview: 68s;
+                --panorama-duration: 65s;
                 --start-free-start: 0.15s;
                 --start-free-duration: 12.4s;
                 --start-flight-start: 0.15s;
@@ -36,10 +31,12 @@
                 --build-flight-duration: 1.7s;
                 --revenue-transition-start: 36.4s;
                 --revenue-banner-start: 37.7s;
-                --revenue-banner-duration: 12.1s;
-                --revenue-start: 40.8s;
+                --revenue-banner-duration: 11.1s;
+                --revenue-start: 39.65s;
                 --revenue-duration: 9s;
                 --revenue-flight-duration: 2.1s;
+                --community-start: 48.65s;
+                --community-duration: 19.35s;
                 color-scheme: dark;
                 background: #110518;
                 font-family: "Geist Pixel Square", ui-monospace, monospace;
@@ -64,6 +61,7 @@
 
             .viewport {
                 position: relative;
+                container-type: size;
                 width: 100%;
                 aspect-ratio: 3 / 2;
                 overflow: hidden;
@@ -85,10 +83,6 @@
                 will-change: transform;
             }
 
-            .playing .world {
-                animation: world-travel var(--preview) linear forwards;
-            }
-
             .light {
                 position: absolute;
                 inset: 0;
@@ -106,14 +100,10 @@
                 pointer-events: none;
             }
 
-            .playing .opening-props {
-                animation: world-travel var(--preview) linear forwards;
-            }
-
             .opening-friend {
                 position: absolute;
                 bottom: 25%;
-                width: clamp(72px, 11vw, 112px);
+                width: 11cqw;
                 transform: translateX(-50%);
                 transform-origin: 50% 100%;
                 image-rendering: pixelated;
@@ -138,7 +128,7 @@
             .opening-friend--nomnom {
                 left: 7.6%;
                 bottom: 24.5%;
-                width: clamp(66px, 10vw, 104px);
+                width: 10cqw;
             }
 
             .opening-friend--nomnom img {
@@ -148,18 +138,18 @@
             .polli {
                 --polli-entry-left: 23%;
                 --polli-entry-bottom: 42%;
-                --polli-entry-width: 3.6%;
+                --polli-entry-width: 3.6cqw;
                 --polli-curve-one-left: 22%;
-                --polli-curve-one-width: 4.8%;
+                --polli-curve-one-width: 4.8cqw;
                 --polli-curve-two-left: 25%;
-                --polli-curve-two-width: 6.4%;
+                --polli-curve-two-width: 6.4cqw;
                 --polli-curve-three-left: 30%;
-                --polli-curve-three-width: 8.2%;
+                --polli-curve-three-width: 8.2cqw;
                 --polli-curve-four-left: 34%;
-                --polli-curve-four-width: 9.8%;
+                --polli-curve-four-width: 9.8cqw;
                 --polli-rest-left: 38%;
                 --polli-rest-bottom: 25.5%;
-                --polli-rest-width: clamp(72px, 11.5%, 128px);
+                --polli-rest-width: 11.5cqw;
                 position: absolute;
                 z-index: 11;
                 left: var(--polli-rest-left);
@@ -226,6 +216,7 @@
             }
 
             .playing .polli {
+                z-index: 22;
                 visibility: visible;
                 animation:
                     polli-start-flight var(--start-flight-duration) linear
@@ -234,8 +225,14 @@
                         var(--media-flight-start) forwards,
                     polli-build-flight var(--build-flight-duration) ease-in
                         var(--build-flight-start) forwards,
-                    polli-revenue-rise var(--revenue-flight-duration) ease-in-out
-                        var(--revenue-transition-start) forwards;
+                    polli-revenue-settle var(--revenue-flight-duration) ease-in-out
+                        var(--revenue-transition-start) forwards,
+                    polli-community-gather 900ms ease-in-out
+                        calc(var(--revenue-start) + 8.1s) forwards,
+                    polli-community-walk var(--community-duration) linear
+                        var(--community-start) forwards,
+                    polli-community-resize 650ms ease-in-out
+                        calc(var(--community-start) - 0.55s) forwards;
             }
 
             .playing .polli__ground {
@@ -244,12 +241,19 @@
                     ground-layer var(--media-flight-duration) linear var(--media-flight-start)
                         forwards,
                     ground-build-layer var(--build-flight-duration) linear var(--build-flight-start)
-                        forwards;
+                        forwards,
+                    community-ground-layer 1ms linear var(--community-start) forwards;
             }
 
-            .arriving .polli__sprite,
-            .playing .polli__sprite {
+            .arriving .polli__sprite {
                 animation: walk-cycle 460ms steps(2, end) infinite;
+            }
+
+            .playing .polli__sprite {
+                animation:
+                    walk-cycle 460ms steps(2, end) infinite,
+                    community-polli-celebrate 900ms steps(3, end)
+                        calc(var(--community-start) + 17s) 2 both;
             }
 
             .playing .polli__flight {
@@ -258,7 +262,8 @@
                     flight-layer var(--media-flight-duration) linear var(--media-flight-start)
                         forwards,
                     flight-build-layer var(--build-flight-duration) linear var(--build-flight-start)
-                        forwards;
+                        forwards,
+                    community-flight-layer 1ms linear var(--community-start) forwards;
             }
 
             .playing .polli::after {
@@ -267,7 +272,8 @@
                     shadow-layer var(--media-flight-duration) linear var(--media-flight-start)
                         forwards,
                     shadow-build-layer var(--build-flight-duration) linear var(--build-flight-start)
-                        forwards;
+                        forwards,
+                    community-shadow-layer 1ms linear var(--community-start) forwards;
             }
 
             .playing .polli__flight-frame:first-child {
@@ -283,7 +289,7 @@
                 z-index: 9;
                 top: 32%;
                 left: 72%;
-                width: min(42%, 400px);
+                width: 42cqw;
                 aspect-ratio: 2 / 1;
                 image-rendering: pixelated;
                 filter: drop-shadow(4px 6px 0 rgb(17 5 24 / 16%));
@@ -328,7 +334,7 @@
                 z-index: 10;
                 bottom: 4%;
                 left: 2.5%;
-                width: min(32%, 320px);
+                width: 32cqw;
                 aspect-ratio: 2 / 1;
                 image-rendering: pixelated;
                 filter: drop-shadow(3px 5px 0 rgb(17 5 24 / 16%));
@@ -368,18 +374,18 @@
             }
 
             .pollen-grain {
-                --pollen-drop: 13vw;
-                --pollen-end-x: -46vw;
+                --pollen-drop: 13cqw;
+                --pollen-end-x: -46cqw;
                 position: absolute;
                 z-index: 11;
                 top: 55%;
                 left: 70%;
-                width: clamp(10px, 1.8%, 18px);
+                width: 1.8cqw;
                 aspect-ratio: 1;
                 background: #ecf874;
-                border: max(1px, 0.18vw) solid #015d2d;
+                border: max(1px, 0.18cqw) solid #015d2d;
                 border-radius: 42% 58% 46% 54%;
-                box-shadow: inset 0 0 0 max(1px, 0.18vw) #61c380;
+                box-shadow: inset 0 0 0 max(1px, 0.18cqw) #61c380;
                 filter: drop-shadow(1px 2px 0 rgb(17 5 24 / 24%));
                 visibility: hidden;
                 pointer-events: none;
@@ -410,7 +416,7 @@
             .pollen-grain--paid {
                 background: #fff0c1;
                 border-color: #6c4800;
-                box-shadow: inset 0 0 0 max(1px, 0.18vw) #eabf13;
+                box-shadow: inset 0 0 0 max(1px, 0.18cqw) #eabf13;
             }
 
             .pollen-grain--paid::before {
@@ -428,13 +434,13 @@
             }
 
             .pollen-grain--out {
-                --pollen-mid-x: 20vw;
-                --pollen-target-x: 42vw;
-                --pollen-mid-y: -7vw;
-                --pollen-target-y: -15vw;
+                --pollen-mid-x: 20cqw;
+                --pollen-target-x: 42cqw;
+                --pollen-mid-y: -7cqw;
+                --pollen-target-y: -15cqw;
                 top: 80%;
                 left: var(--pollen-source);
-                width: clamp(12px, 2.2%, 22px);
+                width: 2.2cqw;
             }
 
             .playing .pollen-grain--out {
@@ -445,7 +451,7 @@
             .pollen-grain--revenue {
                 top: 51%;
                 left: 54%;
-                width: clamp(11px, 1.8%, 19px);
+                width: 1.8cqw;
             }
 
             .playing .pollen-grain--revenue {
@@ -462,7 +468,7 @@
                 z-index: 11;
                 left: var(--x);
                 bottom: var(--y);
-                width: clamp(7px, 1.35%, 14px);
+                width: 1.35cqw;
                 aspect-ratio: 1;
                 background: #ecf874;
                 box-shadow: 0 -100% #fff9c7, 100% 0 #fff9c7, 0 100% #fff9c7,
@@ -481,7 +487,7 @@
                 z-index: 12;
                 top: -6%;
                 left: 50%;
-                width: min(88%, 860px);
+                width: 88cqw;
                 image-rendering: pixelated;
                 filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 18%));
                 visibility: hidden;
@@ -496,14 +502,14 @@
             .capability-friend {
                 position: absolute;
                 z-index: 10;
-                bottom: calc(27.5% - var(--friend-ground-offset, 0vw));
+                bottom: calc(27.5% - var(--friend-ground-offset, 0cqw));
                 left: 0;
-                width: clamp(150px, var(--friend-size, 21%), 250px);
+                width: var(--friend-size, 21cqw);
                 aspect-ratio: 1;
                 image-rendering: pixelated;
                 filter: drop-shadow(5px 7px 0 rgb(17 5 24 / 18%));
                 visibility: hidden;
-                transform: translateX(110vw);
+                transform: translateX(110cqw);
                 pointer-events: none;
             }
 
@@ -543,15 +549,23 @@
             }
 
             .playing .world-props {
-                animation: world-travel var(--preview) linear forwards;
                 visibility: visible;
+            }
+
+            .playing .world,
+            .playing .opening-props,
+            .playing .world-props {
+                animation:
+                    world-travel-to-revenue var(--revenue-start) linear forwards,
+                    world-travel-to-community calc(var(--preview) - var(--community-start)) linear
+                        var(--community-start) forwards;
             }
 
             .build-landmark {
                 position: absolute;
                 bottom: var(--landmark-bottom, 24%);
                 left: 0;
-                width: clamp(170px, var(--landmark-size, 30vw), 330px);
+                width: var(--landmark-size, 30cqw);
                 transform: translateX(-50%);
                 transform-origin: 50% 100%;
                 image-rendering: pixelated;
@@ -583,12 +597,12 @@
                 border-radius: 50%;
                 background: #ecf874;
                 box-shadow:
-                    -3.2vw -0.7vw 0 -0.4vw #f8d86b,
-                    3.2vw -0.7vw 0 -0.4vw #f8d86b,
-                    -2.1vw -2.4vw 0 -0.5vw #8ff0af,
-                    2.1vw -2.4vw 0 -0.5vw #8ff0af,
-                    -4.2vw -2vw 0 -0.55vw #fff2bd,
-                    4.2vw -2vw 0 -0.55vw #fff2bd;
+                    -3.2cqw -0.7cqw 0 -0.4cqw #f8d86b,
+                    3.2cqw -0.7cqw 0 -0.4cqw #f8d86b,
+                    -2.1cqw -2.4cqw 0 -0.5cqw #8ff0af,
+                    2.1cqw -2.4cqw 0 -0.5cqw #8ff0af,
+                    -4.2cqw -2cqw 0 -0.55cqw #fff2bd,
+                    4.2cqw -2cqw 0 -0.55cqw #fff2bd;
                 visibility: hidden;
                 transform: translate(-50%, 50%) scale(0);
             }
@@ -624,110 +638,142 @@
 
             .revenue-stage {
                 position: absolute;
-                inset: 17% 0 0;
+                inset: 15% 0 0;
                 z-index: 9;
                 overflow: hidden;
                 pointer-events: none;
             }
 
-            .revenue-scene,
-            .revenue-agent-state,
-            .revenue-media-token,
+            .playing .revenue-stage {
+                z-index: 21;
+            }
+
+            .revenue-station,
+            .revenue-visitor,
+            .revenue-delivery,
             .revenue-burst {
                 position: absolute;
                 visibility: hidden;
             }
 
-            .revenue-scene {
-                inset: 0;
-            }
-
-            .revenue-scene__asset {
-                position: absolute;
+            .revenue-station {
+                bottom: 25%;
+                left: 50%;
                 display: block;
+                width: 30cqw;
+                max-height: 96%;
+                object-fit: contain;
                 image-rendering: pixelated;
                 filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 18%));
+                transform-origin: 50% 100%;
+                backface-visibility: hidden;
+                will-change: transform;
             }
 
-            .revenue-scene--pollen .revenue-scene__asset {
-                bottom: 4%;
-                left: 50%;
-                width: min(35%, 340px);
-                transform: translateX(-50%);
-            }
-
-            .revenue-connection-ring {
-                position: absolute;
-                bottom: 21%;
-                left: 50%;
-                width: min(48%, 450px);
-                aspect-ratio: 2.1 / 1;
-                border: max(2px, 0.25vw) dashed #ecf874;
-                border-radius: 50%;
-                box-shadow:
-                    inset 0 0 0 max(2px, 0.18vw) rgb(97 195 128 / 55%),
-                    0 0 1.1vw rgb(236 248 116 / 70%);
-                transform: translateX(-50%);
-            }
-
-            .revenue-connection-ring::before,
-            .revenue-connection-ring::after {
-                content: "";
-                position: absolute;
-                top: 45%;
-                width: 7%;
+            .revenue-visitor {
+                z-index: 1;
+                display: grid;
+                width: 15%;
                 aspect-ratio: 1;
-                border: max(1px, 0.15vw) solid #015d2d;
-                border-radius: 50%;
-                background: #ecf874;
-                box-shadow: 0 0 0.7vw #ecf874;
+                place-items: center;
+                will-change: transform;
             }
 
-            .revenue-connection-ring::before {
-                left: -3%;
-            }
-
-            .revenue-connection-ring::after {
-                right: -3%;
-                background: #8ff0af;
-            }
-
-            .revenue-scene--models .revenue-scene__asset {
-                bottom: -1%;
-                left: 50%;
-                width: min(58%, 560px);
-                max-height: 94%;
-                object-fit: contain;
-                transform: translateX(-50%);
-            }
-
-            .revenue-agent-state {
-                bottom: -5%;
-                left: 50%;
+            .revenue-visitor img {
                 display: block;
-                width: min(38%, 360px);
-                max-height: 98%;
+                width: 100%;
+                height: 100%;
                 object-fit: contain;
                 image-rendering: pixelated;
-                filter: drop-shadow(6px 9px 0 rgb(17 5 24 / 20%));
-                transform: translateX(-50%);
+                filter: drop-shadow(4px 6px 0 rgb(17 5 24 / 18%));
+                animation: revenue-visitor-idle 720ms steps(2, end) infinite;
             }
 
-            .revenue-agent-state--rocket {
-                bottom: -2%;
-                width: min(44%, 420px);
+            .revenue-visitor--sky {
+                top: 13%;
+                right: 6%;
             }
 
-            .revenue-media-token {
-                top: 37%;
+            .revenue-visitor--moss {
+                bottom: 28%;
+                left: 12%;
+            }
+
+            .revenue-visitor--lantern {
+                right: 7%;
+                bottom: 11%;
+            }
+
+            .revenue-delivery {
+                top: 48%;
                 left: 50%;
-                width: min(12%, 112px);
+                z-index: 3;
+                width: 6.5cqw;
                 aspect-ratio: 1;
-                background-image: url("revenue-stop-v1/media-sprite-v1.png");
-                background-size: 200% 200%;
-                background-position: var(--media-x) var(--media-y);
+                border: 3px solid #2b173b;
+                border-radius: 5px;
                 image-rendering: pixelated;
-                filter: drop-shadow(3px 5px 0 rgb(17 5 24 / 18%));
+                filter: drop-shadow(3px 4px 0 rgb(17 5 24 / 24%));
+                transform: translate(-50%, -50%) scale(0);
+                transform-origin: 50% 50%;
+            }
+
+            .revenue-delivery::before,
+            .revenue-delivery::after {
+                position: absolute;
+                content: "";
+            }
+
+            .revenue-delivery--image {
+                background: linear-gradient(#9edcff 0 52%, #8ee6a8 52% 100%);
+            }
+
+            .revenue-delivery--image::before {
+                top: 17%;
+                right: 17%;
+                width: 20%;
+                aspect-ratio: 1;
+                border-radius: 50%;
+                background: #fff39b;
+                box-shadow: 0 0 0 2px #f8c95b;
+            }
+
+            .revenue-delivery--image::after {
+                right: 10%;
+                bottom: 10%;
+                left: 10%;
+                height: 42%;
+                background: linear-gradient(135deg, transparent 38%, #456f72 39% 54%, transparent 55%),
+                    linear-gradient(45deg, #39785f 0 46%, transparent 47%);
+            }
+
+            .revenue-delivery--text {
+                aspect-ratio: 4 / 3;
+                background: #fff2bd;
+            }
+
+            .revenue-delivery--text::before {
+                inset: 22% 16%;
+                background: repeating-linear-gradient(
+                    to bottom,
+                    #5e3a62 0 3px,
+                    transparent 3px 8px
+                );
+            }
+
+            .revenue-delivery--video {
+                background: #d78cff;
+            }
+
+            .revenue-delivery--video::before {
+                top: 25%;
+                left: 34%;
+                width: 0;
+                height: 0;
+                border-top: 10px solid transparent;
+                border-bottom: 10px solid transparent;
+                border-left: 15px solid #fff2bd;
+                filter: drop-shadow(2px 2px 0 #6a3b7e);
             }
 
             .revenue-burst {
@@ -738,48 +784,98 @@
                 border-radius: 50%;
                 background: #ecf874;
                 box-shadow:
-                    -9vw -4vh 0 #f8d86b,
-                    9vw -5vh 0 #8ff0af,
-                    -12vw 5vh 0 #fff2bd,
-                    11vw 7vh 0 #d78cff,
-                    -4vw -10vh 0 #61c380,
-                    4vw 11vh 0 #ecf874;
+                    -9cqw -4cqh 0 #f8d86b,
+                    9cqw -5cqh 0 #8ff0af,
+                    -12cqw 5cqh 0 #fff2bd,
+                    11cqw 7cqh 0 #d78cff,
+                    -4cqw -10cqh 0 #61c380,
+                    4cqw 11cqh 0 #ecf874;
                 transform: translate(-50%, -50%) scale(0);
             }
 
-            .playing .revenue-scene--pollen {
-                animation: revenue-pollen-scene var(--revenue-duration) linear
+            .playing .revenue-station--app {
+                animation: revenue-app-station var(--revenue-duration) linear
                     var(--revenue-start) both;
             }
 
-            .playing .revenue-connection-ring {
-                animation: revenue-ring var(--revenue-duration) steps(18, end)
+            .playing .revenue-station--model {
+                animation: revenue-model-station var(--revenue-duration) linear
                     var(--revenue-start) both;
             }
 
-            .playing .revenue-scene--models {
-                animation: revenue-model-scene var(--revenue-duration) linear
+            .playing .revenue-station--agent {
+                animation: revenue-agent-station var(--revenue-duration) linear
                     var(--revenue-start) both;
             }
 
-            .playing .revenue-agent-state--walk {
-                animation: revenue-agent-walk var(--revenue-duration) linear
-                    var(--revenue-start) both;
+            .playing .revenue-visitor--sky {
+                animation:
+                    revenue-sky-visitor var(--revenue-duration) linear var(--revenue-start) both,
+                    community-sky-travel var(--community-duration) linear var(--community-start)
+                        forwards,
+                    community-visitor-resize 650ms ease-in-out
+                        calc(var(--community-start) - 0.55s) forwards;
             }
 
-            .playing .revenue-agent-state--confused {
-                animation: revenue-agent-work var(--revenue-duration) linear
-                    var(--revenue-start) both;
+            .playing .revenue-visitor--moss {
+                animation:
+                    revenue-moss-visitor var(--revenue-duration) linear var(--revenue-start) both,
+                    community-moss-travel var(--community-duration) linear var(--community-start)
+                        forwards,
+                    community-visitor-resize 650ms ease-in-out
+                        calc(var(--community-start) - 0.55s) forwards;
             }
 
-            .playing .revenue-agent-state--rocket {
-                animation: revenue-agent-rocket var(--revenue-duration) linear
-                    var(--revenue-start) both;
+            .playing .revenue-visitor--lantern {
+                animation:
+                    revenue-lantern-visitor var(--revenue-duration) linear var(--revenue-start) both,
+                    community-lantern-travel var(--community-duration) linear
+                        var(--community-start) forwards,
+                    community-visitor-resize 650ms ease-in-out
+                        calc(var(--community-start) - 0.55s) forwards;
             }
 
-            .playing .revenue-media-token {
-                animation: revenue-media-fall 1.45s cubic-bezier(0.3, 0.7, 0.35, 1)
-                    calc(var(--revenue-start) + var(--media-delay)) both;
+            .playing .revenue-visitor--sky img {
+                animation:
+                    revenue-visitor-idle 720ms steps(2, end) infinite,
+                    community-face-right 480ms steps(4, end)
+                        calc(var(--community-start) - 0.55s) forwards,
+                    community-flight-procession 800ms ease-in-out var(--community-start) 21 both,
+                    community-traveler-celebrate 900ms steps(3, end)
+                        calc(var(--community-start) + 17s) 2 both;
+            }
+
+            .playing .revenue-visitor--moss img {
+                animation:
+                    revenue-visitor-idle 720ms steps(2, end) infinite,
+                    community-walk-step 480ms steps(2, end) var(--community-start) 35 both,
+                    community-traveler-celebrate 900ms steps(3, end)
+                        calc(var(--community-start) + 17s) 2 both;
+            }
+
+            .playing .revenue-visitor--lantern img {
+                animation:
+                    revenue-visitor-idle 720ms steps(2, end) infinite,
+                    community-face-right 480ms steps(4, end)
+                        calc(var(--community-start) - 0.55s) forwards,
+                    community-walk-step 480ms steps(2, end) var(--community-start) 35 both,
+                    community-traveler-celebrate 900ms steps(3, end)
+                        calc(var(--community-start) + 17s) 2 both;
+            }
+
+            .playing .revenue-delivery--image {
+                animation: revenue-deliver-image 1050ms cubic-bezier(0.22, 0.74, 0.24, 1)
+                    calc(var(--revenue-start) + 1.05s) both;
+            }
+
+            .playing .revenue-delivery--text {
+                animation: revenue-deliver-text 1050ms cubic-bezier(0.22, 0.74, 0.24, 1)
+                    calc(var(--revenue-start) + 3.55s) both;
+            }
+
+            .playing .revenue-delivery--video {
+                animation: revenue-deliver-video 1050ms cubic-bezier(0.22, 0.74, 0.24, 1)
+                    calc(var(--revenue-start) + 6.35s) both;
             }
 
             .playing .revenue-burst--one {
@@ -792,6 +888,98 @@
                     calc(var(--revenue-start) + 5.05s) both;
             }
 
+            .playing .revenue-burst--three {
+                animation: revenue-burst 620ms steps(7, end)
+                    calc(var(--revenue-start) + 7.95s) both;
+            }
+
+            .community-finale {
+                position: absolute;
+                inset: 0;
+                z-index: 20;
+                overflow: hidden;
+                visibility: hidden;
+                background: #110518;
+                pointer-events: none;
+            }
+
+            .playing .community-finale {
+                animation: community-finale-reveal 3.2s linear var(--community-start) both;
+            }
+
+            .community-finale__world {
+                position: absolute;
+                inset-block: 0;
+                left: 0;
+                width: auto;
+                height: 100%;
+                aspect-ratio: 3 / 1;
+            }
+
+            .playing .community-finale__world {
+                animation: community-finale-camera var(--community-duration) linear
+                    var(--community-start) both;
+            }
+
+            .community-finale__background {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                image-rendering: pixelated;
+            }
+
+            .community-finale__actor {
+                position: absolute;
+                z-index: 2;
+                top: var(--end-y);
+                left: var(--end-x);
+                width: var(--actor-width);
+                translate: -50% -100%;
+            }
+
+            .community-finale__actor--airborne {
+                z-index: 1;
+                translate: -50% -50%;
+            }
+
+            .community-finale__actor img {
+                display: block;
+                width: 100%;
+                height: auto;
+                image-rendering: pixelated;
+                filter: drop-shadow(0 5px 2px rgb(15 8 27 / 45%));
+                animation: community-finale-idle 720ms steps(2, end) infinite;
+            }
+
+            .playing .community-finale__actor {
+                --celebrate-delay: 0s;
+                transform-origin: 50% 100%;
+                animation: community-finale-celebrate 900ms steps(3, end)
+                    calc(var(--community-start) + 17s + var(--celebrate-delay)) 2 both;
+            }
+
+            .playing .community-finale__actor:nth-child(3n) {
+                --celebrate-delay: 0.12s;
+            }
+
+            .playing .community-finale__actor:nth-child(3n + 1) {
+                --celebrate-delay: 0.24s;
+            }
+
+            .community-finale__actor--github img,
+            .community-finale__actor--discord img {
+                animation:
+                    community-finale-idle 720ms steps(2, end) infinite,
+                    community-destination-glow 900ms steps(3, end)
+                        calc(var(--community-start) + 17s) 2 both;
+            }
+
+            .community-finale__actor--airborne img {
+                filter: drop-shadow(0 7px 3px rgb(15 8 27 / 30%));
+                animation: community-finale-flight 1s ease-in-out infinite alternate;
+            }
+
             .storage-light {
                 position: absolute;
                 z-index: 3;
@@ -799,7 +987,7 @@
                 aspect-ratio: 1;
                 border-radius: 3px;
                 background: #ecf874;
-                box-shadow: 0 0 0.65vw #ecf874;
+                box-shadow: 0 0 0.65cqw #ecf874;
                 transform: scale(0.55);
             }
 
@@ -810,7 +998,7 @@
                 aspect-ratio: 1;
                 border-radius: 50%;
                 background: #ecf874;
-                box-shadow: 0 0 0.8vw #ecf874;
+                box-shadow: 0 0 0.8cqw #ecf874;
                 animation: landmark-pulse 1.2s steps(3, end) var(--pulse-delay, 0s) infinite;
             }
 
@@ -875,14 +1063,17 @@
                 outline: none;
             }
 
-            @keyframes world-travel {
+            @keyframes world-travel-to-revenue {
                 from {
                     transform: translateX(0);
                 }
-                70.3448% {
+                to {
                     transform: translateX(var(--world-pause));
                 }
-                85.8621% {
+            }
+
+            @keyframes world-travel-to-community {
+                from {
                     transform: translateX(var(--world-pause));
                 }
                 to {
@@ -968,173 +1159,334 @@
                 }
             }
 
-            @keyframes revenue-pollen-scene {
+            @keyframes revenue-app-station {
                 0% {
                     visibility: hidden;
-                    transform: translateY(9vh) scale(0.06) rotate(-7deg);
+                    transform: translateX(-50%) perspective(900px) rotateY(-88deg) scale(0.94);
                 }
-                2% {
+                0.1% {
                     visibility: visible;
-                    transform: translateY(9vh) scale(0.06) rotate(-7deg);
                 }
-                9% {
-                    transform: translateY(-1vh) scale(1.08) rotate(2deg);
+                7% {
+                    transform: translateX(-50%) perspective(900px) rotateY(0deg) scale(1.04);
                 }
-                13%,
+                11%,
                 25% {
                     visibility: visible;
-                    transform: translateY(0) scale(1) rotate(0);
+                    transform: translateX(-50%) perspective(900px) rotateY(0deg) scale(1);
                 }
-                29% {
+                28% {
                     visibility: visible;
-                    transform: translateY(-4vh) scale(0.05, 0.18) rotate(8deg);
+                    transform: translateX(-50%) perspective(900px) rotateY(88deg) scale(0.94);
                 }
-                29.1%,
+                28.1%,
                 100% {
                     visibility: hidden;
-                    transform: translateY(-4vh) scale(0.05, 0.18) rotate(8deg);
+                    transform: translateX(-50%) perspective(900px) rotateY(88deg) scale(0.94);
                 }
             }
 
-            @keyframes revenue-ring {
+            @keyframes revenue-model-station {
                 0%,
-                3% {
-                    transform: translateX(-50%) scale(0.15) rotate(0);
-                }
-                11% {
-                    transform: translateX(-50%) scale(1.08) rotate(36deg);
-                }
-                25% {
-                    transform: translateX(-50%) scale(1) rotate(108deg);
-                }
-                29%,
-                100% {
-                    transform: translateX(-50%) scale(0.1) rotate(162deg);
-                }
-            }
-
-            @keyframes revenue-model-scene {
-                0%,
-                27% {
+                28% {
                     visibility: hidden;
-                    transform: scale(0.06) rotate(-9deg);
+                    transform: translateX(-50%) perspective(900px) rotateY(-88deg) scale(0.94);
                 }
-                27.1% {
+                28.1% {
                     visibility: visible;
-                    transform: scale(0.06) rotate(-9deg);
                 }
                 35% {
-                    transform: scale(1.08) rotate(2deg);
+                    transform: translateX(-50%) perspective(900px) rotateY(0deg) scale(1.04);
                 }
                 39%,
                 55% {
                     visibility: visible;
-                    transform: scale(1) rotate(0);
+                    transform: translateX(-50%) perspective(900px) rotateY(0deg) scale(1);
                 }
-                59% {
+                58% {
                     visibility: visible;
-                    transform: scale(0.04) rotate(12deg);
+                    transform: translateX(-50%) perspective(900px) rotateY(88deg) scale(0.94);
                 }
-                59.1%,
+                58.1%,
                 100% {
                     visibility: hidden;
-                    transform: scale(0.04) rotate(12deg);
+                    transform: translateX(-50%) perspective(900px) rotateY(88deg) scale(0.94);
                 }
             }
 
-            @keyframes revenue-agent-walk {
+            @keyframes revenue-agent-station {
                 0%,
-                57% {
+                58% {
                     visibility: hidden;
-                    transform: translateX(75vw) translateY(0) rotate(0);
+                    transform: translateX(-50%) perspective(900px) rotateY(-88deg) scale(0.94);
                 }
-                57.1% {
+                58.1% {
                     visibility: visible;
-                    transform: translateX(75vw) translateY(0) rotate(0);
                 }
-                62% {
-                    transform: translateX(18vw) translateY(-1vh) rotate(-2deg);
-                }
-                66% {
-                    transform: translateX(-50%) translateY(0) rotate(1deg);
-                }
-                68.9% {
-                    visibility: visible;
-                    transform: translateX(-50%) translateY(0) rotate(-1deg);
+                65% {
+                    transform: translateX(-50%) perspective(900px) rotateY(0deg) scale(1.04);
                 }
                 69%,
+                91% {
+                    visibility: visible;
+                    transform: translateX(-50%) perspective(900px) rotateY(0deg) scale(1);
+                }
+                95% {
+                    visibility: visible;
+                    transform: translateX(-50%) perspective(900px) rotateY(0deg) scale(1.04);
+                }
                 100% {
                     visibility: hidden;
-                    transform: translateX(-50%) translateY(0) rotate(-1deg);
+                    transform: translateX(58cqw) perspective(900px) rotateY(18deg) scale(0.92);
                 }
             }
 
-            @keyframes revenue-agent-work {
-                0%,
-                68.9% {
-                    visibility: hidden;
-                    transform: translateX(-50%) translateY(0) rotate(0);
-                }
-                69%,
-                83% {
-                    visibility: visible;
-                    transform: translateX(-50%) translateY(0) rotate(0);
-                }
-                75% {
-                    transform: translateX(-50%) translateY(-1vh) rotate(-2deg);
-                }
-                82% {
-                    transform: translateX(-50%) translateY(0) rotate(2deg);
-                }
-                83.1%,
-                100% {
-                    visibility: hidden;
-                    transform: translateX(-50%) translateY(0) rotate(2deg);
-                }
-            }
-
-            @keyframes revenue-agent-rocket {
-                0%,
-                82.9% {
-                    visibility: hidden;
-                    transform: translateX(-50%) translateY(2vh) rotate(-8deg) scale(0.96);
-                }
-                83% {
-                    visibility: visible;
-                    transform: translateX(-50%) translateY(2vh) rotate(-8deg) scale(0.96);
-                }
-                88% {
-                    transform: translateX(-43%) translateY(-2vh) rotate(4deg) scale(1.04);
-                }
-                100% {
-                    visibility: visible;
-                    transform: translateX(70vw) translateY(-60vh) rotate(18deg) scale(0.72);
-                }
-            }
-
-            @keyframes revenue-media-fall {
+            @keyframes revenue-sky-visitor {
                 0% {
                     visibility: hidden;
-                    transform: translate(calc(-50% + var(--media-offset)), -4vh) scale(0.2)
-                        rotate(0);
+                    transform: translate(16cqw, -32cqh) rotate(10deg) scale(0.78);
                 }
-                1%,
-                86% {
+                0.1% {
                     visibility: visible;
                 }
-                18% {
-                    transform: translate(calc(-50% + var(--media-offset)), -9vh) scale(1.08)
-                        rotate(-8deg);
+                8% {
+                    transform: translate(-1cqw, 1.5cqh) rotate(-4deg) scale(1.06);
                 }
-                86% {
-                    transform: translate(calc(-50% + var(--media-offset)), 26vh) scale(0.88)
-                        rotate(16deg);
+                12%,
+                90% {
+                    visibility: visible;
+                    transform: translate(0, 0) rotate(0) scale(1);
                 }
-                86.1%,
+                100% {
+                    visibility: visible;
+                    transform: translate(-38cqw, 12cqw) rotate(0) scale(1);
+                }
+            }
+
+            @keyframes revenue-moss-visitor {
+                0%,
+                28% {
+                    visibility: hidden;
+                    transform: translate(-40cqw, 1cqh) rotate(-3deg) scale(0.92);
+                }
+                28.1% {
+                    visibility: visible;
+                }
+                34% {
+                    transform: translate(-4cqw, -1.5cqh) rotate(2deg) scale(1.03);
+                }
+                39%,
+                90% {
+                    visibility: visible;
+                    transform: translate(0, 0) rotate(0) scale(1);
+                }
+                100% {
+                    visibility: visible;
+                    transform: translate(16cqw, 0) rotate(0) scale(1);
+                }
+            }
+
+            @keyframes revenue-lantern-visitor {
+                0%,
+                58% {
+                    visibility: hidden;
+                    transform: translate(38cqw, -3cqh) rotate(5deg) scale(0.88);
+                }
+                58.1% {
+                    visibility: visible;
+                }
+                65% {
+                    transform: translate(-2cqw, 1.2cqh) rotate(-3deg) scale(1.05);
+                }
+                70%,
+                90% {
+                    visibility: visible;
+                    transform: translate(0, 0) rotate(0) scale(1);
+                }
+                100% {
+                    visibility: visible;
+                    transform: translate(-26cqw, -2cqw) rotate(0) scale(1);
+                }
+            }
+
+            @keyframes community-sky-travel {
+                0% {
+                    visibility: visible;
+                    transform: translate(-38cqw, 12cqw) rotate(0) scale(1);
+                }
+                24% {
+                    transform: translate(-34cqw, 9cqw) rotate(-2deg) scale(1);
+                }
+                58% {
+                    transform: translate(-31cqw, 7cqw) rotate(1deg) scale(1);
+                }
+                88%,
+                100% {
+                    visibility: visible;
+                    transform: translate(-36cqw, 6cqw) rotate(0) scale(1);
+                }
+            }
+
+            @keyframes community-moss-travel {
+                0% {
+                    visibility: visible;
+                    transform: translate(16cqw, 0) rotate(0) scale(1);
+                }
+                24% {
+                    transform: translate(30cqw, 6cqw) rotate(1deg) scale(1);
+                }
+                58% {
+                    transform: translate(47cqw, 8cqw) rotate(-1deg) scale(1);
+                }
+                88%,
+                100% {
+                    visibility: visible;
+                    transform: translate(62cqw, -1cqw) rotate(0) scale(1);
+                }
+            }
+
+            @keyframes community-lantern-travel {
+                0% {
+                    visibility: visible;
+                    transform: translate(-26cqw, -2cqw) rotate(0) scale(1);
+                }
+                24% {
+                    transform: translate(-18cqw, -10cqw) rotate(-1deg) scale(1);
+                }
+                58% {
+                    transform: translate(-9cqw, -16cqw) rotate(1deg) scale(1);
+                }
+                88%,
+                100% {
+                    visibility: visible;
+                    transform: translate(-4cqw, -16cqw) rotate(0) scale(1);
+                }
+            }
+
+            @keyframes community-visitor-resize {
+                from {
+                    scale: 1;
+                }
+                to {
+                    scale: 0.68;
+                }
+            }
+
+            @keyframes community-walk-step {
+                0%,
+                100% {
+                    transform: translateY(1px) rotate(-1.5deg) scaleY(0.98);
+                }
+                50% {
+                    transform: translateY(-6px) rotate(1.5deg) scaleY(1.025);
+                }
+            }
+
+            @keyframes community-flight-procession {
+                0%,
+                100% {
+                    transform: translateY(2px) rotate(-2deg);
+                }
+                50% {
+                    transform: translateY(-8px) rotate(2deg);
+                }
+            }
+
+            @keyframes community-traveler-celebrate {
+                0%,
+                100% {
+                    transform: translateY(0) rotate(-1deg);
+                }
+                50% {
+                    transform: translateY(-9px) rotate(2deg);
+                }
+            }
+
+            @keyframes revenue-visitor-idle {
+                0%,
+                100% {
+                    transform: translateY(0) rotate(-0.8deg);
+                }
+                50% {
+                    transform: translateY(-3px) rotate(0.8deg);
+                }
+            }
+
+            @keyframes community-face-right {
+                0% {
+                    scale: 1 1;
+                }
+                50% {
+                    scale: 0.08 1.06;
+                }
+                100% {
+                    scale: -1 1;
+                }
+            }
+
+            @keyframes revenue-deliver-image {
+                0% {
+                    visibility: hidden;
+                    transform: translate(-50%, -50%) scale(0) rotate(-12deg);
+                }
+                1% {
+                    visibility: visible;
+                    transform: translate(-50%, -50%) scale(0.35) rotate(-12deg);
+                }
+                22% {
+                    transform: translate(-46%, -64%) scale(1.12) rotate(5deg);
+                }
+                78% {
+                    visibility: visible;
+                    transform: translate(32cqw, -7cqw) scale(0.85) rotate(-4deg);
+                }
                 100% {
                     visibility: hidden;
-                    transform: translate(calc(-50% + var(--media-offset)), 26vh) scale(0.1)
-                        rotate(18deg);
+                    transform: translate(36cqw, -9cqw) scale(0) rotate(8deg);
+                }
+            }
+
+            @keyframes revenue-deliver-text {
+                0% {
+                    visibility: hidden;
+                    transform: translate(-50%, -50%) scale(0) rotate(10deg);
+                }
+                1% {
+                    visibility: visible;
+                    transform: translate(-50%, -50%) scale(0.35) rotate(10deg);
+                }
+                22% {
+                    transform: translate(-58%, -68%) scale(1.12) rotate(-4deg);
+                }
+                78% {
+                    visibility: visible;
+                    transform: translate(-25cqw, 4cqw) scale(0.85) rotate(3deg);
+                }
+                100% {
+                    visibility: hidden;
+                    transform: translate(-28cqw, 6cqw) scale(0) rotate(-7deg);
+                }
+            }
+
+            @keyframes revenue-deliver-video {
+                0% {
+                    visibility: hidden;
+                    transform: translate(-50%, -50%) scale(0) rotate(-10deg);
+                }
+                1% {
+                    visibility: visible;
+                    transform: translate(-50%, -50%) scale(0.35) rotate(-10deg);
+                }
+                22% {
+                    transform: translate(-42%, -64%) scale(1.12) rotate(4deg);
+                }
+                78% {
+                    visibility: visible;
+                    transform: translate(27cqw, 10cqw) scale(0.85) rotate(-3deg);
+                }
+                100% {
+                    visibility: hidden;
+                    transform: translate(30cqw, 13cqw) scale(0) rotate(7deg);
                 }
             }
 
@@ -1203,11 +1555,11 @@
                 0%,
                 100% {
                     transform: scale(0.65);
-                    box-shadow: 0 0 0.25vw #ecf874;
+                    box-shadow: 0 0 0.25cqw #ecf874;
                 }
                 50% {
                     transform: scale(1.15);
-                    box-shadow: 0 0 0.9vw #ecf874;
+                    box-shadow: 0 0 0.9cqw #ecf874;
                 }
             }
 
@@ -1216,12 +1568,12 @@
                 100% {
                     transform: scale(0.5);
                     background-color: #b8efb2;
-                    box-shadow: 0 0 0.15vw #b8efb2;
+                    box-shadow: 0 0 0.15cqw #b8efb2;
                 }
                 50% {
                     transform: scale(1.15);
                     background-color: #ecf874;
-                    box-shadow: 0 0 0.8vw #ecf874;
+                    box-shadow: 0 0 0.8cqw #ecf874;
                 }
             }
 
@@ -1266,13 +1618,13 @@
                     transform: translate(0, 0) rotate(0);
                 }
                 20% {
-                    transform: translate(-16vw, -19vh) rotate(-4deg);
+                    transform: translate(-16cqw, -19cqh) rotate(-4deg);
                 }
                 88% {
-                    transform: translate(-15vw, -18vh) rotate(2deg);
+                    transform: translate(-15cqw, -18cqh) rotate(2deg);
                 }
                 96% {
-                    transform: translate(-6vw, -10vh) rotate(4deg);
+                    transform: translate(-6cqw, -10cqh) rotate(4deg);
                 }
                 100% {
                     transform: translate(0, 0) rotate(0);
@@ -1285,14 +1637,14 @@
                     transform: translate(0, 0) rotate(0);
                 }
                 18% {
-                    transform: translate(-9vw, -12vh) rotate(-3deg);
+                    transform: translate(-9cqw, -12cqh) rotate(-3deg);
                 }
                 42% {
-                    transform: translate(-10vw, -13vh) rotate(2deg);
+                    transform: translate(-10cqw, -13cqh) rotate(2deg);
                 }
                 68%,
                 76% {
-                    transform: translate(-9vw, -11vh) rotate(-2deg);
+                    transform: translate(-9cqw, -11cqh) rotate(-2deg);
                 }
                 90%,
                 100% {
@@ -1306,32 +1658,194 @@
                     transform: translate(0, 0) rotate(0);
                 }
                 34% {
-                    transform: translate(0, 5vh) rotate(3deg);
+                    transform: translate(0, 5cqh) rotate(3deg);
                 }
                 72% {
-                    transform: translate(0, 13vh) rotate(-3deg);
+                    transform: translate(0, 13cqh) rotate(-3deg);
                 }
                 88% {
-                    transform: translate(0, 10vh) rotate(2deg);
+                    transform: translate(0, 10cqh) rotate(2deg);
                 }
                 100% {
-                    transform: translate(0, 11vh) rotate(0);
+                    transform: translate(0, 11cqh) rotate(0);
                 }
             }
 
-            @keyframes polli-revenue-rise {
+            @keyframes polli-revenue-settle {
                 0%,
                 8% {
-                    transform: translate(0, 11vh) rotate(0);
+                    transform: translate(0, 11cqh) rotate(0);
                 }
                 52% {
-                    transform: translate(-19vw, -13vh) rotate(-3deg);
+                    transform: translate(-32cqw, -22cqh) rotate(-3deg);
                 }
                 76% {
-                    transform: translate(-15vw, -9vh) rotate(2deg);
+                    transform: translate(-35cqw, -24cqh) rotate(2deg);
                 }
                 100% {
-                    transform: translate(-16vw, -10vh) rotate(0);
+                    transform: translate(-34cqw, -23cqh) rotate(0);
+                }
+            }
+
+            @keyframes polli-community-gather {
+                0% {
+                    transform: translate(-34cqw, -23cqh) rotate(0);
+                }
+                100% {
+                    transform: translate(-20cqw, 0) rotate(0);
+                }
+            }
+
+            @keyframes polli-community-walk {
+                0% {
+                    transform: translate(-20cqw, 0) rotate(0);
+                }
+                24% {
+                    transform: translate(-10cqw, 1cqh) rotate(-1deg);
+                }
+                58% {
+                    transform: translate(3cqw, 4cqh) rotate(1deg);
+                }
+                88%,
+                100% {
+                    transform: translate(22cqw, 6cqh) rotate(0);
+                }
+            }
+
+            @keyframes polli-community-resize {
+                from {
+                    scale: 1;
+                }
+                to {
+                    scale: 0.56;
+                }
+            }
+
+            @keyframes community-polli-celebrate {
+                0%,
+                100% {
+                    transform: translateY(0) rotate(-1deg) scaleY(0.99);
+                }
+                50% {
+                    transform: translateY(-7px) rotate(2deg) scaleY(1.02);
+                }
+            }
+
+            @keyframes community-ground-layer {
+                to {
+                    transform: scale(1);
+                }
+            }
+
+            @keyframes community-flight-layer {
+                to {
+                    transform: scale(0);
+                }
+            }
+
+            @keyframes community-shadow-layer {
+                to {
+                    visibility: visible;
+                }
+            }
+
+            @keyframes community-finale-reveal {
+                0% {
+                    visibility: hidden;
+                    clip-path: polygon(
+                        100% 0,
+                        100% 20%,
+                        100% 40%,
+                        100% 60%,
+                        100% 80%,
+                        100% 100%,
+                        100% 100%,
+                        100% 0
+                    );
+                }
+                0.1% {
+                    visibility: visible;
+                }
+                85% {
+                    visibility: visible;
+                    clip-path: polygon(
+                        0 0,
+                        2% 20%,
+                        0 40%,
+                        3% 60%,
+                        1% 80%,
+                        0 100%,
+                        100% 100%,
+                        100% 0
+                    );
+                }
+                100% {
+                    visibility: visible;
+                    clip-path: polygon(
+                        0 0,
+                        0 20%,
+                        0 40%,
+                        0 60%,
+                        0 80%,
+                        0 100%,
+                        100% 100%,
+                        100% 0
+                    );
+                }
+            }
+
+            @keyframes community-finale-camera {
+                0%,
+                10% {
+                    transform: translateX(0);
+                }
+                88%,
+                100% {
+                    transform: translateX(var(--community-travel));
+                }
+            }
+
+            @keyframes community-finale-idle {
+                from {
+                    translate: 0 0;
+                    rotate: -1deg;
+                }
+                to {
+                    translate: 0 -3px;
+                    rotate: 1deg;
+                }
+            }
+
+            @keyframes community-finale-celebrate {
+                0%,
+                100% {
+                    scale: 1;
+                }
+                50% {
+                    scale: 1.08;
+                }
+            }
+
+            @keyframes community-destination-glow {
+                0%,
+                100% {
+                    filter: drop-shadow(0 5px 2px rgb(15 8 27 / 45%));
+                }
+                50% {
+                    filter:
+                        drop-shadow(0 5px 2px rgb(15 8 27 / 45%))
+                        drop-shadow(0 0 8px #ecf874);
+                }
+            }
+
+            @keyframes community-finale-flight {
+                from {
+                    translate: 0 -3px;
+                    rotate: -1deg;
+                }
+                to {
+                    translate: 0 4px;
+                    rotate: 1deg;
                 }
             }
 
@@ -1578,16 +2092,16 @@
                 }
                 38% {
                     transform: translate(
-                            calc(-14vw + var(--arc-x)),
-                            calc(4vw + var(--arc-y, 0vw))
+                            calc(-14cqw + var(--arc-x)),
+                            calc(4cqw + var(--arc-y, 0cqw))
                         )
                         scale(1.05)
                         rotate(180deg);
                 }
                 62% {
                     transform: translate(
-                            calc(-31vw + var(--arc-x)),
-                            calc(8vw + var(--arc-y, 0vw))
+                            calc(-31cqw + var(--arc-x)),
+                            calc(8cqw + var(--arc-y, 0cqw))
                         )
                         scale(0.92)
                         rotate(290deg);
@@ -1622,7 +2136,7 @@
                     visibility: visible;
                 }
                 14% {
-                    transform: translate(0, -3vh) scale(0.82) rotate(55deg);
+                    transform: translate(0, -3cqh) scale(0.82) rotate(55deg);
                 }
                 40% {
                     transform: translate(var(--pollen-mid-x), var(--pollen-mid-y)) scale(1.02)
@@ -1634,8 +2148,8 @@
                 }
                 90% {
                     transform: translate(
-                            calc(var(--pollen-target-x) + 2vw),
-                            calc(var(--pollen-target-y) - 1vw)
+                            calc(var(--pollen-target-x) + 2cqw),
+                            calc(var(--pollen-target-y) - 1cqw)
                         )
                         scale(0.5)
                         rotate(430deg);
@@ -1644,8 +2158,8 @@
                 100% {
                     visibility: hidden;
                     transform: translate(
-                            calc(var(--pollen-target-x) + 3vw),
-                            calc(var(--pollen-target-y) - 2vw)
+                            calc(var(--pollen-target-x) + 3cqw),
+                            calc(var(--pollen-target-y) - 2cqw)
                         )
                         scale(0.08)
                         rotate(470deg);
@@ -1662,19 +2176,19 @@
                     visibility: visible;
                 }
                 34% {
-                    transform: translate(var(--earn-mid-x), -11vh) scale(1.05) rotate(100deg);
+                    transform: translate(var(--earn-mid-x), 7cqh) scale(1.05) rotate(100deg);
                 }
                 70% {
-                    transform: translate(var(--earn-mid-x), 10vh) scale(0.82) rotate(220deg);
+                    transform: translate(var(--earn-late-x), 17cqh) scale(0.82) rotate(220deg);
                 }
                 92% {
                     visibility: visible;
-                    transform: translate(var(--earn-target-x), 30vh) scale(0.42) rotate(340deg);
+                    transform: translate(var(--earn-target-x), 23cqh) scale(0.42) rotate(340deg);
                 }
                 92.1%,
                 100% {
                     visibility: hidden;
-                    transform: translate(var(--earn-target-x), 30vh) scale(0.1) rotate(360deg);
+                    transform: translate(var(--earn-target-x), 23cqh) scale(0.1) rotate(360deg);
                 }
             }
 
@@ -1733,7 +2247,7 @@
             @keyframes capability-cross {
                 0% {
                     visibility: hidden;
-                    transform: translateX(82vw);
+                    transform: translateX(82cqw);
                 }
                 0.1%,
                 99.9% {
@@ -1741,7 +2255,7 @@
                 }
                 100% {
                     visibility: hidden;
-                    transform: translateX(-36vw);
+                    transform: translateX(-36cqw);
                 }
             }
 
@@ -1794,56 +2308,6 @@
                 }
             }
 
-            @media (max-width: 600px) {
-                .polli {
-                    --polli-entry-left: 21%;
-                    --polli-entry-bottom: 42%;
-                    --polli-entry-width: 5.5%;
-                    --polli-curve-one-left: 20%;
-                    --polli-curve-one-width: 7%;
-                    --polli-curve-two-left: 22%;
-                    --polli-curve-two-width: 10%;
-                    --polli-curve-three-left: 25%;
-                    --polli-curve-three-width: 13%;
-                    --polli-curve-four-left: 28%;
-                    --polli-curve-four-width: 16%;
-                    --polli-rest-left: 30%;
-                    --polli-rest-width: 18%;
-                }
-
-                .quest-board {
-                    top: 32%;
-                    left: 70%;
-                    width: 62%;
-                }
-
-                .quest-wallet {
-                    bottom: 3%;
-                    left: 2%;
-                    width: 44%;
-                }
-
-                .pollen-grain {
-                    --pollen-end-x: -36vw;
-                    top: 56%;
-                    left: 69%;
-                }
-
-                .pollen-grain--out {
-                    top: 79%;
-                    left: var(--pollen-source-mobile, var(--pollen-source));
-                }
-
-                .phase-banner {
-                    top: -5%;
-                    width: 94%;
-                }
-
-                .build-landmark {
-                    width: clamp(155px, var(--landmark-size, 43vw), 280px);
-                }
-
-            }
         </style>
     </head>
     <body>
@@ -1942,63 +2406,105 @@
                 />
                 <div class="pollen-stream" id="revenue-pollen-stream" aria-hidden="true"></div>
                 <div class="revenue-stage" aria-label="Connect, Publish, Earn showcase">
-                    <div class="revenue-scene revenue-scene--pollen">
-                        <span class="revenue-connection-ring" aria-hidden="true"></span>
+                    <img
+                        class="revenue-station revenue-station--app"
+                        src="publish-earn-v2/app-station-v1.png"
+                        alt="Publish an app"
+                    />
+                    <img
+                        class="revenue-station revenue-station--model"
+                        src="publish-earn-v2/model-station-v1.png"
+                        alt="Publish a model"
+                    />
+                    <img
+                        class="revenue-station revenue-station--agent"
+                        src="publish-earn-v2/agent-station-v1.png"
+                        alt="Publish an agent"
+                    />
+                    <div class="revenue-visitor revenue-visitor--sky">
                         <img
-                            class="revenue-scene__asset"
-                            src="build-your-way-v1/pollen-wallet-v1.png"
-                            alt="Pollen Wallet connecting every Pollinations-powered creation"
+                            src="publish-earn-v2/visitors-v1/sky-image-visitor-master-v1-left.png"
+                            alt="Sky visitor receiving an image"
                         />
                     </div>
-                    <div class="revenue-scene revenue-scene--models">
+                    <div class="revenue-visitor revenue-visitor--moss">
                         <img
-                            class="revenue-scene__asset"
-                            src="revenue-stop-v1/community-models-v1.png"
-                            alt="Community Models connected into one shared network"
+                            src="publish-earn-v2/visitors-v1/moss-text-visitor-master-v1.png"
+                            alt="Moss visitor receiving text"
                         />
                     </div>
-                    <div class="revenue-scene revenue-scene--agent" aria-label="Agent creating media">
+                    <div class="revenue-visitor revenue-visitor--lantern">
                         <img
-                            class="revenue-agent-state revenue-agent-state--walk"
-                            src="revenue-stop-v1/agent-walk-v1.png"
-                            alt="Giant Agent Robot walking into the scene"
+                            src="publish-earn-v2/visitors-v1/lantern-video-visitor-master-v1.png"
+                            alt="Lantern visitor receiving video"
                         />
-                        <img
-                            class="revenue-agent-state revenue-agent-state--confused"
-                            src="revenue-stop-v1/agent-confused-v1.png"
-                            alt="Agent Robot creating media"
-                        />
-                        <img
-                            class="revenue-agent-state revenue-agent-state--rocket"
-                            src="revenue-stop-v1/agent-rocket-v1.png"
-                            alt="Agent Robot launching into the sky"
-                        />
-                        <i
-                            class="revenue-media-token"
-                            style="--media-x: 0%; --media-y: 0%; --media-offset: -15vw; --media-delay: 6.55s"
-                        ></i>
-                        <i
-                            class="revenue-media-token"
-                            style="--media-x: 100%; --media-y: 0%; --media-offset: -5vw; --media-delay: 6.75s"
-                        ></i>
-                        <i
-                            class="revenue-media-token"
-                            style="--media-x: 0%; --media-y: 100%; --media-offset: 5vw; --media-delay: 6.95s"
-                        ></i>
-                        <i
-                            class="revenue-media-token"
-                            style="--media-x: 100%; --media-y: 100%; --media-offset: 15vw; --media-delay: 7.15s"
-                        ></i>
                     </div>
+                    <i class="revenue-delivery revenue-delivery--image" aria-hidden="true"></i>
+                    <i class="revenue-delivery revenue-delivery--text" aria-hidden="true"></i>
+                    <i class="revenue-delivery revenue-delivery--video" aria-hidden="true"></i>
                     <i class="revenue-burst revenue-burst--one" aria-hidden="true"></i>
                     <i class="revenue-burst revenue-burst--two" aria-hidden="true"></i>
+                    <i class="revenue-burst revenue-burst--three" aria-hidden="true"></i>
+                </div>
+                <div class="community-finale" aria-label="Pollinations community finale">
+                    <div class="community-finale__world" id="community-finale-world">
+                        <img
+                            class="community-finale__background"
+                            src="community-finale-v1/community-background-lateral-arrival-v1.png"
+                            alt="Pollinations community at night"
+                        />
+
+                        <div
+                            class="community-finale__actor community-finale__actor--airborne community-finale__actor--discord"
+                            style="--end-x: 47.5%; --end-y: 50%; --actor-width: 4.7%"
+                        >
+                            <img src="community-finale-v1/characters/discord-friend.png" alt="Discord friend" />
+                        </div>
+                        <div
+                            class="community-finale__actor community-finale__actor--airborne"
+                            style="--end-x: 62%; --end-y: 45%; --actor-width: 4.2%"
+                        >
+                            <img src="community-finale-v1/characters/video-friend.png" alt="Video friend" />
+                        </div>
+                        <div class="community-finale__actor" style="--end-x: 44%; --end-y: 68%; --actor-width: 3.7%">
+                            <img src="community-finale-v1/characters/text-friend.png" alt="Text friend" />
+                        </div>
+                        <div class="community-finale__actor" style="--end-x: 50%; --end-y: 74%; --actor-width: 3.3%">
+                            <img src="community-finale-v1/characters/image-friend.png" alt="Image friend" />
+                        </div>
+                        <div
+                            class="community-finale__actor community-finale__actor--github"
+                            style="--end-x: 56%; --end-y: 68%; --actor-width: 3.5%"
+                        >
+                            <img src="community-finale-v1/characters/github-friend.png" alt="GitHub friend" />
+                        </div>
+                        <div class="community-finale__actor" style="--end-x: 62%; --end-y: 78%; --actor-width: 4%">
+                            <img src="community-finale-v1/characters/audio-friend.png" alt="Audio friend" />
+                        </div>
+                        <div class="community-finale__actor" style="--end-x: 77%; --end-y: 76%; --actor-width: 4.7%">
+                            <img src="community-finale-v1/characters/computer-head.png" alt="Computer Head" />
+                        </div>
+                        <div class="community-finale__actor" style="--end-x: 85%; --end-y: 88%; --actor-width: 4.8%">
+                            <img src="community-finale-v1/characters/realtime-friend.png" alt="Realtime friend" />
+                        </div>
+
+                        <div class="community-finale__actor" style="--end-x: 46%; --end-y: 91%; --actor-width: 4.6%">
+                            <img src="community-finale-v1/characters/embeddings-friend.png" alt="Embeddings friend" />
+                        </div>
+                        <div class="community-finale__actor" style="--end-x: 56%; --end-y: 91%; --actor-width: 4.8%">
+                            <img src="community-finale-v1/characters/nomnom.png" alt="Nom Nom" />
+                        </div>
+                        <div class="community-finale__actor" style="--end-x: 65%; --end-y: 88%; --actor-width: 4.2%">
+                            <img src="community-finale-v1/characters/agents-friend.png" alt="Agents friend" />
+                        </div>
+                    </div>
                 </div>
                 <div
                     class="capability-friend"
                     style="
                         --friend-start: 12.8s;
-                        --friend-size: 21%;
-                        --friend-ground-offset: 0.25vw;
+                            --friend-size: 21cqw;
+                        --friend-ground-offset: 0.25cqw;
                     "
                     aria-label="Text capability character walking toward Polli"
                 >
@@ -2022,8 +2528,8 @@
                     class="capability-friend"
                     style="
                         --friend-start: 13.65s;
-                        --friend-size: 22%;
-                        --friend-ground-offset: 0.8vw;
+                        --friend-size: 22cqw;
+                        --friend-ground-offset: 0.8cqw;
                     "
                     aria-label="Image capability character walking toward Polli"
                 >
@@ -2045,7 +2551,7 @@
                 </div>
                 <div
                     class="capability-friend"
-                    style="--friend-start: 14.5s; --friend-size: 20%"
+                    style="--friend-start: 14.5s; --friend-size: 20cqw"
                     aria-label="Audio capability character walking toward Polli"
                 >
                     <img
@@ -2068,8 +2574,8 @@
                     class="capability-friend"
                     style="
                         --friend-start: 15.35s;
-                        --friend-size: 19%;
-                        --friend-ground-offset: -0.2vw;
+                        --friend-size: 19cqw;
+                        --friend-ground-offset: -0.2cqw;
                     "
                     aria-label="Video capability character walking toward Polli"
                 >
@@ -2093,8 +2599,8 @@
                     class="capability-friend"
                     style="
                         --friend-start: 16.2s;
-                        --friend-size: 20%;
-                        --friend-ground-offset: 1vw;
+                        --friend-size: 20cqw;
+                        --friend-ground-offset: 1cqw;
                     "
                     aria-label="Real-time capability character walking toward Polli"
                 >
@@ -2116,7 +2622,7 @@
                 </div>
                 <div
                     class="capability-friend"
-                    style="--friend-start: 17.05s; --friend-size: 21%"
+                    style="--friend-start: 17.05s; --friend-size: 21cqw"
                     aria-label="Embeddings capability character walking toward Polli"
                 >
                     <img
@@ -2139,8 +2645,8 @@
                     class="capability-friend"
                     style="
                         --friend-start: 17.9s;
-                        --friend-size: 21%;
-                        --friend-ground-offset: 0.75vw;
+                        --friend-size: 21cqw;
+                        --friend-ground-offset: 0.75cqw;
                     "
                     aria-label="Agents capability character walking toward Polli"
                 >
@@ -2165,7 +2671,7 @@
                         class="build-landmark build-landmark--wallet build-landmark--burst"
                         data-center-time="26"
                         style="
-                            --landmark-size: 30vw;
+                            --landmark-size: 30cqw;
                             --landmark-bottom: 23.5%;
                         "
                     >
@@ -2182,7 +2688,7 @@
                         class="build-landmark build-landmark--cli build-landmark--burst"
                         data-center-time="28.3"
                         style="
-                            --landmark-size: 30vw;
+                            --landmark-size: 30cqw;
                             --landmark-bottom: 23.5%;
                         "
                     >
@@ -2199,7 +2705,7 @@
                         class="build-landmark build-landmark--mcp build-landmark--burst"
                         data-center-time="30.6"
                         style="
-                            --landmark-size: 30vw;
+                            --landmark-size: 30cqw;
                             --landmark-bottom: 23.5%;
                         "
                     >
@@ -2219,7 +2725,7 @@
                         class="build-landmark build-landmark--storage build-landmark--burst"
                         data-center-time="32.9"
                         style="
-                            --landmark-size: 30vw;
+                            --landmark-size: 30cqw;
                             --landmark-bottom: 23.5%;
                         "
                     >
@@ -2253,6 +2759,7 @@
                 <button type="button" data-phase-var="--revenue-transition-start">
                     Connect · Publish · Earn
                 </button>
+                <button type="button" data-phase-var="--community-start">Community</button>
             </nav>
         </main>
 
@@ -2261,6 +2768,7 @@
             const world = document.querySelector("#world");
             const openingProps = document.querySelector("#opening-props");
             const worldProps = document.querySelector("#world-props");
+            const communityFinaleWorld = document.querySelector("#community-finale-world");
             const buildLandmarks = [...document.querySelectorAll(".build-landmark")];
             const phaseControls = [
                 ...document.querySelectorAll("[data-phase-time], [data-phase-var]"),
@@ -2268,9 +2776,6 @@
             const pollenStream = document.querySelector("#pollen-stream");
             const questPollenStream = document.querySelector("#quest-pollen-stream");
             const revenuePollenStream = document.querySelector("#revenue-pollen-stream");
-            const fullJourneySeconds = 65;
-            const movingPreviewSeconds = 49;
-            const pauseStartSeconds = 40.8;
             const arrivalHoldMs = 1000;
             const arrivalDurationMs = 4200;
             let arrivalTimer;
@@ -2289,8 +2794,8 @@
                         "--pollen-delay",
                         `calc(var(--start-free-start) + ${burst.start + index * burst.spacing}s)`,
                     );
-                    grain.style.setProperty("--arc-x", `${((index % 7) - 3) * 0.9}vw`);
-                    grain.style.setProperty("--arc-y", `${((index % 5) - 2) * 0.75}vw`);
+                    grain.style.setProperty("--arc-x", `${((index % 7) - 3) * 0.9}cqw`);
+                    grain.style.setProperty("--arc-y", `${((index % 5) - 2) * 0.75}cqw`);
                     questPollenStream.append(grain);
                 }
             }
@@ -2314,17 +2819,13 @@
                         `${mediaFirstCenter + index * pollenStep + (account === "quest" ? 0.16 : 0)}s`,
                     );
                     grain.style.setProperty("--pollen-source", account === "paid" ? "14%" : "26%");
-                    grain.style.setProperty(
-                        "--pollen-source-mobile",
-                        account === "paid" ? "14%" : "35%",
-                    );
                     const targetX =
                         (account === "paid" ? 40 : 32) + ((index % 4) - 1.5) * 3;
-                    grain.style.setProperty("--pollen-mid-x", `${targetX * 0.46}vw`);
-                    grain.style.setProperty("--pollen-target-x", `${targetX}vw`);
+                    grain.style.setProperty("--pollen-mid-x", `${targetX * 0.46}cqw`);
+                    grain.style.setProperty("--pollen-target-x", `${targetX}cqw`);
                     grain.style.setProperty(
                         "--pollen-target-y",
-                        `${-14 - (index % 3) * 0.8}vw`,
+                        `${-14 - (index % 3) * 0.8}cqw`,
                     );
                     pollenStream.append(grain);
                 }
@@ -2339,15 +2840,19 @@
                         }`;
                         grain.style.setProperty(
                             "--pollen-delay",
-                            `${pauseStartSeconds + beatStart + index * 0.12 + (account === "quest" ? 0.06 : 0)}s`,
+                            `calc(var(--revenue-start) + ${beatStart + index * 0.12 + (account === "quest" ? 0.06 : 0)}s)`,
                         );
                         grain.style.setProperty(
                             "--earn-target-x",
-                            account === "paid" ? "-45vw" : "-32vw",
+                            account === "paid" ? "-30cqw" : "-21cqw",
                         );
                         grain.style.setProperty(
                             "--earn-mid-x",
-                            account === "paid" ? "-27vw" : "-19vw",
+                            account === "paid" ? "-14cqw" : "-10cqw",
+                        );
+                        grain.style.setProperty(
+                            "--earn-late-x",
+                            account === "paid" ? "-24cqw" : "-17cqw",
                         );
                         revenuePollenStream.append(grain);
                     }
@@ -2355,10 +2860,16 @@
             }
 
             function setJourney() {
+                const rootStyles = getComputedStyle(document.documentElement);
+                const seconds = (property) => Number.parseFloat(rootStyles.getPropertyValue(property));
                 const viewportWidth = viewport.getBoundingClientRect().width;
                 const worldWidth = world.getBoundingClientRect().width;
+                const communityWorldWidth = communityFinaleWorld.getBoundingClientRect().width;
                 const maximumTravel = Math.max(0, worldWidth - viewportWidth);
-                const pixelsPerSecond = maximumTravel / fullJourneySeconds;
+                const pixelsPerSecond = maximumTravel / seconds("--panorama-duration");
+                const pauseStart = seconds("--revenue-start");
+                const pauseDuration = seconds("--community-start") - pauseStart;
+                const movingDuration = seconds("--preview") - pauseDuration;
 
                 openingProps.style.width = `${worldWidth}px`;
                 worldProps.style.width = `${worldWidth}px`;
@@ -2370,11 +2881,15 @@
 
                 viewport.style.setProperty(
                     "--world-end",
-                    `${-(pixelsPerSecond * movingPreviewSeconds)}px`,
+                    `${-(pixelsPerSecond * movingDuration)}px`,
                 );
                 viewport.style.setProperty(
                     "--world-pause",
-                    `${-(pixelsPerSecond * pauseStartSeconds)}px`,
+                    `${-(pixelsPerSecond * pauseStart)}px`,
+                );
+                viewport.style.setProperty(
+                    "--community-travel",
+                    `${communityWorldWidth * -0.4}px`,
                 );
             }
 
