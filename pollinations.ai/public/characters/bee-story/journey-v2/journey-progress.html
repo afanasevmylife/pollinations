@@ -18,14 +18,28 @@
             }
 
             :root {
-                --preview: 41s;
-                --start-free-start: 2.2s;
-                --start-free-duration: 16s;
-                --gen-start: 17.8s;
-                --gen-duration: 18s;
+                --preview: 58s;
+                --start-free-start: 0.15s;
+                --start-free-duration: 12.4s;
+                --start-flight-start: 0.15s;
+                --gen-start: 11.8s;
+                --gen-duration: 17.2s;
                 --friend-duration: 9s;
-                --media-flight-start: 21.4s;
-                --media-flight-duration: 10.4s;
+                --media-flight-start: 12.35s;
+                --media-flight-duration: 12.4s;
+                --start-flight-duration: calc(
+                    var(--media-flight-start) - var(--start-flight-start)
+                );
+                --build-start: 25s;
+                --build-duration: 11.4s;
+                --build-flight-start: 25.2s;
+                --build-flight-duration: 1.7s;
+                --revenue-transition-start: 36.4s;
+                --revenue-banner-start: 37.7s;
+                --revenue-banner-duration: 12.1s;
+                --revenue-start: 40.8s;
+                --revenue-duration: 9s;
+                --revenue-flight-duration: 2.1s;
                 color-scheme: dark;
                 background: #110518;
                 font-family: "Geist Pixel Square", ui-monospace, monospace;
@@ -84,18 +98,73 @@
                 mix-blend-mode: soft-light;
             }
 
+            .opening-props {
+                position: absolute;
+                inset: 0 auto 0 0;
+                z-index: 7;
+                width: var(--world-width, 100%);
+                pointer-events: none;
+            }
+
+            .playing .opening-props {
+                animation: world-travel var(--preview) linear forwards;
+            }
+
+            .opening-friend {
+                position: absolute;
+                bottom: 25%;
+                width: clamp(72px, 11vw, 112px);
+                transform: translateX(-50%);
+                transform-origin: 50% 100%;
+                image-rendering: pixelated;
+                filter: drop-shadow(4px 6px 0 rgb(17 5 24 / 16%));
+            }
+
+            .opening-friend img {
+                display: block;
+                width: 100%;
+                height: auto;
+                image-rendering: pixelated;
+            }
+
+            .opening-friend--robot {
+                left: 1.05%;
+            }
+
+            .opening-friend--robot img {
+                animation: robot-welcome-idle 1.6s steps(2, end) infinite;
+            }
+
+            .opening-friend--nomnom {
+                left: 7.6%;
+                bottom: 24.5%;
+                width: clamp(66px, 10vw, 104px);
+            }
+
+            .opening-friend--nomnom img {
+                animation: nomnom-welcome-idle 1.25s steps(2, end) 180ms infinite;
+            }
+
             .polli {
-                --polli-entry-left: 19%;
-                --polli-entry-bottom: 32%;
-                --polli-entry-width: 8%;
+                --polli-entry-left: 23%;
+                --polli-entry-bottom: 42%;
+                --polli-entry-width: 3.6%;
+                --polli-curve-one-left: 22%;
+                --polli-curve-one-width: 4.8%;
+                --polli-curve-two-left: 25%;
+                --polli-curve-two-width: 6.4%;
+                --polli-curve-three-left: 30%;
+                --polli-curve-three-width: 8.2%;
+                --polli-curve-four-left: 34%;
+                --polli-curve-four-width: 9.8%;
                 --polli-rest-left: 38%;
                 --polli-rest-bottom: 25.5%;
                 --polli-rest-width: clamp(72px, 11.5%, 128px);
                 position: absolute;
                 z-index: 11;
-                left: var(--polli-entry-left);
-                bottom: var(--polli-entry-bottom);
-                width: var(--polli-entry-width);
+                left: var(--polli-rest-left);
+                bottom: var(--polli-rest-bottom);
+                width: var(--polli-rest-width);
                 aspect-ratio: 160 / 200;
                 image-rendering: pixelated;
                 filter: drop-shadow(4px 6px 0 rgb(17 5 24 / 18%));
@@ -151,30 +220,54 @@
                 transform: translateX(-50%) scale(0);
             }
 
+            .arriving .polli {
+                visibility: visible;
+                animation: polli-entry 4.2s ease-in-out both;
+            }
+
             .playing .polli {
+                visibility: visible;
                 animation:
-                    polli-entry 2.6s ease-out both,
+                    polli-start-flight var(--start-flight-duration) linear
+                        var(--start-flight-start) both,
                     polli-media-flight var(--media-flight-duration) linear
-                        var(--media-flight-start) both;
+                        var(--media-flight-start) forwards,
+                    polli-build-flight var(--build-flight-duration) ease-in
+                        var(--build-flight-start) forwards,
+                    polli-revenue-rise var(--revenue-flight-duration) ease-in-out
+                        var(--revenue-transition-start) forwards;
             }
 
             .playing .polli__ground {
-                animation: ground-layer var(--media-flight-duration) linear
-                    var(--media-flight-start) both;
+                animation:
+                    ground-layer var(--start-flight-duration) linear var(--start-flight-start) both,
+                    ground-layer var(--media-flight-duration) linear var(--media-flight-start)
+                        forwards,
+                    ground-build-layer var(--build-flight-duration) linear var(--build-flight-start)
+                        forwards;
             }
 
+            .arriving .polli__sprite,
             .playing .polli__sprite {
                 animation: walk-cycle 460ms steps(2, end) infinite;
             }
 
             .playing .polli__flight {
-                animation: flight-layer var(--media-flight-duration) linear
-                    var(--media-flight-start) both;
+                animation:
+                    flight-layer var(--start-flight-duration) linear var(--start-flight-start) both,
+                    flight-layer var(--media-flight-duration) linear var(--media-flight-start)
+                        forwards,
+                    flight-build-layer var(--build-flight-duration) linear var(--build-flight-start)
+                        forwards;
             }
 
             .playing .polli::after {
-                animation: shadow-layer var(--media-flight-duration) linear
-                    var(--media-flight-start) both;
+                animation:
+                    shadow-layer var(--start-flight-duration) linear var(--start-flight-start) both,
+                    shadow-layer var(--media-flight-duration) linear var(--media-flight-start)
+                        forwards,
+                    shadow-build-layer var(--build-flight-duration) linear var(--build-flight-start)
+                        forwards;
             }
 
             .playing .polli__flight-frame:first-child {
@@ -349,6 +442,17 @@
                     var(--pollen-delay) both;
             }
 
+            .pollen-grain--revenue {
+                top: 51%;
+                left: 54%;
+                width: clamp(11px, 1.8%, 19px);
+            }
+
+            .playing .pollen-grain--revenue {
+                animation: pollen-revenue 1.35s cubic-bezier(0.28, 0.72, 0.3, 1)
+                    var(--pollen-delay) both;
+            }
+
             .pollen-stream {
                 display: contents;
             }
@@ -429,40 +533,724 @@
                 animation: capability-frame-three 560ms steps(1, end) var(--friend-start) infinite;
             }
 
-            button {
+            .world-props {
+                position: absolute;
+                inset: 0 auto 0 0;
+                z-index: 8;
+                width: var(--world-width, 100%);
+                pointer-events: none;
+                visibility: hidden;
+            }
+
+            .playing .world-props {
+                animation: world-travel var(--preview) linear forwards;
+                visibility: visible;
+            }
+
+            .build-landmark {
+                position: absolute;
+                bottom: var(--landmark-bottom, 24%);
+                left: 0;
+                width: clamp(170px, var(--landmark-size, 30vw), 330px);
+                transform: translateX(-50%);
+                transform-origin: 50% 100%;
+                image-rendering: pixelated;
+            }
+
+            .build-landmark__scene {
+                position: relative;
+                width: 100%;
+                transform-origin: 50% 100%;
+            }
+
+            .playing .build-landmark__scene {
+                animation: landmark-activate 3.3s ease-in-out
+                    calc(var(--landmark-center) - 1.45s) both;
+            }
+
+            .playing .build-landmark--burst .build-landmark__scene {
+                animation: landmark-seed-burst 1.05s cubic-bezier(0.2, 0.82, 0.28, 1.18)
+                    calc(var(--landmark-center) - 1.15s) both;
+            }
+
+            .landmark-burst {
+                position: absolute;
+                bottom: 5%;
+                left: 50%;
+                z-index: 4;
+                width: 7%;
+                aspect-ratio: 1;
+                border-radius: 50%;
+                background: #ecf874;
+                box-shadow:
+                    -3.2vw -0.7vw 0 -0.4vw #f8d86b,
+                    3.2vw -0.7vw 0 -0.4vw #f8d86b,
+                    -2.1vw -2.4vw 0 -0.5vw #8ff0af,
+                    2.1vw -2.4vw 0 -0.5vw #8ff0af,
+                    -4.2vw -2vw 0 -0.55vw #fff2bd,
+                    4.2vw -2vw 0 -0.55vw #fff2bd;
+                visibility: hidden;
+                transform: translate(-50%, 50%) scale(0);
+            }
+
+            .playing .build-landmark--burst .landmark-burst {
+                animation: landmark-burst-particles 720ms steps(6, end)
+                    calc(var(--landmark-center) - 0.94s) both;
+            }
+
+            .build-landmark__asset {
+                display: block;
+                width: 100%;
+                height: auto;
+                image-rendering: pixelated;
+                filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 16%));
+            }
+
+            .build-landmark--cli .build-landmark__asset {
+                animation: terminal-glow 1.4s steps(2, end) infinite;
+            }
+
+            .build-landmark--wallet .build-landmark__asset {
+                animation: wallet-glow 1.9s steps(2, end) infinite;
+            }
+
+            .build-landmark--mcp .build-landmark__asset {
+                animation: connector-glow 1.8s ease-in-out infinite;
+            }
+
+            .build-landmark--storage .build-landmark__asset {
+                animation: storage-breathe 2.4s ease-in-out infinite;
+            }
+
+            .revenue-stage {
+                position: absolute;
+                inset: 17% 0 0;
+                z-index: 9;
+                overflow: hidden;
+                pointer-events: none;
+            }
+
+            .revenue-scene,
+            .revenue-agent-state,
+            .revenue-media-token,
+            .revenue-burst {
+                position: absolute;
+                visibility: hidden;
+            }
+
+            .revenue-scene {
+                inset: 0;
+            }
+
+            .revenue-scene__asset {
+                position: absolute;
+                display: block;
+                image-rendering: pixelated;
+                filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 18%));
+            }
+
+            .revenue-scene--pollen .revenue-scene__asset {
+                bottom: 4%;
+                left: 50%;
+                width: min(35%, 340px);
+                transform: translateX(-50%);
+            }
+
+            .revenue-connection-ring {
+                position: absolute;
+                bottom: 21%;
+                left: 50%;
+                width: min(48%, 450px);
+                aspect-ratio: 2.1 / 1;
+                border: max(2px, 0.25vw) dashed #ecf874;
+                border-radius: 50%;
+                box-shadow:
+                    inset 0 0 0 max(2px, 0.18vw) rgb(97 195 128 / 55%),
+                    0 0 1.1vw rgb(236 248 116 / 70%);
+                transform: translateX(-50%);
+            }
+
+            .revenue-connection-ring::before,
+            .revenue-connection-ring::after {
+                content: "";
+                position: absolute;
+                top: 45%;
+                width: 7%;
+                aspect-ratio: 1;
+                border: max(1px, 0.15vw) solid #015d2d;
+                border-radius: 50%;
+                background: #ecf874;
+                box-shadow: 0 0 0.7vw #ecf874;
+            }
+
+            .revenue-connection-ring::before {
+                left: -3%;
+            }
+
+            .revenue-connection-ring::after {
+                right: -3%;
+                background: #8ff0af;
+            }
+
+            .revenue-scene--models .revenue-scene__asset {
+                bottom: -1%;
+                left: 50%;
+                width: min(58%, 560px);
+                max-height: 94%;
+                object-fit: contain;
+                transform: translateX(-50%);
+            }
+
+            .revenue-agent-state {
+                bottom: -5%;
+                left: 50%;
+                display: block;
+                width: min(38%, 360px);
+                max-height: 98%;
+                object-fit: contain;
+                image-rendering: pixelated;
+                filter: drop-shadow(6px 9px 0 rgb(17 5 24 / 20%));
+                transform: translateX(-50%);
+            }
+
+            .revenue-agent-state--rocket {
+                bottom: -2%;
+                width: min(44%, 420px);
+            }
+
+            .revenue-media-token {
+                top: 37%;
+                left: 50%;
+                width: min(12%, 112px);
+                aspect-ratio: 1;
+                background-image: url("revenue-stop-v1/media-sprite-v1.png");
+                background-size: 200% 200%;
+                background-position: var(--media-x) var(--media-y);
+                image-rendering: pixelated;
+                filter: drop-shadow(3px 5px 0 rgb(17 5 24 / 18%));
+            }
+
+            .revenue-burst {
+                top: 48%;
+                left: 50%;
+                width: 2.2%;
+                aspect-ratio: 1;
+                border-radius: 50%;
+                background: #ecf874;
+                box-shadow:
+                    -9vw -4vh 0 #f8d86b,
+                    9vw -5vh 0 #8ff0af,
+                    -12vw 5vh 0 #fff2bd,
+                    11vw 7vh 0 #d78cff,
+                    -4vw -10vh 0 #61c380,
+                    4vw 11vh 0 #ecf874;
+                transform: translate(-50%, -50%) scale(0);
+            }
+
+            .playing .revenue-scene--pollen {
+                animation: revenue-pollen-scene var(--revenue-duration) linear
+                    var(--revenue-start) both;
+            }
+
+            .playing .revenue-connection-ring {
+                animation: revenue-ring var(--revenue-duration) steps(18, end)
+                    var(--revenue-start) both;
+            }
+
+            .playing .revenue-scene--models {
+                animation: revenue-model-scene var(--revenue-duration) linear
+                    var(--revenue-start) both;
+            }
+
+            .playing .revenue-agent-state--walk {
+                animation: revenue-agent-walk var(--revenue-duration) linear
+                    var(--revenue-start) both;
+            }
+
+            .playing .revenue-agent-state--confused {
+                animation: revenue-agent-work var(--revenue-duration) linear
+                    var(--revenue-start) both;
+            }
+
+            .playing .revenue-agent-state--rocket {
+                animation: revenue-agent-rocket var(--revenue-duration) linear
+                    var(--revenue-start) both;
+            }
+
+            .playing .revenue-media-token {
+                animation: revenue-media-fall 1.45s cubic-bezier(0.3, 0.7, 0.35, 1)
+                    calc(var(--revenue-start) + var(--media-delay)) both;
+            }
+
+            .playing .revenue-burst--one {
+                animation: revenue-burst 620ms steps(7, end)
+                    calc(var(--revenue-start) + 2.35s) both;
+            }
+
+            .playing .revenue-burst--two {
+                animation: revenue-burst 620ms steps(7, end)
+                    calc(var(--revenue-start) + 5.05s) both;
+            }
+
+            .storage-light {
+                position: absolute;
+                z-index: 3;
+                display: block;
+                aspect-ratio: 1;
+                border-radius: 3px;
+                background: #ecf874;
+                box-shadow: 0 0 0.65vw #ecf874;
+                transform: scale(0.55);
+            }
+
+            .landmark-pulse {
+                position: absolute;
+                z-index: 3;
+                width: 5%;
+                aspect-ratio: 1;
+                border-radius: 50%;
+                background: #ecf874;
+                box-shadow: 0 0 0.8vw #ecf874;
+                animation: landmark-pulse 1.2s steps(3, end) var(--pulse-delay, 0s) infinite;
+            }
+
+            .build-landmark--mcp .landmark-pulse:nth-of-type(1) {
+                top: 17%;
+                left: 49%;
+            }
+
+            .build-landmark--mcp .landmark-pulse:nth-of-type(2) {
+                top: 36%;
+                left: 17%;
+            }
+
+            .build-landmark--mcp .landmark-pulse:nth-of-type(3) {
+                top: 36%;
+                right: 17%;
+            }
+
+            .storage-light {
+                width: 3.8%;
+                border-radius: 50%;
+                animation: storage-light 1.6s steps(2, end) var(--pulse-delay, 0s) infinite;
+            }
+
+            .storage-light:nth-of-type(1) {
+                top: 39%;
+                left: 29%;
+            }
+
+            .storage-light:nth-of-type(2) {
+                top: 39%;
+                left: 48%;
+            }
+
+            .storage-light:nth-of-type(3) {
+                top: 39%;
+                right: 29%;
+            }
+
+            .review-controls {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
                 margin-top: 14px;
+            }
+
+            button {
                 border: 1px solid #ecf874;
                 border-radius: 999px;
-                padding: 10px 16px;
+                padding: 9px 14px;
                 color: #ecf874;
                 background: #110518;
                 font: inherit;
                 cursor: pointer;
             }
 
+            button:hover,
+            button:focus-visible {
+                color: #110518;
+                background: #ecf874;
+                outline: none;
+            }
+
             @keyframes world-travel {
                 from {
                     transform: translateX(0);
+                }
+                70.3448% {
+                    transform: translateX(var(--world-pause));
+                }
+                85.8621% {
+                    transform: translateX(var(--world-pause));
                 }
                 to {
                     transform: translateX(var(--world-end));
                 }
             }
 
-            @keyframes polli-entry {
+            @keyframes robot-welcome-idle {
+                0%,
+                100% {
+                    transform: translateY(0) rotate(-0.5deg);
+                }
+                50% {
+                    transform: translateY(-4px) rotate(0.7deg);
+                }
+            }
+
+            @keyframes nomnom-welcome-idle {
+                0%,
+                100% {
+                    transform: translateY(0) scaleY(1);
+                }
+                50% {
+                    transform: translateY(-5px) scaleY(1.02);
+                }
+            }
+
+            @keyframes landmark-activate {
+                0%,
+                12% {
+                    transform: translateY(0) scale(1) rotate(0);
+                }
+                22% {
+                    transform: translateY(-7px) scale(1.035) rotate(-0.7deg);
+                }
+                31% {
+                    transform: translateY(2px) scale(0.995) rotate(0.45deg);
+                }
+                42%,
+                100% {
+                    transform: translateY(0) scale(1) rotate(0);
+                }
+            }
+
+            @keyframes landmark-seed-burst {
+                0%,
+                15% {
+                    transform: translateY(18px) scale(0.03, 0.08) rotate(-2deg);
+                }
+                34% {
+                    transform: translateY(-12px) scale(1.12, 0.94) rotate(1.2deg);
+                }
+                48% {
+                    transform: translateY(3px) scale(0.94, 1.07) rotate(-0.7deg);
+                }
+                62% {
+                    transform: translateY(-3px) scale(1.035, 0.985) rotate(0.35deg);
+                }
+                76%,
+                100% {
+                    transform: translateY(0) scale(1) rotate(0);
+                }
+            }
+
+            @keyframes landmark-burst-particles {
                 0% {
                     visibility: hidden;
+                    transform: translate(-50%, 50%) scale(0);
+                }
+                1%,
+                38% {
+                    visibility: visible;
+                    transform: translate(-50%, 50%) scale(0.45);
+                }
+                68% {
+                    visibility: visible;
+                    transform: translate(-50%, 35%) scale(1.35);
+                }
+                69%,
+                100% {
+                    visibility: hidden;
+                    transform: translate(-50%, 25%) scale(1.6);
+                }
+            }
+
+            @keyframes revenue-pollen-scene {
+                0% {
+                    visibility: hidden;
+                    transform: translateY(9vh) scale(0.06) rotate(-7deg);
+                }
+                2% {
+                    visibility: visible;
+                    transform: translateY(9vh) scale(0.06) rotate(-7deg);
+                }
+                9% {
+                    transform: translateY(-1vh) scale(1.08) rotate(2deg);
+                }
+                13%,
+                25% {
+                    visibility: visible;
+                    transform: translateY(0) scale(1) rotate(0);
+                }
+                29% {
+                    visibility: visible;
+                    transform: translateY(-4vh) scale(0.05, 0.18) rotate(8deg);
+                }
+                29.1%,
+                100% {
+                    visibility: hidden;
+                    transform: translateY(-4vh) scale(0.05, 0.18) rotate(8deg);
+                }
+            }
+
+            @keyframes revenue-ring {
+                0%,
+                3% {
+                    transform: translateX(-50%) scale(0.15) rotate(0);
+                }
+                11% {
+                    transform: translateX(-50%) scale(1.08) rotate(36deg);
+                }
+                25% {
+                    transform: translateX(-50%) scale(1) rotate(108deg);
+                }
+                29%,
+                100% {
+                    transform: translateX(-50%) scale(0.1) rotate(162deg);
+                }
+            }
+
+            @keyframes revenue-model-scene {
+                0%,
+                27% {
+                    visibility: hidden;
+                    transform: scale(0.06) rotate(-9deg);
+                }
+                27.1% {
+                    visibility: visible;
+                    transform: scale(0.06) rotate(-9deg);
+                }
+                35% {
+                    transform: scale(1.08) rotate(2deg);
+                }
+                39%,
+                55% {
+                    visibility: visible;
+                    transform: scale(1) rotate(0);
+                }
+                59% {
+                    visibility: visible;
+                    transform: scale(0.04) rotate(12deg);
+                }
+                59.1%,
+                100% {
+                    visibility: hidden;
+                    transform: scale(0.04) rotate(12deg);
+                }
+            }
+
+            @keyframes revenue-agent-walk {
+                0%,
+                57% {
+                    visibility: hidden;
+                    transform: translateX(75vw) translateY(0) rotate(0);
+                }
+                57.1% {
+                    visibility: visible;
+                    transform: translateX(75vw) translateY(0) rotate(0);
+                }
+                62% {
+                    transform: translateX(18vw) translateY(-1vh) rotate(-2deg);
+                }
+                66% {
+                    transform: translateX(-50%) translateY(0) rotate(1deg);
+                }
+                68.9% {
+                    visibility: visible;
+                    transform: translateX(-50%) translateY(0) rotate(-1deg);
+                }
+                69%,
+                100% {
+                    visibility: hidden;
+                    transform: translateX(-50%) translateY(0) rotate(-1deg);
+                }
+            }
+
+            @keyframes revenue-agent-work {
+                0%,
+                68.9% {
+                    visibility: hidden;
+                    transform: translateX(-50%) translateY(0) rotate(0);
+                }
+                69%,
+                83% {
+                    visibility: visible;
+                    transform: translateX(-50%) translateY(0) rotate(0);
+                }
+                75% {
+                    transform: translateX(-50%) translateY(-1vh) rotate(-2deg);
+                }
+                82% {
+                    transform: translateX(-50%) translateY(0) rotate(2deg);
+                }
+                83.1%,
+                100% {
+                    visibility: hidden;
+                    transform: translateX(-50%) translateY(0) rotate(2deg);
+                }
+            }
+
+            @keyframes revenue-agent-rocket {
+                0%,
+                82.9% {
+                    visibility: hidden;
+                    transform: translateX(-50%) translateY(2vh) rotate(-8deg) scale(0.96);
+                }
+                83% {
+                    visibility: visible;
+                    transform: translateX(-50%) translateY(2vh) rotate(-8deg) scale(0.96);
+                }
+                88% {
+                    transform: translateX(-43%) translateY(-2vh) rotate(4deg) scale(1.04);
+                }
+                100% {
+                    visibility: visible;
+                    transform: translateX(70vw) translateY(-60vh) rotate(18deg) scale(0.72);
+                }
+            }
+
+            @keyframes revenue-media-fall {
+                0% {
+                    visibility: hidden;
+                    transform: translate(calc(-50% + var(--media-offset)), -4vh) scale(0.2)
+                        rotate(0);
+                }
+                1%,
+                86% {
+                    visibility: visible;
+                }
+                18% {
+                    transform: translate(calc(-50% + var(--media-offset)), -9vh) scale(1.08)
+                        rotate(-8deg);
+                }
+                86% {
+                    transform: translate(calc(-50% + var(--media-offset)), 26vh) scale(0.88)
+                        rotate(16deg);
+                }
+                86.1%,
+                100% {
+                    visibility: hidden;
+                    transform: translate(calc(-50% + var(--media-offset)), 26vh) scale(0.1)
+                        rotate(18deg);
+                }
+            }
+
+            @keyframes revenue-burst {
+                0% {
+                    visibility: hidden;
+                    transform: translate(-50%, -50%) scale(0);
+                }
+                1%,
+                70% {
+                    visibility: visible;
+                }
+                55% {
+                    transform: translate(-50%, -50%) scale(1.15) rotate(90deg);
+                }
+                70.1%,
+                100% {
+                    visibility: hidden;
+                    transform: translate(-50%, -50%) scale(1.6) rotate(150deg);
+                }
+            }
+
+            @keyframes terminal-glow {
+                0%,
+                100% {
+                    filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 16%)) brightness(1);
+                }
+                50% {
+                    filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 16%)) brightness(1.08);
+                }
+            }
+
+            @keyframes wallet-glow {
+                0%,
+                100% {
+                    filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 16%)) brightness(1);
+                }
+                50% {
+                    filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 16%)) brightness(1.08)
+                        saturate(1.05);
+                }
+            }
+
+            @keyframes connector-glow {
+                0%,
+                100% {
+                    filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 16%)) brightness(1);
+                }
+                50% {
+                    filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 16%)) brightness(1.1)
+                        saturate(1.06);
+                }
+            }
+
+            @keyframes storage-breathe {
+                0%,
+                100% {
+                    filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 16%)) brightness(1);
+                }
+                50% {
+                    filter: drop-shadow(5px 8px 0 rgb(17 5 24 / 16%)) brightness(1.06);
+                }
+            }
+
+            @keyframes landmark-pulse {
+                0%,
+                100% {
+                    transform: scale(0.65);
+                    box-shadow: 0 0 0.25vw #ecf874;
+                }
+                50% {
+                    transform: scale(1.15);
+                    box-shadow: 0 0 0.9vw #ecf874;
+                }
+            }
+
+            @keyframes storage-light {
+                0%,
+                100% {
+                    transform: scale(0.5);
+                    background-color: #b8efb2;
+                    box-shadow: 0 0 0.15vw #b8efb2;
+                }
+                50% {
+                    transform: scale(1.15);
+                    background-color: #ecf874;
+                    box-shadow: 0 0 0.8vw #ecf874;
+                }
+            }
+
+            @keyframes polli-entry {
+                0% {
+                    visibility: visible;
                     left: var(--polli-entry-left);
                     bottom: var(--polli-entry-bottom);
                     width: var(--polli-entry-width);
                 }
-                0.1% {
-                    visibility: visible;
+                20% {
+                    left: var(--polli-curve-one-left);
+                    bottom: 39%;
+                    width: var(--polli-curve-one-width);
                 }
-                45% {
-                    left: 26%;
-                    bottom: 29%;
-                    width: clamp(64px, 9.5%, 104px);
+                43% {
+                    left: var(--polli-curve-two-left);
+                    bottom: 35%;
+                    width: var(--polli-curve-two-width);
+                }
+                68% {
+                    left: var(--polli-curve-three-left);
+                    bottom: 30.5%;
+                    width: var(--polli-curve-three-width);
+                }
+                84% {
+                    left: var(--polli-curve-four-left);
+                    bottom: 27.5%;
+                    width: var(--polli-curve-four-width);
                 }
                 100% {
                     visibility: visible;
@@ -477,17 +1265,73 @@
                 5% {
                     transform: translate(0, 0) rotate(0);
                 }
-                25% {
-                    transform: translate(0, -72vh) rotate(-4deg);
-                }
-                72% {
-                    transform: translate(0, -72vh) rotate(2deg);
+                20% {
+                    transform: translate(-16vw, -19vh) rotate(-4deg);
                 }
                 88% {
-                    transform: translate(0, -28vh) rotate(4deg);
+                    transform: translate(-15vw, -18vh) rotate(2deg);
+                }
+                96% {
+                    transform: translate(-6vw, -10vh) rotate(4deg);
                 }
                 100% {
                     transform: translate(0, 0) rotate(0);
+                }
+            }
+
+            @keyframes polli-start-flight {
+                0%,
+                4% {
+                    transform: translate(0, 0) rotate(0);
+                }
+                18% {
+                    transform: translate(-9vw, -12vh) rotate(-3deg);
+                }
+                42% {
+                    transform: translate(-10vw, -13vh) rotate(2deg);
+                }
+                68%,
+                76% {
+                    transform: translate(-9vw, -11vh) rotate(-2deg);
+                }
+                90%,
+                100% {
+                    transform: translate(0, 0) rotate(0);
+                }
+            }
+
+            @keyframes polli-build-flight {
+                0%,
+                6% {
+                    transform: translate(0, 0) rotate(0);
+                }
+                34% {
+                    transform: translate(0, 5vh) rotate(3deg);
+                }
+                72% {
+                    transform: translate(0, 13vh) rotate(-3deg);
+                }
+                88% {
+                    transform: translate(0, 10vh) rotate(2deg);
+                }
+                100% {
+                    transform: translate(0, 11vh) rotate(0);
+                }
+            }
+
+            @keyframes polli-revenue-rise {
+                0%,
+                8% {
+                    transform: translate(0, 11vh) rotate(0);
+                }
+                52% {
+                    transform: translate(-19vw, -13vh) rotate(-3deg);
+                }
+                76% {
+                    transform: translate(-15vw, -9vh) rotate(2deg);
+                }
+                100% {
+                    transform: translate(-16vw, -10vh) rotate(0);
                 }
             }
 
@@ -521,6 +1365,28 @@
                 }
             }
 
+            @keyframes ground-build-layer {
+                0%,
+                5% {
+                    transform: scale(1);
+                }
+                5.01%,
+                100% {
+                    transform: scale(0);
+                }
+            }
+
+            @keyframes flight-build-layer {
+                0%,
+                5% {
+                    transform: scale(0);
+                }
+                5.01%,
+                100% {
+                    transform: scale(1);
+                }
+            }
+
             @keyframes shadow-layer {
                 0%,
                 4%,
@@ -530,6 +1396,17 @@
                 }
                 4.01%,
                 94.99% {
+                    visibility: hidden;
+                }
+            }
+
+            @keyframes shadow-build-layer {
+                0%,
+                5% {
+                    visibility: visible;
+                }
+                5.01%,
+                100% {
                     visibility: hidden;
                 }
             }
@@ -775,6 +1652,32 @@
                 }
             }
 
+            @keyframes pollen-revenue {
+                0% {
+                    visibility: hidden;
+                    transform: translate(0, 0) scale(0.25) rotate(0);
+                }
+                0.1%,
+                70% {
+                    visibility: visible;
+                }
+                34% {
+                    transform: translate(var(--earn-mid-x), -11vh) scale(1.05) rotate(100deg);
+                }
+                70% {
+                    transform: translate(var(--earn-mid-x), 10vh) scale(0.82) rotate(220deg);
+                }
+                92% {
+                    visibility: visible;
+                    transform: translate(var(--earn-target-x), 30vh) scale(0.42) rotate(340deg);
+                }
+                92.1%,
+                100% {
+                    visibility: hidden;
+                    transform: translate(var(--earn-target-x), 30vh) scale(0.1) rotate(360deg);
+                }
+            }
+
             @keyframes wallet-spark {
                 0%,
                 83% {
@@ -830,7 +1733,7 @@
             @keyframes capability-cross {
                 0% {
                     visibility: hidden;
-                    transform: translateX(110vw);
+                    transform: translateX(82vw);
                 }
                 0.1%,
                 99.9% {
@@ -893,9 +1796,17 @@
 
             @media (max-width: 600px) {
                 .polli {
-                    --polli-entry-left: 16%;
-                    --polli-entry-bottom: 31%;
-                    --polli-entry-width: 12%;
+                    --polli-entry-left: 21%;
+                    --polli-entry-bottom: 42%;
+                    --polli-entry-width: 5.5%;
+                    --polli-curve-one-left: 20%;
+                    --polli-curve-one-width: 7%;
+                    --polli-curve-two-left: 22%;
+                    --polli-curve-two-width: 10%;
+                    --polli-curve-three-left: 25%;
+                    --polli-curve-three-width: 13%;
+                    --polli-curve-four-left: 28%;
+                    --polli-curve-four-width: 16%;
                     --polli-rest-left: 30%;
                     --polli-rest-width: 18%;
                 }
@@ -928,6 +1839,10 @@
                     width: 94%;
                 }
 
+                .build-landmark {
+                    width: clamp(155px, var(--landmark-size, 43vw), 280px);
+                }
+
             }
         </style>
     </head>
@@ -937,10 +1852,22 @@
                 <img
                     class="world"
                     id="world"
-                    src="phase-refactor-v1/worlds-panorama-with-welcome.png"
+                    src="opening-v1/worlds-panorama-with-portal.png"
                     alt="Polli walks continuously through the Pollinations worlds"
                 />
                 <div class="light"></div>
+
+                <div class="opening-props" id="opening-props" aria-label="Pollinations welcome">
+                    <div class="opening-friend opening-friend--robot">
+                        <img
+                            src="opening-v1/robot-welcome.png"
+                            alt="Computer Head welcomes Polli"
+                        />
+                    </div>
+                    <div class="opening-friend opening-friend--nomnom">
+                        <img src="opening-v1/nomnom-welcome.png" alt="Nom Nom welcomes Polli" />
+                    </div>
+                </div>
 
                 <img
                     class="phase-banner"
@@ -998,10 +1925,78 @@
                     src="phase-refactor-v1/generate-ai-media-banner.png"
                     alt="Generate AI Media"
                 />
+                <img
+                    class="phase-banner"
+                    style="--phase-start: var(--build-start); --phase-duration: var(--build-duration)"
+                    src="build-your-way-v1/build-your-way-banner.png"
+                    alt="Build Your Way"
+                />
+                <img
+                    class="phase-banner"
+                    style="
+                        --phase-start: var(--revenue-banner-start);
+                        --phase-duration: var(--revenue-banner-duration);
+                    "
+                    src="publish-earn-v1/connect-publish-earn-banner-v1.png"
+                    alt="Connect, Publish, Earn"
+                />
+                <div class="pollen-stream" id="revenue-pollen-stream" aria-hidden="true"></div>
+                <div class="revenue-stage" aria-label="Connect, Publish, Earn showcase">
+                    <div class="revenue-scene revenue-scene--pollen">
+                        <span class="revenue-connection-ring" aria-hidden="true"></span>
+                        <img
+                            class="revenue-scene__asset"
+                            src="build-your-way-v1/pollen-wallet-v1.png"
+                            alt="Pollen Wallet connecting every Pollinations-powered creation"
+                        />
+                    </div>
+                    <div class="revenue-scene revenue-scene--models">
+                        <img
+                            class="revenue-scene__asset"
+                            src="revenue-stop-v1/community-models-v1.png"
+                            alt="Community Models connected into one shared network"
+                        />
+                    </div>
+                    <div class="revenue-scene revenue-scene--agent" aria-label="Agent creating media">
+                        <img
+                            class="revenue-agent-state revenue-agent-state--walk"
+                            src="revenue-stop-v1/agent-walk-v1.png"
+                            alt="Giant Agent Robot walking into the scene"
+                        />
+                        <img
+                            class="revenue-agent-state revenue-agent-state--confused"
+                            src="revenue-stop-v1/agent-confused-v1.png"
+                            alt="Agent Robot creating media"
+                        />
+                        <img
+                            class="revenue-agent-state revenue-agent-state--rocket"
+                            src="revenue-stop-v1/agent-rocket-v1.png"
+                            alt="Agent Robot launching into the sky"
+                        />
+                        <i
+                            class="revenue-media-token"
+                            style="--media-x: 0%; --media-y: 0%; --media-offset: -15vw; --media-delay: 6.55s"
+                        ></i>
+                        <i
+                            class="revenue-media-token"
+                            style="--media-x: 100%; --media-y: 0%; --media-offset: -5vw; --media-delay: 6.75s"
+                        ></i>
+                        <i
+                            class="revenue-media-token"
+                            style="--media-x: 0%; --media-y: 100%; --media-offset: 5vw; --media-delay: 6.95s"
+                        ></i>
+                        <i
+                            class="revenue-media-token"
+                            style="--media-x: 100%; --media-y: 100%; --media-offset: 15vw; --media-delay: 7.15s"
+                        ></i>
+                    </div>
+                    <i class="revenue-burst revenue-burst--one" aria-hidden="true"></i>
+                    <i class="revenue-burst revenue-burst--two" aria-hidden="true"></i>
+                </div>
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 20.8s;
+                        --friend-start: 12.8s;
                         --friend-size: 21%;
                         --friend-ground-offset: 0.25vw;
                     "
@@ -1026,7 +2021,7 @@
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 21.65s;
+                        --friend-start: 13.65s;
                         --friend-size: 22%;
                         --friend-ground-offset: 0.8vw;
                     "
@@ -1050,7 +2045,7 @@
                 </div>
                 <div
                     class="capability-friend"
-                    style="--friend-start: 22.5s; --friend-size: 20%"
+                    style="--friend-start: 14.5s; --friend-size: 20%"
                     aria-label="Audio capability character walking toward Polli"
                 >
                     <img
@@ -1072,7 +2067,7 @@
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 23.35s;
+                        --friend-start: 15.35s;
                         --friend-size: 19%;
                         --friend-ground-offset: -0.2vw;
                     "
@@ -1097,7 +2092,7 @@
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 24.2s;
+                        --friend-start: 16.2s;
                         --friend-size: 20%;
                         --friend-ground-offset: 1vw;
                     "
@@ -1121,7 +2116,7 @@
                 </div>
                 <div
                     class="capability-friend"
-                    style="--friend-start: 25.05s; --friend-size: 21%"
+                    style="--friend-start: 17.05s; --friend-size: 21%"
                     aria-label="Embeddings capability character walking toward Polli"
                 >
                     <img
@@ -1143,7 +2138,7 @@
                 <div
                     class="capability-friend"
                     style="
-                        --friend-start: 25.9s;
+                        --friend-start: 17.9s;
                         --friend-size: 21%;
                         --friend-ground-offset: 0.75vw;
                     "
@@ -1165,6 +2160,82 @@
                         alt=""
                     />
                 </div>
+                <div class="world-props" id="world-props" aria-label="Build Your Way landmarks">
+                    <div
+                        class="build-landmark build-landmark--wallet build-landmark--burst"
+                        data-center-time="26"
+                        style="
+                            --landmark-size: 30vw;
+                            --landmark-bottom: 23.5%;
+                        "
+                    >
+                        <div class="build-landmark__scene">
+                            <img
+                                class="build-landmark__asset"
+                                src="build-your-way-v1/pollen-wallet-v1.png"
+                                alt="Pollen Wallet embedded login and balances"
+                            />
+                            <span class="landmark-burst" aria-hidden="true"></span>
+                        </div>
+                    </div>
+                    <div
+                        class="build-landmark build-landmark--cli build-landmark--burst"
+                        data-center-time="28.3"
+                        style="
+                            --landmark-size: 30vw;
+                            --landmark-bottom: 23.5%;
+                        "
+                    >
+                        <div class="build-landmark__scene">
+                            <img
+                                class="build-landmark__asset"
+                                src="build-your-way-v1/cli-totem-v2.png"
+                                alt="CLI terminal totem"
+                            />
+                            <span class="landmark-burst" aria-hidden="true"></span>
+                        </div>
+                    </div>
+                    <div
+                        class="build-landmark build-landmark--mcp build-landmark--burst"
+                        data-center-time="30.6"
+                        style="
+                            --landmark-size: 30vw;
+                            --landmark-bottom: 23.5%;
+                        "
+                    >
+                        <div class="build-landmark__scene">
+                            <img
+                                class="build-landmark__asset"
+                                src="build-your-way-v1/mcp-hub-v2.png"
+                                alt="MCP connector flower hub"
+                            />
+                            <span class="landmark-burst" aria-hidden="true"></span>
+                            <i class="landmark-pulse" style="--pulse-delay: 0s"></i>
+                            <i class="landmark-pulse" style="--pulse-delay: 0.2s"></i>
+                            <i class="landmark-pulse" style="--pulse-delay: 0.4s"></i>
+                        </div>
+                    </div>
+                    <div
+                        class="build-landmark build-landmark--storage build-landmark--burst"
+                        data-center-time="32.9"
+                        style="
+                            --landmark-size: 30vw;
+                            --landmark-bottom: 23.5%;
+                        "
+                    >
+                        <div class="build-landmark__scene">
+                            <img
+                                class="build-landmark__asset"
+                                src="build-your-way-v1/media-storage-v1.png"
+                                alt="Media Storage archive for image, audio and video"
+                            />
+                            <span class="landmark-burst" aria-hidden="true"></span>
+                            <i class="storage-light" style="--pulse-delay: 0s"></i>
+                            <i class="storage-light" style="--pulse-delay: 0.2s"></i>
+                            <i class="storage-light" style="--pulse-delay: 0.4s"></i>
+                        </div>
+                    </div>
+                </div>
                 <div class="polli" aria-label="Polli walking">
                     <div class="polli__ground">
                         <div class="polli__sprite"></div>
@@ -1175,23 +2246,39 @@
                     </div>
                 </div>
             </div>
-            <button type="button" id="replay">Replay progress</button>
+            <nav class="review-controls" aria-label="Journey review controls">
+                <button type="button" data-phase-time="0">Start Free</button>
+                <button type="button" data-phase-var="--gen-start">Generate AI Media</button>
+                <button type="button" data-phase-var="--build-start">Build Your Way</button>
+                <button type="button" data-phase-var="--revenue-transition-start">
+                    Connect · Publish · Earn
+                </button>
+            </nav>
         </main>
 
         <script>
             const viewport = document.querySelector("#viewport");
             const world = document.querySelector("#world");
-            const replay = document.querySelector("#replay");
+            const openingProps = document.querySelector("#opening-props");
+            const worldProps = document.querySelector("#world-props");
+            const buildLandmarks = [...document.querySelectorAll(".build-landmark")];
+            const phaseControls = [
+                ...document.querySelectorAll("[data-phase-time], [data-phase-var]"),
+            ];
             const pollenStream = document.querySelector("#pollen-stream");
             const questPollenStream = document.querySelector("#quest-pollen-stream");
+            const revenuePollenStream = document.querySelector("#revenue-pollen-stream");
             const fullJourneySeconds = 65;
-            const previewSeconds = 41;
-            const arrivalHoldMs = 450;
+            const movingPreviewSeconds = 49;
+            const pauseStartSeconds = 40.8;
+            const arrivalHoldMs = 1000;
+            const arrivalDurationMs = 4200;
             let arrivalTimer;
+            let playTimer;
 
             const questRewardBursts = [
-                { start: 7, count: 5, spacing: 0.14 },
-                { start: 9, count: 14, spacing: 0.1 },
+                { start: 5.3, count: 5, spacing: 0.14 },
+                { start: 7.2, count: 14, spacing: 0.1 },
             ];
 
             for (const burst of questRewardBursts) {
@@ -1208,8 +2295,8 @@
                 }
             }
 
-            const mediaFirstCenter = 25.1;
-            const mediaLastCenter = 30.2;
+            const mediaFirstCenter = 16.1;
+            const mediaLastCenter = 21.2;
             const pollenSpendDuration = 2.1;
             const pollenStep = 0.55;
             const pollenBursts = Math.floor(
@@ -1243,29 +2330,84 @@
                 }
             }
 
+            for (const beatStart of [1.05, 3.55, 6.35]) {
+                for (let index = 0; index < 6; index += 1) {
+                    for (const account of ["paid", "quest"]) {
+                        const grain = document.createElement("i");
+                        grain.className = `pollen-grain pollen-grain--revenue${
+                            account === "paid" ? " pollen-grain--paid" : ""
+                        }`;
+                        grain.style.setProperty(
+                            "--pollen-delay",
+                            `${pauseStartSeconds + beatStart + index * 0.12 + (account === "quest" ? 0.06 : 0)}s`,
+                        );
+                        grain.style.setProperty(
+                            "--earn-target-x",
+                            account === "paid" ? "-45vw" : "-32vw",
+                        );
+                        grain.style.setProperty(
+                            "--earn-mid-x",
+                            account === "paid" ? "-27vw" : "-19vw",
+                        );
+                        revenuePollenStream.append(grain);
+                    }
+                }
+            }
+
             function setJourney() {
                 const viewportWidth = viewport.getBoundingClientRect().width;
                 const worldWidth = world.getBoundingClientRect().width;
                 const maximumTravel = Math.max(0, worldWidth - viewportWidth);
                 const pixelsPerSecond = maximumTravel / fullJourneySeconds;
 
+                openingProps.style.width = `${worldWidth}px`;
+                worldProps.style.width = `${worldWidth}px`;
+                for (const landmark of buildLandmarks) {
+                    const centerTime = Number(landmark.dataset.centerTime);
+                    landmark.style.setProperty("--landmark-center", `${centerTime}s`);
+                    landmark.style.left = `${pixelsPerSecond * centerTime + viewportWidth * 0.65}px`;
+                }
+
                 viewport.style.setProperty(
                     "--world-end",
-                    `${-(pixelsPerSecond * previewSeconds)}px`,
+                    `${-(pixelsPerSecond * movingPreviewSeconds)}px`,
+                );
+                viewport.style.setProperty(
+                    "--world-pause",
+                    `${-(pixelsPerSecond * pauseStartSeconds)}px`,
                 );
             }
 
             function play() {
+                viewport.classList.remove("arriving");
                 viewport.classList.remove("playing");
                 void viewport.offsetWidth;
                 viewport.classList.add("playing");
             }
 
+            function playFrom(seconds) {
+                window.clearTimeout(arrivalTimer);
+                window.clearTimeout(playTimer);
+                viewport.classList.remove("arriving");
+                setJourney();
+                play();
+                window.requestAnimationFrame(() => {
+                    for (const animation of viewport.getAnimations({ subtree: true })) {
+                        animation.currentTime = seconds * 1000;
+                    }
+                });
+            }
+
             function begin() {
                 window.clearTimeout(arrivalTimer);
+                window.clearTimeout(playTimer);
+                viewport.classList.remove("arriving");
                 viewport.classList.remove("playing");
                 setJourney();
-                arrivalTimer = window.setTimeout(play, arrivalHoldMs);
+                arrivalTimer = window.setTimeout(() => {
+                    viewport.classList.add("arriving");
+                    playTimer = window.setTimeout(play, arrivalDurationMs);
+                }, arrivalHoldMs);
             }
 
             if (world.complete) {
@@ -1274,7 +2416,22 @@
                 world.addEventListener("load", begin);
             }
             window.addEventListener("resize", setJourney);
-            replay.addEventListener("click", begin);
+            for (const control of phaseControls) {
+                control.addEventListener("click", () => {
+                    const seconds = control.dataset.phaseVar
+                        ? Number.parseFloat(
+                              getComputedStyle(document.documentElement).getPropertyValue(
+                                  control.dataset.phaseVar,
+                              ),
+                          )
+                        : Number(control.dataset.phaseTime);
+                    if (seconds === 0) {
+                        begin();
+                    } else {
+                        playFrom(seconds);
+                    }
+                });
+            }
         </script>
     </body>
 </html>

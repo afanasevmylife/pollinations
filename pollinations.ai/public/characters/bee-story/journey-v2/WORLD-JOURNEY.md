@@ -10,14 +10,13 @@ This document records the current direction. It distinguishes decisions that are
 
 ## Story structure
 
-The journey has six worlds, always in this order:
+The journey has five narrative worlds, always in this order:
 
-1. **Welcome** — introduce Pollinations and invite the viewer into the world.
-2. **Start Free** — show that people can begin with Quest Pollen.
-3. **Building Tools** — introduce the tools and infrastructure used to build.
-4. **Publish** — show that apps, models, and agents can be published.
-5. **Earn** — connect user spending, BYOP, publishing, and developer earnings.
-6. **Build Together** — finish with open source, creativity, and the wider community.
+1. **Start Free** — welcome the viewer through the Pollinations gate, then show that everyone can begin with Quest Pollen.
+2. **Building Tools** — introduce the tools and infrastructure used to build.
+3. **Publish** — show that apps, models, and agents can be published.
+4. **Earn** — connect user spending, BYOP, publishing, and developer earnings.
+5. **Build Together** — finish with open source, creativity, and the wider community.
 
 The worlds are narrative chapters, not visible title cards. Their meaning will eventually come from scenery, character actions, and animated objects.
 
@@ -29,7 +28,7 @@ The worlds are narrative chapters, not visible title cards. Their meaning will e
 - The landscape moves continuously behind Polli; the experience must not feel like six slides.
 - The walk follows a full day, from sunrise to a warm starry night.
 - The world stays visually minimal so feature elements can later appear, animate, and disappear without creating clutter.
-- No product cards, captions, banners, labels, wallets, coins, NomNom, robot, or feature overlays during the background-world pass.
+- Keep the background itself free of product cards and feature overlays. The opening's separate Nom Nom and Computer Head greeters are the only mascot exception in the arrival landscape.
 - The bottom explanatory banner from earlier versions should not return. Important ideas must ultimately exist inside the animated composition.
 - First validate the worlds and their continuity. Add feature overlays only afterward.
 
@@ -55,13 +54,17 @@ Current approved sources:
 
 | Scene | Source of truth |
 |---|---|
-| Fixed arrival world | `phase-refactor-v1/welcome-world-source.png` embedded in the panorama |
+| Start Free arrival | `opening-v1/worlds-panorama-with-portal.png`; greeters in `opening-v1/`; Polli entrance and timing in `journey-progress.html` |
 | Start Free phase | `phase-refactor-v1/everyone-starts-free-banner.png`; message frames in `start-free-v3/`; free-standing Pollen-pot frames in `start-free-v4/`; timing and reusable Pollen circulation in `journey-progress.html` |
 | Generate AI Media phase | `phase-refactor-v1/generate-ai-media-banner.png` and the seven capability friends in `capability-parade-v2/` |
 
 Current phase-title grammar:
 
-- The website opens on the fixed Welcome world for 1.2 seconds. Its title is part of the panorama, not a separate overlay.
+- Start Free opens on a fixed one-second establishing hold. Polli then spends 4.2 seconds following the curved road from deep inside the gate to her foreground position while the panorama remains still.
+- The panorama begins its one constant movement only after Polli completes that entrance. `EVERYONE STARTS FREE` starts dropping 0.15 seconds later, with no empty walking gap.
+- The entrance is a road-spanning monument whose crown reinterprets only the botanical Pollinations mark. It contains no wordmark, brand name, welcome copy, UI, or floating panel.
+- The road visibly passes through the arch. Polli emerges through it when movement begins; Computer Head and Nom Nom wait at opposite sides with small idle motions and leave naturally with the world.
+- The welcome is communicated by the place and characters. `EVERYONE STARTS FREE` is the first written message.
 - Later phase titles use one shared wide, shallow rope banner design.
 - Each banner enters physically from above, settles high in the sky with a short bounce, stays for its phase, and retracts upward. Opacity never changes.
 - `EVERYONE STARTS FREE` introduces one compact floating-island message that moves through `COMPLETE A QUEST`, `EARN YOUR FIRST POLLEN`, and `COMPLETE MORE QUESTS / KEEP EARNING POLLEN`.
@@ -71,19 +74,57 @@ Current phase-title grammar:
 - The two-pot wallet stays close to the bottom-left edge so later developer earnings can reuse it. It does not open, close, fade, or change position between chapters; only pot levels and circulating Pollen animate.
 - The wallet pops in with `EARN YOUR FIRST POLLEN`, not before or after it. Start Free then sends Quest Pollen into the green pot.
 - Quest rewards use a five-grain first burst, followed by a denser fourteen-grain burst for continued Quests.
+- The first Quest burst reaches the green pot as its low state appears; the larger burst begins filling it before the high state appears. Shortening Start Free must shift these reward delays with the phase.
 - During the Generate AI Media parade, the Paid and Quest pots continuously send their matching gold and green Pollen upward toward the capability friends. The stream begins only as the first friend arrives and ends with the final friend. Airborne Pollen is always transient animation and is never baked into a wallet state image.
 - More precisely, media spending begins when the first capability friend reaches the screen center and ends when the last friend reaches the center. No Pollen may continue after that event window.
 - Spent Pollen terminates inside the capability friends' body-and-prop zone. It never flies into empty sky.
 - `@pollinations/ui` wallet tokens and icons are the canonical source for wallet identity. Older generated-media prompts must not override them.
 - `GENERATE AI MEDIA` replaces `GEN API` and remains for the entire capability sequence.
 - The Generate AI Media banner exits only after Text, Image, Audio, Video, Real-time, Embeddings, and Agents have passed.
-- Polli walks through the Welcome and Start Free sections. She begins flying out only when the first Generate AI Media friend reaches the frame, remains offscreen through the parade, and returns after the final friend has entered. Her landing follows the final friend's center crossing.
+- Start Free begins with the welcome frame at time zero. Its banner yields directly to Generate AI Media while Polli uses her existing alternating wing frames to descend into one brief walking step.
+- Polli's Start Free descent completes through its own continuous curve before Generate AI Media takes control of her transform and visibility layers. Its duration is derived from the next flight's start time, so the two flights meet at one matching frame and never overlap or flash.
+- Generate AI Media starts as Polli reaches the road: its banner drops immediately after the landing, Polli lifts first, and the complete friend parade appears directly at the right edge. Polli then flies to the upper-left for the parade; every media event, including the Pollen-spending stream, moves together if this chapter is retimed.
+- Polli remains in the upper-left until the last capability friend passes, then returns to the road only briefly. Build Your Way follows immediately; never leave an empty panorama between the two chapters.
+- The local review page keeps its phase controls outside the presentation frame. Start Free begins at time zero and includes the welcome frame; it is not a separate chapter. Each button reconstructs the complete animation state at Start Free, Generate AI Media, Build Your Way, or Connect · Publish · Earn and continues playback from that point.
+- Pollen spending keeps its exact approved delay relative to the parade: it begins at the first friend's center crossing and ends at the final friend's center crossing. Moving the parade earlier moves the complete Pollen stream earlier without changing its internal rhythm.
+- At the approved media-flight moment, Polli flies into a visible top-left hover instead of leaving the frame. She remains there while the media group passes, then starts returning after the final friend has arrived.
+- After landing, Polli uses her existing alternating wing frames to fly physically downward below the road as Build Your Way begins. She stays visible and hovering along the lower edge without being clipped or covering the tool landmarks.
 - These seven items form one capability parade, not seven separate slides.
 - Capability names are integrated into carried placards and props.
 - Pollinations-universe characters carry the capabilities toward Polli from the right while the world keeps its constant speed.
 - Every capability friend enters from screen-right, faces left, and travels left toward Polli, opposite Polli's rightward journey. Forward-facing or right-facing character frames are invalid.
 - Several capabilities may share the frame. Empty pauses between isolated features are a regression.
 - Every capability friend shares one visible foot-contact line on the road. Transparent canvas padding must be compensated so no character floats above or sinks below the path.
+
+### Build Your Way
+
+- `BUILD YOUR WAY` follows the media parade after a short breathing distance. It uses the same physical rope-banner entrance as the previous phases.
+- Pollen Wallet, CLI, MCP, and Media Storage are landmarks attached to the world layer. They never fade, float independently, or move at a speed different from the panorama.
+- Each landmark activates in the right-hand presentation zone, then approaches Polli as the world carries it left. This keeps Polli from covering the feature name.
+- Pollen Wallet arrives first; CLI, MCP, and Media Storage retain their approved positions on the same tight 2.3-second rhythm. Removing a landmark closes its complete 2.3-second slot instead of leaving an empty screen.
+- All four landmarks use one shared compact footprint and the same perceived scale. No item becomes a larger chapter card or destination screen.
+- Every landmark integrates one large, readable wooden name plaque that occupies roughly one quarter of the composition.
+- Each landmark's `data-center-time` is the single timing source for both its world position and activation. Never duplicate that value in inline CSS.
+- Pollen Wallet, CLI, MCP, and Media Storage enter with one fast physical seed burst: compressed point, upward growth, landing overshoot, and a brief geometric sparkle. They then remain fully present and leave only with the moving world. The effect uses CSS geometry and one helper element, not extra image frames or opacity fades.
+- Pollen Wallet is the universal user-wallet doorway: people connect with Pollinations and spend their own Paid or Quest Pollen through any Pollinations-powered creation, including an app, tool, agent, device, terminal, automation, or headless workflow. Never frame it as requiring a frontend. Its public label is `POLLEN WALLET`; do not expose the internal BYOP term in the journey.
+- CLI is a compact terminal shrine with a pulsing screen.
+- MCP is a cheerful rounded connector-flower hub with three tool buds. It must never become a twisted tree, bare branch, ominous crystal, ghostly face, or dark device.
+- Media Storage is one compact living archive. Its plaque reads `MEDIA STORAGE`, with three large bays for image, audio, and video. It does not imply app, model, or agent hosting.
+- Build Your Way contains no Nom Nom or Computer Head sprites. The landmarks carry the product identity without extra mascots.
+- Landmark animation uses physical bounce, screen light, sequential connector pulses, and media-bay lights. Opacity is never used to enter or exit.
+
+### Connect · Publish · Earn
+
+- `CONNECT · PUBLISH · EARN` follows Build Your Way and bridges the Publish and Earn worlds. It uses the shared rope-banner entrance and remains one continuous landscape sequence.
+- Build Your Way keeps its approved exit timing. After its banner has left, the world travels one complete viewport from the Media Storage landmark before Pollen Wallet may appear. Polli rises first, then the `CONNECT · PUBLISH · EARN` banner lands, then the revenue showcase begins.
+- The camera stops once for nine seconds in the golden-hour world. Nothing in the background jumps or drifts during the hold, and the camera resumes at exactly its prior speed afterward.
+- Three deliberately different center-stage beats replace one another: Pollen Wallet connection, Community Models aggregation, then a giant Agent Robot. This is not another roadside-landmark parade.
+- Pollen Wallet returns as the universal connective mechanism, not a second product: any app, tool, agent, device, terminal, automation, or headless workflow can connect a user's Paid or Quest Pollen without requiring a frontend.
+- Community Models is one living network assembled from many visibly different model beings. The connected organism physically grows into place, then compresses and bursts away.
+- The Agent Robot walks in from screen-right toward screen-left, pauses in a confused working pose, creates falling text, image, audio, and video objects, then ignites its backpack and rockets offscreen.
+- Every beat sends both Paid and Quest Pollen into the matching persistent pots at lower-left. The pollen colors and destinations never swap.
+- Scenes enter through spring growth, assembly, walking, or ignition and leave through collapse, burst, or flight. Opacity fades, cards, app windows, humans, and cross-dissolves are forbidden.
+- Polli rises from her low Build Your Way hover into the upper-left and remains visibly engaged while the three beats replace one another.
 
 Current validation gate:
 
@@ -240,13 +281,12 @@ These belong to the next phase, after the background journey is approved.
 
 ### Building Tools
 
-- Gen API.
-- Media hosting.
-- SDK.
+- Generate AI Media.
+- Media Storage.
+- CLI.
 - MCP.
-- App hosting.
 - Wallet, with greater visual prominence.
-- Broader promise: host what you build, including apps, models, agents, and media.
+- App hosting is deliberately omitted until the product is ready.
 
 ### Publish
 
