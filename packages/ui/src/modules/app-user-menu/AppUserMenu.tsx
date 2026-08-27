@@ -1,4 +1,5 @@
 import { useAuthActions } from "@pollinations/sdk/react";
+import { cn } from "../../lib/cn.ts";
 import { ChevronIcon } from "../../primitives/ChevronIcon.tsx";
 import { Dropdown } from "../../primitives/Dropdown.tsx";
 import { DropdownItem } from "../../primitives/DropdownItem.tsx";
@@ -28,6 +29,8 @@ export type AppUserMenuProps = {
     labels?: Partial<AppUserMenuLabels>;
     /** Keep the account menu focused when the host already links to Dashboard. */
     showDashboard?: boolean;
+    /** Match a large rectangular site action instead of the default pill. */
+    triggerVariant?: "pill" | "action";
 };
 
 const defaultLabels: AppUserMenuLabels = {
@@ -41,12 +44,14 @@ export function AppUserMenu({
     dashboardHref,
     labels: labelOverrides,
     showDashboard = true,
+    triggerVariant = "pill",
 }: AppUserMenuProps) {
     return (
         <AppUserMenuContent
             dashboardHref={dashboardHref}
             labels={labelOverrides}
             showDashboard={showDashboard}
+            triggerVariant={triggerVariant}
         />
     );
 }
@@ -55,7 +60,10 @@ function AppUserMenuContent({
     dashboardHref,
     labels: labelOverrides,
     showDashboard,
-}: Required<Pick<AppUserMenuProps, "dashboardHref" | "showDashboard">> &
+    triggerVariant,
+}: Required<
+    Pick<AppUserMenuProps, "dashboardHref" | "showDashboard" | "triggerVariant">
+> &
     Pick<AppUserMenuProps, "labels">) {
     const labels = { ...defaultLabels, ...labelOverrides };
     const { logout } = useAuthActions();
@@ -83,7 +91,12 @@ function AppUserMenuContent({
                             type="button"
                             data-theme="accent"
                             aria-label={labels.appUserMenu}
-                            className="polli-control polli:flex polli:min-w-0 polli:items-center polli:gap-2 polli:rounded-full polli:bg-theme-bg-active polli:py-1 polli:pl-1 polli:pr-3 polli:text-theme-text-base polli:transition-colors polli:hover:bg-theme-bg-hover"
+                            className={cn(
+                                "polli-control polli:flex polli:min-w-0 polli:items-center polli:gap-2 polli:bg-theme-bg-active polli:text-theme-text-base polli:transition-colors polli:hover:bg-theme-bg-hover",
+                                triggerVariant === "action"
+                                    ? "polli:min-h-14 polli:rounded-xl polli:border-r-4 polli:border-b-4 polli:border-solid polli:border-brand-dark/20 polli:py-2 polli:pl-2 polli:pr-4 polli:hover:border-brand-dark/45"
+                                    : "polli:rounded-full polli:py-1 polli:pl-1 polli:pr-3",
+                            )}
                         >
                             <UserAvatar
                                 size="md"

@@ -44,23 +44,22 @@ const tabButtonSizeClass = {
 
 const variantClasses = {
     // The default tab look: borderless and monochrome. Selected uses `bg-active`
-    // — the same resting fill as the site's normal buttons; clicking the selected
-    // tab does nothing, so it has no hover state. Non-selected uses the quiet
-    // `bg-subtle` token and, like any button, darkens to `bg-hover` on hover —
-    // distinct from the selected pill.
+    // — the same light resting fill as the site's normal buttons. Both states
+    // deepen to `bg-hover` and use the theme's hover label color. Non-selected
+    // uses the quiet `bg-subtle` token until then.
     soft: {
         base: "",
-        active: "polli:bg-theme-bg-active polli:text-theme-text-strong",
+        active: "polli:bg-theme-bg-active polli:text-theme-text-strong polli:hover:bg-theme-bg-hover polli:hover:text-theme-text-hover",
         inactive:
-            "polli:bg-theme-bg-subtle polli:text-theme-text-base polli:hover:bg-theme-bg-hover",
+            "polli:bg-theme-bg-subtle polli:text-theme-text-base polli:hover:bg-theme-bg-hover polli:hover:text-theme-text-hover",
     },
     // Transparent until hovered or selected — for multi-select toggles and
     // inline rows where a filled idle pill would read as a hard selection.
     ghost: {
         base: "polli:border polli:border-transparent",
-        active: "polli:bg-theme-bg-active polli:text-theme-text-strong",
+        active: "polli:bg-theme-bg-active polli:text-theme-text-strong polli:hover:bg-theme-bg-hover polli:hover:text-theme-text-hover",
         inactive:
-            "polli:bg-transparent polli:text-theme-text-base polli:hover:bg-theme-bg-subtle polli:hover:text-theme-text-strong",
+            "polli:bg-transparent polli:text-theme-text-base polli:hover:bg-theme-bg-hover polli:hover:text-theme-text-hover",
     },
 } as const;
 

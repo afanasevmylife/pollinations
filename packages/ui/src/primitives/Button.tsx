@@ -13,7 +13,7 @@ const sizes = {
 // Cascade-driven base — reads [data-theme] vars.
 const themeClasses =
     "polli:bg-theme-bg-active polli:text-theme-text-strong " +
-    "polli:hover:bg-theme-bg-hover polli:transition-colors";
+    "polli:hover:bg-theme-bg-hover polli:hover:text-theme-text-hover polli:transition-colors";
 
 // Soft intent recipes — light tile + deep text, slightly deeper bg on hover.
 // No filled CTAs anywhere.
@@ -26,7 +26,7 @@ const intentClasses: Record<ButtonIntent, string> = {
         "polli:hover:bg-intent-info-bg-hover polli:transition-colors",
     neutral:
         "polli:bg-theme-bg-subtle polli:text-theme-text-base " +
-        "polli:hover:bg-theme-bg-hover polli:transition-colors",
+        "polli:hover:bg-theme-bg-hover polli:hover:text-theme-text-hover polli:transition-colors",
 };
 
 type BaseButtonProps = {
