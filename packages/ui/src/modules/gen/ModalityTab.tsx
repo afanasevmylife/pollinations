@@ -5,7 +5,7 @@ type ModalityTabOwnProps = {
     active: boolean;
     onClick: () => void;
     children: ReactNode;
-    size?: "sm" | "md";
+    size?: "sm" | "md" | "lg";
     disabled?: boolean;
     className?: string;
 };
