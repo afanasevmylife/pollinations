@@ -151,7 +151,7 @@ function AppsPage() {
                 }
                 if (
                     needle &&
-                    !`${app.name} ${app.description}`
+                    !`${app.name} ${app.description} ${app.github_username}`
                         .toLowerCase()
                         .includes(needle)
                 ) {
@@ -286,7 +286,7 @@ function AppsPage() {
                     <Input
                         type="search"
                         value={q ?? ""}
-                        placeholder="Search by name or description…"
+                        placeholder="Search by app, description or creator…"
                         aria-label="Search apps"
                         onChange={(event) =>
                             navigate({

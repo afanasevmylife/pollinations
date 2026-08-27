@@ -388,11 +388,13 @@ export function FileUpload({
                             )}
                         </ul>
 
-                        {maxFiles > 1 && !compact && (
-                            <span className="polli:text-xs polli:text-theme-text-muted">
-                                {value.length} / {maxFiles} files
-                            </span>
-                        )}
+                        {Number.isFinite(maxFiles) &&
+                            maxFiles > 1 &&
+                            !compact && (
+                                <span className="polli:text-xs polli:text-theme-text-muted">
+                                    {value.length} / {maxFiles} files
+                                </span>
+                            )}
                     </div>
                 )}
             </fieldset>

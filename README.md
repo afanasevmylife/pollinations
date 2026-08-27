@@ -14,6 +14,13 @@
 
 </div>
 
+> [!IMPORTANT]
+> **New model IDs are available now**
+>
+> Publisher-qualified IDs such as `black-forest-labs/flux.1-schnell` work today and become canonical on September 7. Existing IDs will keep working.
+>
+> [View all model ID changes →](MODEL_SLUGS.md)
+
 <p align="center"><img src="https://media.pollinations.ai/eb3be88cf66d7491" alt="Pixel art cozy hackerspace — robot at terminal, nomnom creature eating code, bee with glasses" width="800" /></p>
 
 <!-- recent-apps:start -->
@@ -21,16 +28,16 @@
 
 | Name | Description | Author |
 |------|-------------|--------|
-| [💼 Vyrsa Academy](https://vyrsa.xyz) | [Vyrsa.xyz](https://vyrsa.xyz/) is a premium digital transformation academy designed to help you break free from imposter syndrome and build unshakable confidence. Through a proven "Grow, Reflect, Tra | [@ariaerendev](https://github.com/ariaerendev) |
-| [💼 Indish Marketer's Voice Agent](https://voice.prototools.in) | An AI voice agent that businesses embed on their own website. Callers speak naturally instead of filling out a contact form; the agent answers from the business's own knowledge base and captures leads | [@indishmarketer](https://github.com/indishmarketer) |
-| [🛠️ FSChart](https://fastnow.github.io/fschart_pollinations) | FSChart converts natural language into 3D models and 2D function plots in the browser. Enter “a rotating red cube” or “plot y=sin(x)” to call Pollinations and render. | [@fastnow](https://github.com/fastnow) |
-| [💼 Jornal Bitcoin](https://jornalbitcoin.com.br) | A real-time Brazilian Portuguese cryptocurrency news aggregator that automatically curates, translates, and summarizes articles using Pollinations text models (Gemma & OpenAI) and generates custom cov | [@j0n777](https://github.com/j0n777) |
-| [🖼️ Article Illustrator](https://article.240801.xyz) | An AI-powered article illustration tool built with React and deployed on Cloudflare Pages, powered by [Pollinations.ai](https://pollinations.ai/). https://github.com/pollinations/pollinations/issues/1 | [@zzerding](https://github.com/zzerding) |
-| [🖼️ HQ IA](https://editoraitacaiunas.com.br/app/quadrinhos-ia) | Create comic strips quickly with HQ IA, an AI-powered comic book creator. | [@wljrodrigues](https://github.com/wljrodrigues) |
-| [🖼️ IMADreamer](https://fastnow.github.io/imadreamer) | IMADreamer is a free AI image generation tool built on the Pollinations API. | [@fastnow](https://github.com/fastnow) |
-| [📚 FlashcardGeneratorAI](https://flashcardgeneratorai-pollinationsai-classic.pages.dev) | With FlashcardGeneratorAI you can use Pollinations AI to generate digital interactive flashcards to enhance memorization and learning (and use card matching games to reinforce concepts by repetition) | [@rpbmultiongh](https://github.com/rpbmultiongh) |
-| [🖼️ INKRUSH](https://inkrush-comic-studio.onrender.com) | Free browser-based AI comic book maker powered by Pollinations.AI. Create multi-panel comic stories with custom speech bubbles, character lock, retro comic styles, and export as PDF books.📖 | [@takiff507](https://github.com/takiff507) |
-| [✍️ Tessera Lumen - Oracle of Sophia Tarot](https://app.963.co.za) | Personalised oracle readings with card draws, guidance, reflection, and daily insight. | [@Jeraque007](https://github.com/Jeraque007) |
+| [🖼️ AI STUDIO — RealTime AUDIO & VIDEO CREATOR](https://noanswers.website/WebAnimation) | Creates collaborative images using the Pollinations image API integration. Thereby, allowing users to add generated content or uploaded from the local machines and create slide/videos adaptive to FPS | [@noanswers-website](https://github.com/noanswers-website) |
+| [💬 Pollinations Studio](https://sankezhiyyds.github.io/pollinations-app) | A pure HTML/JavaScript AI generation studio with no framework dependencies. It supports image, text, audio, and video generation via the Pollinations API. Users bring their own API key (sk_ or pk_) fo | [@sankezhiyyds](https://github.com/sankezhiyyds) |
+| [🖼️ Dery AI](https://dery-ai.my.id) | Create collaborative images using the Pollinations image API | [@derymegana](https://github.com/derymegana) |
+| [🖼️ Pollinations App](https://sohaib7838.github.io/pollinations-app) | A simple web app that lets users connect their Pollinations account and generate AI images using their own Pollen. | [@Sohaib7838](https://github.com/Sohaib7838) |
+| [✍️ Descriptly](https://github.com/g33ky00/descriptly) | ## Descriptly v1.0.0 First public release. Descriptly scans images added or modified in a pull request and generates accessible alt-text suggestions using Pollinations vision models — posted directly | [@g33ky00](https://github.com/g33ky00) |
+| [🖼️ EAS AI STUDIO](https://www.ekin-ai-studio.my.id) | Create collaborative images using the Pollinations image API | [@EkinLiu](https://github.com/EkinLiu) |
+| [💬 App Submission: FreeChat CLI](https://github.com/xiaotian1171/freechat-cli) | A zero-config command-line chat tool powered by the Pollinations free API. No API key required. Features include multi-model switching, streaming responses, conversation history, and save/load. Uses t | [@xiaotian1171](https://github.com/xiaotian1171) |
+| [✍️ StoryForge](https://storyforge.wiradifit-makmur-sejahtera.duckdns.org) | Turn any idea into an illustrated AI micro-story. The user signs in via the official BYOP OAuth flow (PKCE) with a self-chosen pollen budget, describes an idea, picks a genre (fantasy / sci-fi / myste | [@wiradifit](https://github.com/wiradifit) |
+| [🖼️ vaia-ai-studio.my.id](https://vaia-ai-studio.my.id) | Create collaborative images using the Pollinations image API | [@vaiaaistudio](https://github.com/vaiaaistudio) |
+| [🖼️ Dery Lau AI](https://derylau.my.id) | Create collaborative images using the Pollinations image API | [@derylau166](https://github.com/derylau166) |
 
 [Browse all apps →](https://pollinations.ai/apps)
 <!-- recent-apps:end -->
@@ -51,16 +58,16 @@ We've launched **https://gen.pollinations.ai** — a single endpoint for all you
 
 ## 🆕 Latest News
 
-- **2026-08-14** – **🎯 Starred models stay starred** The [Model Monitor](https://model-monitor.pollinations.ai) now remembers your favorite models, filters, and category view. Because scrolling the whole garden every time was apparently a feature.
-- **2026-08-14** – **🎵 Scribe joins the live hive** Plug ElevenLabs Scribe live transcription into OpenAI Realtime-compatible clients via `/realtime` or `/v1/realtime`, with partial transcripts, VAD, and language controls.
-- **2026-08-14** – **🎨 Grok gets a new canvas** `x-ai/grok-imagine-image-2.0` can generate and edit 1K or 2K images with up to three reference images through the usual image routes.
-- **2026-08-14** – **🎬 Two new seeds, faster films** Generate video with `seedance-2.0-mini` for 4–10 second 480p/720p clips, `seedance-2.0-fast` for quick shots, or `minimax-h3` for five-second videos with synchronized audio.
-- **2026-08-14** – **🤖 A glimmer and a very large Qwen arrive** `muse-glimmer` brings vision, tools, reasoning, and 131K context; `qwen3.8-2.4t-a95b` adds a 262K-context option for long, tool-using work.
-- **2026-08-14** – **🔗 Speech takes the short route** Every speech model, including multi-voice `eleven-dialogue`, now works through the compact `/audio/{text}` endpoint as well as `/v1/audio/speech`.
-- **2026-08-14** – **✨ Words become wireframes** FSChart turns plain-language prompts into browser-based 3D models and function plots. [Try it](https://fastnow.github.io/fschart_pollinations) <!-- app -->
-- **2026-08-13** – **🎨 Qwen Image 3** Generate 1K/2K images or edit with up to three reference images using paid `qwen-image-3`. More eyes, fewer tabs. [Image API](https://gen.pollinations.ai/image/{prompt})
-- **2026-08-13** – **🚀 Seedance 2.5 video** Generate four-second 480p or 720p clips with optional audio and first/last-frame guidance through `seedance-2.5`. [API Docs](https://gen.pollinations.ai/docs)
-- **2026-08-13** – **🎵 Live transcription** `scribe-realtime` streams partial and final transcripts over WebSockets, with VAD, timestamps, language controls, and seven audio formats. [API Docs](https://gen.pollinations.ai/docs)
+- **2026-08-26** – **🔗 Connect your Discord account** Link Discord to your Pollinations account, verify hive membership, and claim a 1-Pollen community Quest. [Connect your account](https://enter.pollinations.ai/keys)
+- **2026-08-26** – **🎬 FFmpeg MCP takes multiple inputs** Combine separate video, audio, and media files in one MCP job, then get the finished file hosted on Pollinations Media. [MCP docs](https://gen.pollinations.ai/docs#tag/mcp-server)
+- **2026-08-26** – **🔍 Exa Search MCP joins the agent toolbox** Prompt agents can now search the web and fetch pages through Exa in the shared MCP catalog. The internet remains largely unformatted. [MCP docs](https://gen.pollinations.ai/docs#tag/mcp-server)
+- **2026-08-26** – **💡 Descriptly writes alt-text suggestions for PR images** Use Pollinations vision models to spot changed images in pull requests and propose accessible descriptions. [View repo](https://github.com/g33ky00/descriptly) <!-- app -->
+- **2026-08-25** – **🎬 Wan 3.0 video generation** `wan-3.0` now makes 5-second text-to-video and image-to-video clips with optional audio, start frames, and 480p through 1080p output. [API Docs](https://gen.pollinations.ai/docs)
+- **2026-08-25** – **✨ Hosted FFmpeg for prompt agents** Agents can now select a managed FFmpeg tool to process media and receive stored outputs—no server maintenance, a small mercy. [MCP Server Docs](https://gen.pollinations.ai/docs#tag/mcp-server)
+- **2026-08-25** – **💡 Model lookup, OpenAI-style** OpenAI-compatible clients can inspect a single accessible model with `GET /v1/models/:model`, including aliases and registry metadata. [API Docs](https://gen.pollinations.ai/docs)
+- **2026-08-25** – **🌟 Pollen earnings in code and CLI** Check developer earnings from TypeScript with `accountEarnings()` or run `polli earnings --days 30 --json` for scriptable totals and per-entity detail.
+- **2026-08-25** – **🎨 EAS AI STUDIO joins the garden** A collaborative image-making app built on the Pollinations image API is now in the community showcase. [Try it](https://www.ekin-ai-studio.my.id) <!-- app -->
+- **2026-08-24** – **🤖 MCPs move into the hive** Managed agents can now discover and use registered MCP servers through a single authenticated Gen path, with Pollen handling the receipts. [MCP docs](https://gen.pollinations.ai/docs#tag/mcp-server)
 ---
 
 ## 🌱 Introduction
@@ -79,6 +86,7 @@ We've launched **https://gen.pollinations.ai** — a single endpoint for all you
 - 🧊 **3D Generation** — Text-to-3D and image-to-3D
 - 🎙️ **Real-time API** — OpenAI-compatible WebSocket for streaming conversations
 - 🔢 **Embeddings Creation** — Semantic search, retrieval, similarity matching
+- 🤖 **Managed Agents** — Turn a prompt, base model, and optional Pollinations tools into a reusable model
 - 🎣 **_Easy-to-use Packages_** ([Packages](packages/))
 
 <!-- Updated daily by .github/workflows/docs-update-readme-news.yml.
@@ -92,15 +100,25 @@ We've launched **https://gen.pollinations.ai** — a single endpoint for all you
  </picture>
 </a>
 
+## 🤖 Managed Agents
+
+Build a reusable text agent without hosting an agent server. Choose a system prompt and base model, optionally give it Pollinations tools, then call it through the same OpenAI-compatible API as any other model.
+
+- **Private or public** — keep an agent owner-only or publish it after receiving community publisher access.
+- **Normal model API** — call a registered agent by its `owner/agent-name` model ID.
+- **Dashboard, CLI, or API** — manage agents in [My Models](https://enter.pollinations.ai/my-models), with `polli agents`, or through `/account/agents`.
+
+See [Publish an Agent](./BUILD_YOUR_OWN_AGENT.md) for setup and billing behavior.
+
 ## 🧩 Community Models
 
-Community members run their own models on the Pollinations platform — text, image, video, audio, embeddings, and more.
+Community members connect their own OpenAI-compatible text, image, image-editing, and speech-to-text endpoints to Pollinations.
 
-- **Host your own model** — register an upstream endpoint with the [`/account/my-models`](APIDOCS.md) API, then serve it to everyone or keep it private to your account.
+- **Host your own model** — follow [Publish a Model](./BRING_YOUR_OWN_MODEL.md) to test and register an upstream endpoint, then keep it private or publish it to the catalog.
 - **Automatic fallback routing** — nominate up to three compatible backup models so generations keep moving when an upstream model goes down.
 - **Discover and monitor** — browse community models via [gen.pollinations.ai/v1/models](https://gen.pollinations.ai/v1/models) and watch live health and community leaderboards at [model-monitor.pollinations.ai](https://model-monitor.pollinations.ai).
 
-For billing details when building apps on top, see [Bring Your Own Pollen](./BRING_YOUR_OWN_POLLEN.md).
+For billing details when building apps on top, see [Connect User Wallets](./BRING_YOUR_OWN_POLLEN.md).
 
 ## 🚀 Getting Started
 
@@ -267,7 +285,7 @@ Get your API key at [enter.pollinations.ai](https://enter.pollinations.ai/keys)
 
 > ⚠️ **Never expose `sk_` keys** in client-side code, git repos, or public URLs
 
-> 💡 **Building an app?** Use [Bring Your Own Pollen](./BRING_YOUR_OWN_POLLEN.md) — users pay for their own usage, you pay $0
+> 💡 **Building an app?** Use [Connect User Wallets](./BRING_YOUR_OWN_POLLEN.md) — users pay for their own usage, you pay $0
 
 ### Model Restrictions
 
