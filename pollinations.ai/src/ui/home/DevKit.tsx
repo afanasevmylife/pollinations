@@ -58,8 +58,8 @@ const TOOLS: Tool[] = [
         href: "https://gen.pollinations.ai/models",
     },
     {
-        label: "Sign in",
-        title: "Sign in with Pollinations",
+        label: "Connect",
+        title: "Connect with Pollinations",
         body: "OAuth 2.1 with PKCE, plus device flow for CLIs and desktop apps. Users approve once and spend from their own wallet — with a budget and expiry they set, revocable any time.",
         linkLabel: "Read the BYOP guide",
         href: "https://github.com/pollinations/pollinations/blob/main/BRING_YOUR_OWN_POLLEN.md",

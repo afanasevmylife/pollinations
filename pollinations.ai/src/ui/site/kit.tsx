@@ -202,10 +202,10 @@ export function PageHeader({ eyebrow, title, subtitle, action }: HeadingProps) {
  * `overflow-clip` on <main> crops it at the 28px radius (clip, not hidden —
  * hidden would stop /play's sticky output panel sticking).
  *
- * On phones the scene sits behind the copy rather than reserving a separate
- * band above it. Its left edge is masked away so the character can remain in
- * the top-right without competing with the headline. Between sm and lg the
- * scene remains a separate band; desktop keeps the full background treatment.
+ * The composition does not change at responsive breakpoints: copy remains on
+ * the left and the scene remains anchored on the right. The scene keeps its
+ * natural aspect ratio, so it scales continuously with the available width
+ * instead of jumping between stacked and side-by-side arrangements.
  */
 export function Hero({
     scene,
@@ -216,7 +216,7 @@ export function Hero({
     children: ReactNode;
 }) {
     return (
-        <section className="-mx-4 -mt-10 relative sm:-mx-8 sm:-mt-16 md:-mx-18 lg:flex lg:items-start">
+        <section className="-mx-4 -mt-10 relative flex items-start sm:-mx-8 sm:-mt-16 md:-mx-18">
             {/* The scene is a fixed-height backdrop, decoupled from the text.
                 Tying it to the section meant short pages got small art —
                 Play's robot shrank to its two lines of copy. Now every page
@@ -232,9 +232,9 @@ export function Hero({
                 height={854}
                 // The LCP element on every page — never lazy.
                 fetchPriority="high"
-                className="hero-scene pointer-events-none absolute top-0 right-0 h-auto w-full select-none object-cover object-right-top sm:relative sm:h-72 sm:object-right-bottom lg:absolute lg:h-[max(560px,calc(100%+120px))]"
+                className="hero-scene pointer-events-none absolute top-0 right-0 h-auto w-full select-none"
             />
-            <div className="relative flex w-full min-w-0 flex-col gap-6 px-4 pt-14 pb-2 sm:gap-8 sm:px-8 sm:pt-0 md:px-18 lg:max-w-[58%] lg:py-16">
+            <div className="relative flex w-full max-w-[70%] min-w-0 flex-col gap-6 px-4 py-14 sm:gap-8 sm:px-8 sm:py-16 md:px-18 lg:max-w-[58%]">
                 {children}
             </div>
         </section>

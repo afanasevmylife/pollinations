@@ -233,7 +233,7 @@ function AppsPage() {
                         title="Playground"
                         badge="Official"
                         badgeTone="accent"
-                        description="Official text, image, audio and video models in the browser. Sign in and generate with your own Pollen — nothing to install."
+                        description="Official text, image, audio and video models in the browser. Connect and generate with your own Pollen — nothing to install."
                         meta="pollinations.ai/play"
                         image={appCover("Pollinations Playground")}
                         action={<OpenPill>Open →</OpenPill>}
