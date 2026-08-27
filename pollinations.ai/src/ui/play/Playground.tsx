@@ -31,7 +31,7 @@ import {
     Tooltip,
     VideoIcon,
 } from "@pollinations/ui";
-import { categoryLabel, ModalityDot, ModalityTab } from "@pollinations/ui/gen";
+import { categoryLabel, ModalityTab } from "@pollinations/ui/gen";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Chat } from "./Chat";
@@ -55,6 +55,7 @@ const EMPTY_CATALOG: ModelCatalog = {
 type PlaygroundModel = {
     id: string;
     title: string;
+    description: string;
     category: ModelCategory;
     community: boolean;
     inputModalities: string[];
@@ -65,6 +66,18 @@ type PlaygroundModel = {
     paidOnly: boolean;
 };
 
+const AUDIO_TASK_ORDER = [
+    "transcription",
+    "speech-generation",
+    "music-and-sound-effects",
+] as const;
+type AudioTask = (typeof AUDIO_TASK_ORDER)[number];
+const AUDIO_TASK_LABEL: Record<AudioTask, string> = {
+    transcription: "Transcription",
+    "speech-generation": "Speech generation",
+    "music-and-sound-effects": "Music & sound effects",
+};
+
 function playgroundModel(model: ModelInfo): PlaygroundModel | null {
     const id = model.id ?? model.name;
     if (!id || !model.category) return null;
@@ -72,6 +85,7 @@ function playgroundModel(model: ModelInfo): PlaygroundModel | null {
     return {
         id,
         title: model.title ?? model.name,
+        description: model.description ?? "",
         category: model.category,
         community: model.community ?? false,
         inputModalities: model.input_modalities ?? [],
@@ -150,10 +164,19 @@ function usePlaygroundCatalog(apiKey: string | null) {
     return { catalog, isLoading, error };
 }
 
-function promptPlaceholder(isAudioTranscription = false): string {
-    if (isAudioTranscription)
+function promptPlaceholder(
+    category: PlaygroundCategory,
+    audioTask?: AudioTask,
+): string {
+    if (category === "image") return "Describe the image you want…";
+    if (category === "video") return "Describe the video you want…";
+    if (audioTask === "transcription")
         return "Optional vocabulary, names, or context for the transcript";
-    return "Write your prompt here…";
+    if (audioTask === "speech-generation")
+        return "Enter the words you want spoken…";
+    if (audioTask === "music-and-sound-effects")
+        return "Describe the music or sound you want…";
+    return "Describe what you want…";
 }
 
 function getResultExtension(result: PlaygroundResult): string {
@@ -214,6 +237,22 @@ function mediaList(modalities: UploadMedia[]): string {
     return `${modalities.slice(0, -1).join(", ")}, or ${modalities[modalities.length - 1]}`;
 }
 
+function audioTaskForModel(model: PlaygroundModel): AudioTask {
+    if (
+        model.inputModalities.includes("audio") &&
+        model.outputModalities.includes("text")
+    )
+        return "transcription";
+    const audioPurpose = `${model.title} ${model.description}`.toLowerCase();
+    if (
+        audioPurpose.includes("music") ||
+        audioPurpose.includes("sound effect") ||
+        audioPurpose.includes("soundscape")
+    )
+        return "music-and-sound-effects";
+    return "speech-generation";
+}
+
 /** Card = needs a paid balance; sprout = runs on any Pollen. */
 function AccessIcon({ paidOnly }: { paidOnly?: boolean }) {
     return paidOnly ? (
@@ -255,6 +294,57 @@ function ModalityTabs({
                 );
             })}
         </fieldset>
+    );
+}
+
+function AudioTaskPicker({
+    value,
+    onChange,
+}: {
+    value: AudioTask;
+    onChange: (task: AudioTask) => void;
+}) {
+    return (
+        <div className="flex min-w-0 items-center gap-3">
+            <Text as="span" size="sm" weight="bold" className="shrink-0">
+                Type
+            </Text>
+            <Dropdown
+                className="w-max max-w-[calc(100vw-2rem)] p-2"
+                trigger={(open) => (
+                    <Button
+                        type="button"
+                        className="w-fit max-w-full self-start justify-between gap-2"
+                        aria-label={`Audio type: ${AUDIO_TASK_LABEL[value]}`}
+                    >
+                        <span className="truncate">
+                            {AUDIO_TASK_LABEL[value]}
+                        </span>
+                        <ChevronIcon expanded={open} />
+                    </Button>
+                )}
+            >
+                {(close) => (
+                    <div className="flex flex-col gap-1">
+                        {AUDIO_TASK_ORDER.map((task) => (
+                            <TabButton
+                                key={task}
+                                active={task === value}
+                                size="sm"
+                                variant="ghost"
+                                className="w-full justify-start text-left"
+                                onClick={() => {
+                                    onChange(task);
+                                    close();
+                                }}
+                            >
+                                {AUDIO_TASK_LABEL[task]}
+                            </TabButton>
+                        ))}
+                    </div>
+                )}
+            </Dropdown>
+        </div>
     );
 }
 
@@ -444,14 +534,14 @@ function ResultPanel({
                     className,
                 )}
             >
+                {/* biome-ignore lint/a11y/useMediaCaption: Generated audio has no timed caption file; an empty track creates a broken native menu. */}
                 <audio
                     src={result.url}
                     controls
+                    controlsList="nodownload noplaybackrate"
                     autoPlay
                     className="polli-playground-audio min-w-0 flex-1"
-                >
-                    <track kind="captions" />
-                </audio>
+                />
                 <ResultDownloadButton result={result} />
             </div>
         );
@@ -553,6 +643,7 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
     } = usePlaygroundCatalog(apiKey);
     const [activeCategory, setActiveCategory] =
         useState<PlaygroundCategory>("text");
+    const [audioTask, setAudioTask] = useState<AudioTask>("speech-generation");
     const [selectedModel, setSelectedModel] = useState("");
     const [prompt, setPrompt] = useState("");
     const [width, setWidth] = useState(1024);
@@ -585,16 +676,26 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
     );
     const categoryModels = useMemo(
         () =>
-            visibleModels.filter((model) => model.category === activeCategory),
-        [activeCategory, visibleModels],
+            visibleModels.filter(
+                (model) =>
+                    model.category === activeCategory &&
+                    (activeCategory !== "audio" ||
+                        audioTaskForModel(model) === audioTask),
+            ),
+        [activeCategory, audioTask, visibleModels],
     );
 
     useEffect(() => {
         if (activeCategory === "text") return;
-        if (currentModel?.category === activeCategory) return;
+        if (
+            currentModel?.category === activeCategory &&
+            (activeCategory !== "audio" ||
+                audioTaskForModel(currentModel) === audioTask)
+        )
+            return;
         setSelectedModel(categoryModels[0]?.id ?? "");
         setAudioFiles([]);
-    }, [activeCategory, categoryModels, currentModel]);
+    }, [activeCategory, audioTask, categoryModels, currentModel]);
 
     useEffect(() => {
         if (!currentModel) return;
@@ -644,6 +745,20 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
         .join(",");
     const mediaUploadLabel = mediaList(uploadMedia);
     const MediaUploadIcon = CATEGORY_ICON[uploadMedia[0] ?? "audio"];
+    const showPromptInput =
+        currentModel?.category !== "audio" ||
+        isAudioTranscription ||
+        currentModel.inputModalities.includes("text");
+    const promptLabel =
+        activeCategory === "image"
+            ? "Image description"
+            : activeCategory === "video"
+              ? "Video description"
+              : audioTask === "transcription"
+                ? "Instructions (optional)"
+                : audioTask === "speech-generation"
+                  ? "Script"
+                  : "Description";
     const selectedModelAllowed =
         !!currentModel &&
         isLoggedIn &&
@@ -661,10 +776,25 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
         setActiveCategory(category);
         setAudioFiles([]);
         if (category === "text") return;
-        setSelectedModel(
-            visibleModels.find((model) => model.category === category)?.id ??
-                "",
+        const firstModel = visibleModels.find(
+            (model) => model.category === category,
         );
+        if (category === "audio" && firstModel)
+            setAudioTask(audioTaskForModel(firstModel));
+        setSelectedModel(firstModel?.id ?? "");
+    }
+
+    function selectAudioTask(task: AudioTask) {
+        if (task === audioTask) return;
+        setAudioTask(task);
+        setSelectedModel(
+            visibleModels.find(
+                (model) =>
+                    model.category === "audio" &&
+                    audioTaskForModel(model) === task,
+            )?.id ?? "",
+        );
+        setAudioFiles([]);
     }
 
     function selectModel(modelId: string) {
@@ -702,7 +832,7 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
             return;
         }
         if (!isAudioTranscription && !trimmedPrompt) {
-            setError("Enter a prompt first.");
+            setError(`Add ${promptLabel.toLowerCase()} first.`);
             return;
         }
 
@@ -836,10 +966,46 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
         : missingInput
           ? requiresMediaUpload
               ? `Upload ${mediaUploadLabel} first`
-              : "Write a prompt first"
+              : `Add ${promptLabel.toLowerCase()} first`
           : !selectedModelAllowed
             ? "This key cannot use the selected model"
             : null;
+
+    const audioInput =
+        currentModel?.category === "audio" && acceptsMediaUpload ? (
+            <FieldStack
+                label={`${mediaUploadLabel.charAt(0).toUpperCase()}${mediaUploadLabel.slice(1)} input`}
+            >
+                <FileUpload
+                    value={audioFiles}
+                    onChange={setAudioFiles}
+                    variant="compact"
+                    maxFiles={1}
+                    maxSizeBytes={AUDIO_UPLOAD_MAX_SIZE_BYTES}
+                    accept={mediaUploadAccept}
+                    icon={<MediaUploadIcon className="h-6 w-6" />}
+                    previewIcon={<MediaUploadIcon className="h-5 w-5" />}
+                    label={
+                        <>
+                            Drag {mediaUploadLabel} here or{" "}
+                            <span className="underline">browse</span>
+                        </>
+                    }
+                    onReject={(rejected) => {
+                        const reason = rejected[0]?.reason;
+                        if (reason === "size") {
+                            setError("Media files must be under 20 MB.");
+                        } else if (reason === "count") {
+                            setError("Use one media file.");
+                        } else if (reason === "type") {
+                            setError(
+                                `Use ${mediaUploadLabel} files for this model.`,
+                            );
+                        }
+                    }}
+                />
+            </FieldStack>
+        ) : null;
 
     return (
         <div className="flex w-full flex-col gap-5 text-theme-text-base">
@@ -869,65 +1035,45 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                 hidden={activeCategory === "text"}
             >
                 <div className="polli-playground-input-panel flex flex-col gap-4 bg-surface-opaque p-4">
-                    <ModelPicker
-                        models={categoryModels}
-                        selectedModel={selectedModel}
-                        isLoading={isLoading || !isHydrated}
-                        onSelectModel={selectModel}
-                    />
-                    <FieldStack label="Prompt">
-                        <Textarea
-                            value={prompt}
-                            rows={7}
-                            onChange={(event) => setPrompt(event.target.value)}
-                            placeholder={promptPlaceholder(
-                                isAudioTranscription,
-                            )}
-                            className="polli-playground-textarea min-h-44"
-                        />
-                    </FieldStack>
-
-                    {currentModel?.category === "audio" &&
-                        acceptsMediaUpload && (
-                            <FieldStack label={`${mediaUploadLabel} file`}>
-                                <FileUpload
-                                    value={audioFiles}
-                                    onChange={setAudioFiles}
-                                    variant="compact"
-                                    maxFiles={1}
-                                    maxSizeBytes={AUDIO_UPLOAD_MAX_SIZE_BYTES}
-                                    accept={mediaUploadAccept}
-                                    icon={
-                                        <MediaUploadIcon className="h-6 w-6" />
-                                    }
-                                    previewIcon={
-                                        <MediaUploadIcon className="h-5 w-5" />
-                                    }
-                                    label={
-                                        <>
-                                            Drag {mediaUploadLabel} here or{" "}
-                                            <span className="underline">
-                                                browse
-                                            </span>
-                                        </>
-                                    }
-                                    onReject={(rejected) => {
-                                        const reason = rejected[0]?.reason;
-                                        if (reason === "size") {
-                                            setError(
-                                                "Media files must be under 20 MB.",
-                                            );
-                                        } else if (reason === "count") {
-                                            setError("Use one media file.");
-                                        } else if (reason === "type") {
-                                            setError(
-                                                `Use ${mediaUploadLabel} files for this model.`,
-                                            );
-                                        }
-                                    }}
-                                />
-                            </FieldStack>
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                        {activeCategory === "audio" && (
+                            <AudioTaskPicker
+                                value={audioTask}
+                                onChange={selectAudioTask}
+                            />
                         )}
+                        <ModelPicker
+                            models={categoryModels}
+                            selectedModel={selectedModel}
+                            isLoading={isLoading || !isHydrated}
+                            onSelectModel={selectModel}
+                        />
+                    </div>
+                    {isAudioTranscription && audioInput}
+                    {showPromptInput && (
+                        <FieldStack label={promptLabel}>
+                            <Textarea
+                                value={prompt}
+                                rows={isAudioTranscription ? 3 : 7}
+                                onChange={(event) =>
+                                    setPrompt(event.target.value)
+                                }
+                                placeholder={promptPlaceholder(
+                                    activeCategory,
+                                    activeCategory === "audio"
+                                        ? audioTask
+                                        : undefined,
+                                )}
+                                className={cn(
+                                    "polli-playground-textarea",
+                                    isAudioTranscription
+                                        ? "min-h-24"
+                                        : "min-h-44",
+                                )}
+                            />
+                        </FieldStack>
+                    )}
+                    {!isAudioTranscription && audioInput}
 
                     {isReferenceImageListMode && (
                         <FieldStack
@@ -1098,15 +1244,7 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                     )}
 
                     {currentModel && currentModel.voices.length > 0 && (
-                        <FieldStack
-                            label={
-                                <>
-                                    <ModalityDot modality="audio" />
-                                    Voice
-                                </>
-                            }
-                            labelClassName="flex items-center gap-1.5"
-                        >
+                        <FieldStack label="Voice">
                             <ButtonGroup aria-label="Voice">
                                 {currentModel.voices.map((voice) => (
                                     <TabButton
