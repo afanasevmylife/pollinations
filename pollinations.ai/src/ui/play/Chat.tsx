@@ -944,43 +944,44 @@ export function Chat() {
                                     </Chip>
                                 )}
                             </TabButton>
-                            {isLoggedIn && (
-                                <span className="inline-flex">
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept={ATTACHMENT_ACCEPT}
-                                        multiple
-                                        hidden
-                                        onChange={(event) => {
-                                            addFiles(
-                                                Array.from(
-                                                    event.currentTarget.files ??
-                                                        [],
-                                                ),
-                                            );
-                                            event.currentTarget.value = "";
-                                        }}
-                                    />
-                                    <Button
-                                        type="button"
-                                        size="lg"
-                                        intent="info"
-                                        aria-label="Add media"
-                                        title="Add media"
-                                        disabled={
-                                            !canAttach ||
-                                            files.length >= MAX_ATTACHMENTS
-                                        }
-                                        className="h-12 w-12 shrink-0 p-0"
-                                        onClick={() =>
-                                            fileInputRef.current?.click()
-                                        }
-                                    >
-                                        <CloudUploadIcon className="h-5 w-5" />
-                                    </Button>
-                                </span>
-                            )}
+                            <span className="inline-flex">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept={ATTACHMENT_ACCEPT}
+                                    multiple
+                                    hidden
+                                    onChange={(event) => {
+                                        addFiles(
+                                            Array.from(
+                                                event.currentTarget.files ?? [],
+                                            ),
+                                        );
+                                        event.currentTarget.value = "";
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    size="lg"
+                                    intent="info"
+                                    aria-label="Add media"
+                                    title={
+                                        isLoggedIn
+                                            ? "Add media"
+                                            : "Connect to add media"
+                                    }
+                                    disabled={
+                                        !canAttach ||
+                                        files.length >= MAX_ATTACHMENTS
+                                    }
+                                    className="h-12 w-12 shrink-0 p-0"
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
+                                >
+                                    <CloudUploadIcon className="h-5 w-5" />
+                                </Button>
+                            </span>
                             {(!isHydrated || sending) && (
                                 <Text size="xs" tone="muted" aria-live="polite">
                                     {!isHydrated

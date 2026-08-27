@@ -20,6 +20,15 @@
     mask-image: linear-gradient(to bottom, black 0%, black 38%, transparent 100%);
 }
 
+.polli-playground-modality-button {
+    background-color: var(--playground-mode-background);
+}
+
+.polli-playground-modality-button:not([aria-pressed="true"]):hover {
+    background-color: var(--playground-mode-hover);
+    color: var(--playground-mode-hover-text) !important;
+}
+
 .play-chat-window {
     height: 42rem;
 }

@@ -3,13 +3,13 @@ import {
     useAuthActions,
     useAuthState,
 } from "@pollinations/sdk/react";
-import { Button, LockIcon } from "@pollinations/ui";
+import { LockIcon } from "@pollinations/ui";
 import { AppUserMenu } from "@pollinations/ui/app-user-menu/sdk";
 import { createFileRoute } from "@tanstack/react-router";
 import { ENTER_URL, POLLI_APP_KEY } from "../config";
 import { routeHead } from "../routeMeta";
 import { Playground } from "../ui/play/Playground";
-import { Hero, PageHeader } from "../ui/site/kit";
+import { ActionButton, Hero, PageHeader } from "../ui/site/kit";
 
 export const Route = createFileRoute("/play")({
     head: () => routeHead("/play"),
@@ -24,21 +24,27 @@ function SignInAction() {
     const { login } = useAuthActions();
     if (!isHydrated) {
         return (
-            <Button disabled size="lg" aria-label="Loading account">
+            <ActionButton
+                as="button"
+                disabled
+                aria-label="Loading account"
+                data-theme="accent"
+            >
                 Checking…
-            </Button>
+            </ActionButton>
         );
     }
     return isLoggedIn ? (
         <AppUserMenu
             dashboardHref={`${ENTER_URL}/keys`}
             labels={{ topUpAccount: "Manage key" }}
+            triggerVariant="action"
         />
     ) : (
-        <Button size="lg" onClick={() => login()}>
+        <ActionButton as="button" data-theme="accent" onClick={() => login()}>
             <LockIcon className="mr-2 h-4 w-4" />
             Connect
-        </Button>
+        </ActionButton>
     );
 }
 

@@ -31,9 +31,16 @@ import {
     Tooltip,
     VideoIcon,
 } from "@pollinations/ui";
-import { categoryLabel, ModalityTab } from "@pollinations/ui/gen";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { categoryLabel } from "@pollinations/ui/gen";
+import {
+    type CSSProperties,
+    type ReactNode,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { createPortal } from "react-dom";
+import { ActionButton } from "../site/kit";
 import { Chat } from "./Chat";
 
 type ViteImportMeta = ImportMeta & {
@@ -262,7 +269,64 @@ function AccessIcon({ paidOnly }: { paidOnly?: boolean }) {
     );
 }
 
+const PLAYGROUND_CATEGORY_COLOR: Record<PlaygroundCategory, string> = {
+    text: "var(--polli-color-brand-accent)",
+    image: "var(--polli-color-modality-text)",
+    video: "var(--polli-color-modality-image)",
+    audio: "var(--polli-color-modality-video)",
+};
+
+const PLAYGROUND_CATEGORY_BACKGROUND: Record<PlaygroundCategory, string> = {
+    text: "var(--polli-color-bg-subtle)",
+    image: "var(--polli-color-modality-text-bg)",
+    video: "var(--polli-color-modality-image-bg)",
+    audio: "var(--polli-color-modality-video-bg)",
+};
+
 /** Modality tabs only switch modes; model selection belongs to the media card. */
+function modalityButtonStyle(
+    category: PlaygroundCategory,
+    active: boolean,
+): CSSProperties {
+    const color = PLAYGROUND_CATEGORY_COLOR[category];
+    const labelColor =
+        category === "text"
+            ? "color-mix(in oklab, var(--polli-color-brand-accent) 70%, var(--polli-color-text-strong))"
+            : `color-mix(in oklab, ${color} 78%, var(--polli-color-text-strong))`;
+
+    return {
+        "--playground-mode-background": active
+            ? PLAYGROUND_CATEGORY_BACKGROUND[category]
+            : "var(--polli-color-bg-pale)",
+        "--playground-mode-hover":
+            "color-mix(in oklab, var(--polli-color-app-bg) 34%, var(--polli-color-bg-pale))",
+        "--playground-mode-hover-text": labelColor,
+        borderColor: active
+            ? color
+            : "color-mix(in oklab, var(--polli-color-text-muted) 28%, transparent)",
+        color: active ? "var(--polli-color-text-strong)" : labelColor,
+    } as CSSProperties;
+}
+
+function playgroundThemeStyle(
+    category: PlaygroundCategory,
+): CSSProperties | undefined {
+    if (category === "text") return undefined;
+
+    const color = PLAYGROUND_CATEGORY_COLOR[category];
+    const background = PLAYGROUND_CATEGORY_BACKGROUND[category];
+
+    return {
+        "--polli-color-bg-subtle": background,
+        "--polli-color-bg-active": background,
+        "--polli-color-bg-hover": color,
+        "--polli-color-border": `color-mix(in oklab, ${color} 42%, transparent)`,
+        "--polli-color-scrollbar-thumb": `color-mix(in oklab, ${color} 55%, transparent)`,
+        "--polli-color-text-soft": `color-mix(in oklab, ${color} 58%, var(--polli-color-text-strong))`,
+        "--polli-color-text-hover": "var(--polli-color-text-on-accent)",
+    } as CSSProperties;
+}
+
 function ModalityTabs({
     activeCategory,
     onSelectCategory,
@@ -279,18 +343,21 @@ function ModalityTabs({
                 const active = category === activeCategory;
                 const CategoryIcon = CATEGORY_ICON[category];
                 return (
-                    <ModalityTab
+                    <ActionButton
                         key={category}
-                        active={active}
-                        size="lg"
-                        className="gap-2"
+                        as="button"
+                        tone="plain"
+                        size="md"
+                        aria-pressed={active}
+                        style={modalityButtonStyle(category, active)}
+                        className="polli-playground-modality-button gap-2"
                         onClick={() => onSelectCategory(category)}
                     >
                         <CategoryIcon className="h-4 w-4 shrink-0" />
                         {category === "text"
                             ? "Agent"
                             : categoryLabel(category)}
-                    </ModalityTab>
+                    </ActionButton>
                 );
             })}
         </fieldset>
@@ -300,9 +367,11 @@ function ModalityTabs({
 function AudioTaskPicker({
     value,
     onChange,
+    themeStyle,
 }: {
     value: AudioTask;
     onChange: (task: AudioTask) => void;
+    themeStyle?: CSSProperties;
 }) {
     return (
         <div className="flex min-w-0 items-center gap-3">
@@ -311,6 +380,7 @@ function AudioTaskPicker({
             </Text>
             <Dropdown
                 className="w-max max-w-[calc(100vw-2rem)] p-2"
+                panelStyle={themeStyle}
                 trigger={(open) => (
                     <Button
                         type="button"
@@ -353,11 +423,13 @@ function ModelPicker({
     selectedModel,
     isLoading,
     onSelectModel,
+    themeStyle,
 }: {
     models: PlaygroundModel[];
     selectedModel: string;
     isLoading: boolean;
     onSelectModel: (modelId: string) => void;
+    themeStyle?: CSSProperties;
 }) {
     const selected = models.find((model) => model.id === selectedModel);
 
@@ -368,6 +440,7 @@ function ModelPicker({
             </Text>
             <Dropdown
                 className="w-max max-w-[calc(100vw-2rem)] p-2"
+                panelStyle={themeStyle}
                 trigger={(open) => (
                     <Button
                         type="button"
@@ -1006,9 +1079,13 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                 />
             </FieldStack>
         ) : null;
+    const activeThemeStyle = playgroundThemeStyle(activeCategory);
 
     return (
-        <div className="flex w-full flex-col gap-5 text-theme-text-base">
+        <div
+            className="flex w-full flex-col gap-5 text-theme-text-base"
+            style={activeThemeStyle}
+        >
             <div className="relative flex w-full flex-wrap items-start gap-3">
                 <ModalityTabs
                     activeCategory={activeCategory}
@@ -1040,6 +1117,7 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                             <AudioTaskPicker
                                 value={audioTask}
                                 onChange={selectAudioTask}
+                                themeStyle={activeThemeStyle}
                             />
                         )}
                         <ModelPicker
@@ -1047,6 +1125,7 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                             selectedModel={selectedModel}
                             isLoading={isLoading || !isHydrated}
                             onSelectModel={selectModel}
+                            themeStyle={activeThemeStyle}
                         />
                     </div>
                     {isAudioTranscription && audioInput}
