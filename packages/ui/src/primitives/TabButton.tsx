@@ -8,6 +8,7 @@ type TabButtonOwnProps = {
     children: ReactNode;
     size?: "lg" | "md" | "sm";
     variant?: "soft" | "ghost";
+    intent?: "neutral";
     ariaLabel?: string;
     disabled?: boolean;
     className?: string;
@@ -70,6 +71,7 @@ export function TabButton<T extends ElementType = "button">({
     children,
     size = "md",
     variant = "soft",
+    intent,
     ariaLabel,
     disabled = false,
     className,
@@ -93,7 +95,11 @@ export function TabButton<T extends ElementType = "button">({
             className={cn(
                 tabButtonBaseClass,
                 classes.base,
-                active ? classes.active : classes.inactive,
+                intent === "neutral"
+                    ? "polli:bg-theme-bg-subtle polli:text-theme-text-base polli:hover:bg-theme-bg-hover"
+                    : active
+                      ? classes.active
+                      : classes.inactive,
                 disabled && "polli:cursor-not-allowed polli:opacity-50",
                 tabButtonSizeClass[size],
                 className,

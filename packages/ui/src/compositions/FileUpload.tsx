@@ -54,7 +54,7 @@ function PreviewPlaceholder({
     return (
         <div
             className={cn(
-                "polli:flex polli:items-center polli:justify-center polli:rounded-lg polli:bg-theme-bg-active polli:text-theme-text-soft",
+                "polli:flex polli:items-center polli:justify-center polli:rounded-xl polli:bg-theme-bg-active polli:text-theme-text-soft",
                 previewSizeClasses[size],
             )}
         >
@@ -139,7 +139,7 @@ function FilePreview({
             ref={canvasRef}
             role="img"
             aria-label={file.name}
-            className={cn("polli:rounded-lg", previewSizeClasses[size])}
+            className={cn("polli:rounded-xl", previewSizeClasses[size])}
             width={previewSize}
             height={previewSize}
         />
@@ -156,8 +156,8 @@ export type FileUploadProps = {
     icon?: ReactNode;
     label?: ReactNode;
     previewIcon?: ReactNode;
-    /** Compact horizontal drop zone with small previews aligned to the right. */
-    variant?: "default" | "compact";
+    /** Compact drop zone, or preview-only strip for a parent drop target. */
+    variant?: "default" | "compact" | "inline";
     /** Fully locks the field: no add, no remove, drops ignored. */
     disabled?: boolean;
     className?: string;
@@ -212,7 +212,8 @@ export function FileUpload({
     const hasFiles = value.length > 0;
     const canAdd = !disabled && value.length < maxFiles;
     const isSingleFile = maxFiles === 1;
-    const compact = variant === "compact";
+    const compact = variant !== "default";
+    const inline = variant === "inline";
     const previewSize = compact ? "sm" : isSingleFile ? "lg" : "sm";
     const inputId = useId();
     const addInputId = `${inputId}-add`;
@@ -222,17 +223,22 @@ export function FileUpload({
         event.target.value = "";
     }
 
+    if (inline && !hasFiles) return null;
+
     return (
         <div className={cn("polli:flex polli:flex-col polli:gap-2", className)}>
             <fieldset
                 disabled={disabled}
                 className={cn(
                     "polli:m-0",
-                    "polli:rounded-xl polli:border polli:border-dashed polli:border-theme-border polli:bg-theme-bg-pale",
+                    !inline &&
+                        "polli:rounded-xl polli:border polli:border-dashed polli:border-theme-border polli:bg-theme-bg-pale",
                     "polli:text-sm",
-                    compact
-                        ? "polli:min-h-16 polli:px-3 polli:py-2 polli:text-left"
-                        : "polli:px-4 polli:py-4 polli:text-center",
+                    inline
+                        ? "polli:border-0 polli:bg-transparent polli:p-0 polli:text-left"
+                        : compact
+                          ? "polli:min-h-16 polli:px-3 polli:py-2 polli:text-left"
+                          : "polli:px-4 polli:py-4 polli:text-center",
                     "polli:text-theme-text-soft polli:transition-colors",
                     disabled
                         ? "polli:opacity-50"
@@ -279,7 +285,7 @@ export function FileUpload({
                             compact ? "polli:items-center" : "polli:flex-col",
                         )}
                     >
-                        {compact && (
+                        {compact && !inline && (
                             <span className="polli:text-xs polli:font-medium polli:text-theme-text-muted">
                                 {attachmentSummary(value)}
                             </span>
@@ -288,7 +294,12 @@ export function FileUpload({
                             className={cn(
                                 "polli:m-0 polli:gap-3 polli:p-0",
                                 compact
-                                    ? "polli:ml-auto polli:flex polli:min-w-0 polli:flex-1 polli:flex-wrap polli:justify-end"
+                                    ? cn(
+                                          "polli:flex polli:min-w-0 polli:flex-1 polli:flex-wrap",
+                                          inline
+                                              ? "polli:justify-start"
+                                              : "polli:ml-auto polli:justify-end",
+                                      )
                                     : "polli:grid polli:grid-cols-[repeat(auto-fill,minmax(5rem,1fr))]",
                                 isSingleFile &&
                                     !compact &&
@@ -346,7 +357,7 @@ export function FileUpload({
                                 </li>
                             ))}
 
-                            {!isSingleFile && canAdd && (
+                            {!inline && !isSingleFile && canAdd && (
                                 <li className="polli:flex polli:list-none">
                                     <label
                                         htmlFor={addInputId}

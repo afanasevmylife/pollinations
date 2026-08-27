@@ -89,6 +89,15 @@ export function DownloadIcon(props: IconProps) {
     );
 }
 
+export function CloudUploadIcon(props: IconProps) {
+    return (
+        <svg aria-hidden="true" viewBox="0 0 24 24" {...strokeProps} {...props}>
+            <path d="M17.5 19H19a4 4 0 0 0 .4-8A7.5 7.5 0 0 0 5 9.5 5 5 0 0 0 6 19h1.5" />
+            <path d="m8.5 15.5 3.5-3.5 3.5 3.5M12 12v9" />
+        </svg>
+    );
+}
+
 export function ExternalLinkIcon(props: IconProps) {
     return (
         <svg aria-hidden="true" viewBox="0 0 24 24" {...strokeProps} {...props}>
@@ -332,6 +341,17 @@ export function XIcon(props: IconProps) {
     return (
         <svg aria-hidden="true" viewBox="0 0 24 24" {...strokeProps} {...props}>
             <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+    );
+}
+
+export function TrashIcon(props: IconProps) {
+    return (
+        <svg aria-hidden="true" viewBox="0 0 24 24" {...strokeProps} {...props}>
+            <path d="M3 6h18" />
+            <path d="M8 6V4h8v2" />
+            <path d="m19 6-1 15H6L5 6" />
+            <path d="M10 11v6M14 11v6" />
         </svg>
     );
 }
