@@ -9,16 +9,19 @@ import { useAuthActions, useAuthState } from "@pollinations/sdk/react";
 import {
     Alert,
     AudioIcon,
+    Button,
     ButtonGroup,
     CardIcon,
     ChevronIcon,
     cn,
+    DownloadIcon,
     Dropdown,
     FieldStack,
     FileUpload,
     ImageIcon,
     Input,
-    MediaPlaceholder,
+    LockIcon,
+    RobotIcon,
     ScrollArea,
     SproutIcon,
     Surface,
@@ -26,11 +29,13 @@ import {
     Text,
     Textarea,
     Tooltip,
+    VideoIcon,
 } from "@pollinations/ui";
 import { categoryLabel, ModalityDot, ModalityTab } from "@pollinations/ui/gen";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { ActionButton } from "../site/kit";
+import { Chat } from "./Chat";
 
 type ViteImportMeta = ImportMeta & {
     env?: {
@@ -53,7 +58,6 @@ type PlaygroundModel = {
     title: string;
     category: ModelCategory;
     community: boolean;
-    description?: string;
     inputModalities: string[];
     outputModalities: string[];
     videoCapabilities: string[];
@@ -71,7 +75,6 @@ function playgroundModel(model: ModelInfo): PlaygroundModel | null {
         title: model.title ?? model.name,
         category: model.category,
         community: model.community ?? false,
-        description: model.description,
         inputModalities: model.input_modalities ?? [],
         outputModalities: model.output_modalities ?? [],
         videoCapabilities: model.video_capabilities ?? [],
@@ -81,8 +84,26 @@ function playgroundModel(model: ModelInfo): PlaygroundModel | null {
     };
 }
 
-const CATEGORY_ORDER: ModelCategory[] = ["image", "video", "text", "audio"];
-const AUDIO_UPLOAD_ACCEPT = "audio/*,.mp3,.mp4,.mpeg,.mpga,.m4a,.wav,.webm";
+const CATEGORY_ORDER = [
+    "text",
+    "image",
+    "video",
+    "audio",
+] as const satisfies readonly ModelCategory[];
+type PlaygroundCategory = (typeof CATEGORY_ORDER)[number];
+const CATEGORY_ICON = {
+    text: RobotIcon,
+    image: ImageIcon,
+    video: VideoIcon,
+    audio: AudioIcon,
+} as const;
+const UPLOAD_MEDIA_ORDER = ["image", "video", "audio"] as const;
+type UploadMedia = (typeof UPLOAD_MEDIA_ORDER)[number];
+const UPLOAD_ACCEPT: Record<UploadMedia, string> = {
+    image: "image/*",
+    video: "video/*,.mp4,.mov,.webm,.mkv",
+    audio: "audio/*,.mp3,.mpeg,.mpga,.m4a,.wav",
+};
 const AUDIO_UPLOAD_MAX_SIZE_BYTES = 20 * 1024 * 1024;
 
 type PlaygroundResult =
@@ -90,47 +111,11 @@ type PlaygroundResult =
           type: "image" | "video" | "audio";
           url: string;
           contentType: string;
-          /** The seeded example, not something this visitor generated. */
-          demo?: boolean;
       }
     | {
           type: "text";
           text: string;
-          /** The seeded example, not something this visitor generated. */
-          demo?: boolean;
       };
-
-/**
- * The playground opens on a worked example rather than an empty form: prompt,
- * model, size and seed all filled in, with the image that combination actually
- * produced already in the output panel.
- *
- * The image is a live gen.pollinations.ai URL, not a bundled file. That works
- * anonymously — and costs nothing — because the media cache is checked before
- * auth (gen.pollinations.ai/src/middleware/media-cache.ts), so a URL generated
- * once stays publicly readable. It is R2-backed on a 30-day lifecycle that
- * refreshes on access, and this page keeps it warm.
- *
- * IMPORTANT: every field below feeds the URL. Change the prompt, model, size
- * or seed and it becomes a cache MISS, which 401s anonymously — the example
- * would simply stop loading. Re-run scripts/warm-demo.mjs after any edit.
- */
-const DEMO = {
-    prompt: "a bee reading a paper map while sitting on a sunflower, golden hour, shallow depth of field",
-    model: "nanobanana-2-lite",
-    category: "image" as ModelCategory,
-    width: 1024,
-    height: 768,
-    seed: 7,
-};
-
-function demoImageUrl(): string {
-    return (
-        `${API_BASE_URL}/image/${encodeURIComponent(DEMO.prompt)}` +
-        `?model=${DEMO.model}&width=${DEMO.width}&height=${DEMO.height}` +
-        `&nologo=true&seed=${DEMO.seed}`
-    );
-}
 
 function usePlaygroundCatalog(apiKey: string | null) {
     const [catalog, setCatalog] = useState<ModelCatalog>(EMPTY_CATALOG);
@@ -166,19 +151,10 @@ function usePlaygroundCatalog(apiKey: string | null) {
     return { catalog, isLoading, error };
 }
 
-function promptPlaceholder(
-    category: ModelCategory,
-    isAudioTranscription = false,
-): string {
-    if (category === "image")
-        return "A luminous greenhouse full of tiny AI tools";
-    if (category === "video")
-        return "A slow cinematic orbit around a glass workshop";
-    if (category === "audio" && isAudioTranscription)
+function promptPlaceholder(isAudioTranscription = false): string {
+    if (isAudioTranscription)
         return "Optional vocabulary, names, or context for the transcript";
-    if (category === "audio")
-        return "A calm voice introducing a new creative tool";
-    return "Explain how to build a tiny AI app with Pollinations";
+    return "Write your prompt here…";
 }
 
 function getResultExtension(result: PlaygroundResult): string {
@@ -224,6 +200,21 @@ function pluralizeImages(count: number): string {
     return count === 1 ? "1 image" : `${count} images`;
 }
 
+function uploadMediaForModel(
+    model: PlaygroundModel | undefined,
+): UploadMedia[] {
+    if (!model) return [];
+    return model.inputModalities.filter((modality): modality is UploadMedia =>
+        UPLOAD_MEDIA_ORDER.includes(modality as UploadMedia),
+    );
+}
+
+function mediaList(modalities: UploadMedia[]): string {
+    if (modalities.length < 2) return modalities[0] ?? "media";
+    if (modalities.length === 2) return `${modalities[0]} or ${modalities[1]}`;
+    return `${modalities.slice(0, -1).join(", ")}, or ${modalities[modalities.length - 1]}`;
+}
+
 /** Card = needs a paid balance; sprout = runs on any Pollen. */
 function AccessIcon({ paidOnly }: { paidOnly?: boolean }) {
     return paidOnly ? (
@@ -233,131 +224,102 @@ function AccessIcon({ paidOnly }: { paidOnly?: boolean }) {
     );
 }
 
-/**
- * Modality tabs and the model menu, folded into one control: each tab opens
- * its modality's model list, and the active tab wears the model it settled on
- * ("Image · NanoBanana 2 Lite"). Clicking an inactive tab switches modality
- * immediately — a sensible model is picked before the menu even opens — so
- * the menu is an offer, never a gate; dismissing it costs nothing.
- *
- * Controlled popovers, not Ark's own toggle: TabButton pins its `onClick`
- * after spreading rest, which would clobber the handler asChild injects.
- */
-function ModalityModelPicker({
-    models,
+/** Modality tabs only switch modes; model selection belongs to the media card. */
+function ModalityTabs({
     activeCategory,
-    selectedModel,
-    isLoading,
     onSelectCategory,
-    onSelectModel,
 }: {
-    models: PlaygroundModel[];
-    activeCategory: ModelCategory;
-    selectedModel: string;
-    isLoading: boolean;
-    onSelectCategory: (category: ModelCategory) => void;
-    onSelectModel: (modelId: string) => void;
+    activeCategory: PlaygroundCategory;
+    onSelectCategory: (category: PlaygroundCategory) => void;
 }) {
-    const [openMenu, setOpenMenu] = useState<ModelCategory | null>(null);
-    const currentModel = models.find((model) => model.id === selectedModel);
-
     return (
         <fieldset
-            aria-label="Modality and model"
+            aria-label="Modality"
             className="m-0 flex min-w-0 flex-wrap gap-2 border-0 p-0"
         >
             {CATEGORY_ORDER.map((category) => {
                 const active = category === activeCategory;
-                const open = openMenu === category;
-                const items = models.filter(
-                    (model) => model.category === category,
-                );
+                const CategoryIcon = CATEGORY_ICON[category];
                 return (
-                    <Dropdown
+                    <ModalityTab
                         key={category}
-                        open={open}
-                        onOpenChange={(next) =>
-                            setOpenMenu((current) =>
-                                next
-                                    ? category
-                                    : current === category
-                                      ? null
-                                      : current,
-                            )
-                        }
-                        className="w-[min(24rem,calc(100vw-2rem))] p-2"
-                        trigger={() => (
-                            <ModalityTab
-                                active={active}
-                                size="md"
-                                // The playground's biggest decision, so the
-                                // tabs outrank the default pill size.
-                                className="gap-2 px-6 py-2.5 text-lg"
-                                onClick={() => {
-                                    if (!active) onSelectCategory(category);
-                                    setOpenMenu(open ? null : category);
-                                }}
-                            >
-                                {active && currentModel
-                                    ? `${categoryLabel(category)} · ${currentModel.title}`
-                                    : categoryLabel(category)}
-                                {active && <ChevronIcon expanded={open} />}
-                            </ModalityTab>
-                        )}
+                        active={active}
+                        size="lg"
+                        className="gap-2"
+                        onClick={() => onSelectCategory(category)}
                     >
-                        {(close) =>
-                            // Ark keeps closed panels mounted (merely hidden),
-                            // which would leave every category's rows sitting
-                            // in the DOM — render nothing until this menu is
-                            // the open one.
-                            !open ? null : isLoading ? (
-                                <p className="m-0 px-2 py-2 text-sm text-theme-text-soft">
-                                    Loading models…
-                                </p>
-                            ) : (
-                                <ScrollArea className="max-h-80 pr-2">
-                                    <div className="flex flex-col gap-1">
-                                        {items.map((model) => (
-                                            <TabButton
-                                                key={model.id}
-                                                active={
-                                                    model.id === selectedModel
-                                                }
-                                                size="sm"
-                                                variant="ghost"
-                                                className="w-full justify-start text-left"
-                                                onClick={() => {
-                                                    onSelectModel(model.id);
-                                                    close();
-                                                }}
-                                            >
-                                                <span className="flex min-w-0 flex-col gap-0.5">
-                                                    <span className="flex min-w-0 items-center gap-2">
-                                                        <span className="truncate">
-                                                            {model.title}
-                                                        </span>
-                                                        <AccessIcon
-                                                            paidOnly={
-                                                                model.paidOnly
-                                                            }
-                                                        />
-                                                    </span>
-                                                    {model.description && (
-                                                        <span className="truncate font-normal text-theme-text-muted text-xs">
-                                                            {model.description}
-                                                        </span>
-                                                    )}
-                                                </span>
-                                            </TabButton>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
-                            )
-                        }
-                    </Dropdown>
+                        <CategoryIcon className="h-4 w-4 shrink-0" />
+                        {category === "text"
+                            ? "Agent"
+                            : categoryLabel(category)}
+                    </ModalityTab>
                 );
             })}
         </fieldset>
+    );
+}
+
+function ModelPicker({
+    models,
+    selectedModel,
+    isLoading,
+    onSelectModel,
+}: {
+    models: PlaygroundModel[];
+    selectedModel: string;
+    isLoading: boolean;
+    onSelectModel: (modelId: string) => void;
+}) {
+    const selected = models.find((model) => model.id === selectedModel);
+
+    return (
+        <FieldStack label="Model">
+            <Dropdown
+                className="w-max max-w-[calc(100vw-2rem)] p-2"
+                trigger={(open) => (
+                    <Button
+                        type="button"
+                        disabled={isLoading || models.length === 0}
+                        className="w-fit max-w-full self-start justify-between gap-2"
+                        aria-label={`Model: ${selected?.title ?? "Unavailable"}`}
+                    >
+                        <span className="truncate">
+                            {isLoading
+                                ? "Loading models…"
+                                : (selected?.title ?? "No models available")}
+                        </span>
+                        <ChevronIcon expanded={open} />
+                    </Button>
+                )}
+            >
+                {(close) => (
+                    <ScrollArea className="max-h-80 pr-2">
+                        <div className="flex flex-col gap-1">
+                            {models.map((model) => (
+                                <TabButton
+                                    key={model.id}
+                                    active={model.id === selectedModel}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="w-full justify-start text-left"
+                                    onClick={() => {
+                                        onSelectModel(model.id);
+                                        close();
+                                    }}
+                                >
+                                    <span className="flex min-w-0 items-center gap-2">
+                                        <span className="truncate">
+                                            {model.title}
+                                        </span>
+                                        <AccessIcon paidOnly={model.paidOnly} />
+                                    </span>
+                                </TabButton>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                )}
+            </Dropdown>
+        </FieldStack>
     );
 }
 
@@ -366,6 +328,31 @@ function downloadHref(result: PlaygroundResult): string {
     if (result.type === "text")
         return `data:text/plain;charset=utf-8,${encodeURIComponent(result.text)}`;
     return result.url;
+}
+
+function ResultDownloadButton({
+    result,
+    className,
+}: {
+    result: PlaygroundResult;
+    className?: string;
+}) {
+    return (
+        <Button
+            as="a"
+            href={downloadHref(result)}
+            download={`pollinations-playground.${getResultExtension(result)}`}
+            aria-label={`Download ${result.type}`}
+            title={`Download ${result.type}`}
+            size="sm"
+            className={cn(
+                "h-10 w-10 shrink-0 self-auto rounded-full p-0 shadow-sm",
+                className,
+            )}
+        >
+            <DownloadIcon className="h-4 w-4" />
+        </Button>
+    );
 }
 
 /**
@@ -433,11 +420,9 @@ function Lightbox({
 
 function ResultPanel({
     result,
-    isLoading,
     className,
 }: {
-    result: PlaygroundResult | null;
-    isLoading: boolean;
+    result: PlaygroundResult;
     className?: string;
 }) {
     const [expanded, setExpanded] = useState(false);
@@ -449,50 +434,35 @@ function ResultPanel({
     const zoomButtonClass =
         "flex h-full w-full cursor-zoom-in items-center justify-center border-0 bg-transparent p-0";
 
-    return (
-        <Surface
-            variant="card"
-            className={cn("flex min-h-[360px] flex-col gap-4 p-4", className)}
-        >
-            <div className="flex items-center justify-between gap-3 empty:hidden">
-                {/* Say whose picture this is. The seeded example arrives before
-                    the visitor has generated anything, and letting it pass as
-                    their result would be a lie. */}
-                {result?.type === "image" && result.demo && (
-                    <Text as="span" size="xs" className="text-theme-text-muted">
-                        Example output
-                    </Text>
+    if (result.type === "audio") {
+        return (
+            <div
+                className={cn(
+                    "flex items-center gap-3 bg-surface-white p-4",
+                    className,
                 )}
-                {result && !result.demo && (
-                    <ActionButton
-                        href={downloadHref(result)}
-                        download={`pollinations-playground.${getResultExtension(
-                            result,
-                        )}`}
-                        tone="plain"
-                        size="sm"
-                        className="ml-auto"
-                    >
-                        Download
-                    </ActionButton>
-                )}
+            >
+                <audio
+                    src={result.url}
+                    controls
+                    autoPlay
+                    className="polli-playground-audio min-w-0 flex-1"
+                >
+                    <track kind="captions" />
+                </audio>
+                <ResultDownloadButton result={result} />
             </div>
+        );
+    }
 
-            {isLoading ? (
-                <MediaPlaceholder
-                    label="Generating…"
-                    detail="Hang tight while your result is created."
-                    className="flex-1"
-                />
-            ) : !result ? (
-                <MediaPlaceholder
-                    icon={<ImageIcon className="h-5 w-5" />}
-                    label="Output preview"
-                    detail="Generated results appear here."
-                    className="flex-1"
-                />
-            ) : result.type === "text" ? (
-                <div className="min-h-0 flex-1 overflow-auto rounded-xl bg-surface-white p-4 text-theme-text-strong">
+    return (
+        <div className={cn("flex min-h-[360px] flex-col p-4", className)}>
+            {result.type === "text" ? (
+                <div className="relative min-h-0 flex-1 overflow-auto rounded-xl bg-surface-white p-4 pr-16 text-theme-text-strong">
+                    <ResultDownloadButton
+                        result={result}
+                        className="absolute top-3 right-3"
+                    />
                     <Text
                         as="p"
                         size="sm"
@@ -502,7 +472,11 @@ function ResultPanel({
                     </Text>
                 </div>
             ) : (
-                <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl bg-surface-white p-3 text-theme-text-strong">
+                <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl bg-surface-white p-3 text-theme-text-strong">
+                    <ResultDownloadButton
+                        result={result}
+                        className="absolute top-3 right-3 z-10"
+                    />
                     {result.type === "image" && (
                         <button
                             type="button"
@@ -542,24 +516,13 @@ function ResultPanel({
                             </video>
                         </button>
                     )}
-
-                    {result.type === "audio" && (
-                        <audio
-                            src={result.url}
-                            controls
-                            autoPlay
-                            className="w-full"
-                        >
-                            <track kind="captions" />
-                        </audio>
-                    )}
                 </div>
             )}
 
-            {expanded && result && (
+            {expanded && (
                 <Lightbox result={result} onClose={() => setExpanded(false)} />
             )}
-        </Surface>
+        </div>
     );
 }
 
@@ -578,7 +541,7 @@ async function uploadReferenceImages(
     return uploads.map((upload) => upload.url);
 }
 
-export function Playground() {
+export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
     const { apiKey, isLoggedIn, isHydrated } = useAuthState();
     const { login } = useAuthActions();
     const {
@@ -586,23 +549,17 @@ export function Playground() {
         isLoading,
         error: catalogError,
     } = usePlaygroundCatalog(apiKey);
-    const [activeCategory, setActiveCategory] = useState<ModelCategory>(
-        DEMO.category,
-    );
-    const [selectedModel, setSelectedModel] = useState(DEMO.model);
-    const [prompt, setPrompt] = useState(DEMO.prompt);
-    const [width, setWidth] = useState(DEMO.width);
-    const [height, setHeight] = useState(DEMO.height);
-    const [seed, setSeed] = useState(DEMO.seed);
+    const [activeCategory, setActiveCategory] =
+        useState<PlaygroundCategory>("text");
+    const [selectedModel, setSelectedModel] = useState("");
+    const [prompt, setPrompt] = useState("");
+    const [width, setWidth] = useState(1024);
+    const [height, setHeight] = useState(1024);
+    const [seed, setSeed] = useState(42);
     const [referenceImages, setReferenceImages] = useState<File[]>([]);
     const [audioFiles, setAudioFiles] = useState<File[]>([]);
     const [selectedVoice, setSelectedVoice] = useState("");
-    const [result, setResult] = useState<PlaygroundResult | null>({
-        type: "image",
-        url: demoImageUrl(),
-        contentType: "image/jpeg",
-        demo: true,
-    });
+    const [result, setResult] = useState<PlaygroundResult | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -624,19 +581,18 @@ export function Playground() {
         () => visibleModels.find((model) => model.id === selectedModel),
         [visibleModels, selectedModel],
     );
+    const categoryModels = useMemo(
+        () =>
+            visibleModels.filter((model) => model.category === activeCategory),
+        [activeCategory, visibleModels],
+    );
 
     useEffect(() => {
-        if (visibleModels.length === 0) return;
-        if (visibleModels.some((model) => model.id === selectedModel)) return;
-        const nextModel =
-            visibleModels.find((model) => model.id === "flux") ??
-            visibleModels.find((model) => model.category === "image") ??
-            visibleModels[0];
-        if (nextModel) {
-            setSelectedModel(nextModel.id);
-            setActiveCategory(nextModel.category);
-        }
-    }, [visibleModels, selectedModel]);
+        if (activeCategory === "text") return;
+        if (currentModel?.category === activeCategory) return;
+        setSelectedModel(categoryModels[0]?.id ?? "");
+        setAudioFiles([]);
+    }, [activeCategory, categoryModels, currentModel]);
 
     useEffect(() => {
         if (!currentModel) return;
@@ -650,38 +606,9 @@ export function Playground() {
         }
     }, [currentModel, selectedVoice]);
 
-    // The example output is only honest while the form still shows the exact
-    // inputs that produced it. The first edit to any field clears it back to
-    // the placeholder, so a stale picture never claims the new settings.
-    useEffect(() => {
-        if (!result?.demo) return;
-        const untouched =
-            prompt === DEMO.prompt &&
-            selectedModel === DEMO.model &&
-            activeCategory === DEMO.category &&
-            width === DEMO.width &&
-            height === DEMO.height &&
-            seed === DEMO.seed &&
-            referenceImages.length === 0 &&
-            audioFiles.length === 0;
-        if (!untouched) setResult(null);
-    }, [
-        result,
-        prompt,
-        selectedModel,
-        activeCategory,
-        width,
-        height,
-        seed,
-        referenceImages,
-        audioFiles,
-    ]);
-
     useEffect(() => {
         return () => {
-            // Only blob: URLs are ours to revoke — the seeded example is a
-            // remote gen URL and revoking that is meaningless.
-            if (result && result.type !== "text" && !result.demo) {
+            if (result && result.type !== "text") {
                 URL.revokeObjectURL(result.url);
             }
         };
@@ -701,6 +628,20 @@ export function Playground() {
     const lastFrameFiles = referenceImages[1] ? [referenceImages[1]] : [];
     const isAudioTranscription = isAudioTranscriptionModel(currentModel);
     const isTextToAudio = isTextToAudioModel(currentModel);
+    const uploadMedia =
+        currentModel?.category === "audio"
+            ? uploadMediaForModel(currentModel)
+            : [];
+    const acceptsMediaUpload = uploadMedia.length > 0;
+    const requiresMediaUpload =
+        currentModel?.category === "audio" &&
+        acceptsMediaUpload &&
+        !currentModel.inputModalities.includes("text");
+    const mediaUploadAccept = uploadMedia
+        .map((modality) => UPLOAD_ACCEPT[modality])
+        .join(",");
+    const mediaUploadLabel = mediaList(uploadMedia);
+    const MediaUploadIcon = CATEGORY_ICON[uploadMedia[0] ?? "audio"];
     const selectedModelAllowed =
         !!currentModel &&
         isLoggedIn &&
@@ -713,18 +654,20 @@ export function Playground() {
         });
     }, [maxReferenceImages]);
 
-    function selectCategory(category: ModelCategory) {
+    function selectCategory(category: PlaygroundCategory) {
+        if (category === activeCategory) return;
         setActiveCategory(category);
-        if (currentModel?.category === category) return;
+        setAudioFiles([]);
+        if (category === "text") return;
+        setSelectedModel(
+            visibleModels.find((model) => model.category === category)?.id ??
+                "",
+        );
+    }
 
-        const nextModel =
-            visibleModels.find(
-                (model) =>
-                    model.category === category &&
-                    (!isLoggedIn || catalog.allowedModelIds.has(model.id)),
-            ) ?? visibleModels.find((model) => model.category === category);
-
-        if (nextModel) setSelectedModel(nextModel.id);
+    function selectModel(modelId: string) {
+        setSelectedModel(modelId);
+        setAudioFiles([]);
     }
 
     function setFrameImage(index: 0 | 1, files: File[]) {
@@ -741,7 +684,7 @@ export function Playground() {
         const audioFile = audioFiles[0];
 
         if (!apiKey) {
-            setError("Sign in before generating.");
+            setError("Connect before generating.");
             return;
         }
         if (!currentModel) {
@@ -869,10 +812,19 @@ export function Playground() {
               : currentModel?.category === "text"
                 ? "Generate text"
                 : "Generate image";
+    const GenerateIcon = CATEGORY_ICON[activeCategory];
+    const connectLabel =
+        currentModel?.category === "video"
+            ? "Connect to create video"
+            : currentModel?.category === "audio"
+              ? "Connect to create audio"
+              : currentModel?.category === "text"
+                ? "Connect to chat"
+                : "Connect to generate image";
 
     // Signed out is a step, not a fault — handled by the button itself.
     const needsSignIn = isHydrated && !apiKey;
-    const missingInput = isAudioTranscription
+    const missingInput = requiresMediaUpload
         ? audioFiles.length === 0
         : !prompt.trim();
 
@@ -880,8 +832,8 @@ export function Playground() {
     const blockedReason = needsSignIn
         ? null
         : missingInput
-          ? isAudioTranscription
-              ? "Upload an audio file first"
+          ? requiresMediaUpload
+              ? `Upload ${mediaUploadLabel} first`
               : "Write a prompt first"
           : !selectedModelAllowed
             ? "This key cannot use the selected model"
@@ -889,60 +841,69 @@ export function Playground() {
 
     return (
         <div className="flex w-full flex-col gap-5 text-theme-text-base">
-            {catalogError && (
+            <div className="relative flex w-full flex-wrap items-start gap-3">
+                <ModalityTabs
+                    activeCategory={activeCategory}
+                    onSelectCategory={selectCategory}
+                />
+                {toolbarAction && (
+                    <div className="absolute right-0 bottom-full z-20 mb-4 shrink-0">
+                        {toolbarAction}
+                    </div>
+                )}
+            </div>
+
+            {activeCategory === "text" && <Chat />}
+
+            {activeCategory !== "text" && catalogError && (
                 <Alert intent="danger">
                     Model catalog failed to load: {catalogError.message}
                 </Alert>
             )}
 
-            {/* One row decides what you make and what makes it. It sits above
-                both columns because modality and model change the output, not
-                just the prompt. */}
-            <ModalityModelPicker
-                models={visibleModels}
-                activeCategory={activeCategory}
-                selectedModel={selectedModel}
-                isLoading={isLoading || !isHydrated}
-                onSelectCategory={selectCategory}
-                onSelectModel={setSelectedModel}
-            />
+            <Surface
+                variant="panel"
+                className="polli-playground-main-grid"
+                hidden={activeCategory === "text"}
+            >
+                <div className="polli-playground-input-panel flex flex-col gap-4 bg-surface-opaque p-4">
+                    <ModelPicker
+                        models={categoryModels}
+                        selectedModel={selectedModel}
+                        isLoading={isLoading || !isHydrated}
+                        onSelectModel={selectModel}
+                    />
+                    <FieldStack label="Prompt">
+                        <Textarea
+                            value={prompt}
+                            rows={7}
+                            onChange={(event) => setPrompt(event.target.value)}
+                            placeholder={promptPlaceholder(
+                                isAudioTranscription,
+                            )}
+                            className="polli-playground-textarea min-h-44"
+                        />
+                    </FieldStack>
 
-            <div className="polli-playground-main-grid">
-                <div className="flex flex-col gap-4">
-                    <Surface
-                        variant="card"
-                        className="flex flex-1 flex-col gap-4 p-4"
-                    >
-                        <FieldStack label="Prompt">
-                            <Textarea
-                                value={prompt}
-                                rows={7}
-                                onChange={(event) =>
-                                    setPrompt(event.target.value)
-                                }
-                                placeholder={promptPlaceholder(
-                                    currentModel?.category ?? activeCategory,
-                                    isAudioTranscription,
-                                )}
-                                className="polli-playground-textarea min-h-44"
-                            />
-                        </FieldStack>
-
-                        {isAudioTranscription && (
-                            <FieldStack label="Audio file">
+                    {currentModel?.category === "audio" &&
+                        acceptsMediaUpload && (
+                            <FieldStack label={`${mediaUploadLabel} file`}>
                                 <FileUpload
                                     value={audioFiles}
                                     onChange={setAudioFiles}
+                                    variant="compact"
                                     maxFiles={1}
                                     maxSizeBytes={AUDIO_UPLOAD_MAX_SIZE_BYTES}
-                                    accept={AUDIO_UPLOAD_ACCEPT}
-                                    icon={<AudioIcon className="h-6 w-6" />}
+                                    accept={mediaUploadAccept}
+                                    icon={
+                                        <MediaUploadIcon className="h-6 w-6" />
+                                    }
                                     previewIcon={
-                                        <AudioIcon className="h-5 w-5" />
+                                        <MediaUploadIcon className="h-5 w-5" />
                                     }
                                     label={
                                         <>
-                                            Drag audio here or{" "}
+                                            Drag {mediaUploadLabel} here or{" "}
                                             <span className="underline">
                                                 browse
                                             </span>
@@ -952,13 +913,13 @@ export function Playground() {
                                         const reason = rejected[0]?.reason;
                                         if (reason === "size") {
                                             setError(
-                                                "Audio files must be under 20 MB.",
+                                                "Media files must be under 20 MB.",
                                             );
                                         } else if (reason === "count") {
-                                            setError("Use one audio file.");
+                                            setError("Use one media file.");
                                         } else if (reason === "type") {
                                             setError(
-                                                "Use MP3, MP4, MPEG, MPGA, M4A, WAV, or WebM audio.",
+                                                `Use ${mediaUploadLabel} files for this model.`,
                                             );
                                         }
                                     }}
@@ -966,27 +927,67 @@ export function Playground() {
                             </FieldStack>
                         )}
 
-                        {isReferenceImageListMode && (
-                            <FieldStack
+                    {isReferenceImageListMode && (
+                        <FieldStack
+                            label={
+                                <>
+                                    Reference images (up to{" "}
+                                    {pluralizeImages(maxReferenceImages)})
+                                </>
+                            }
+                        >
+                            <FileUpload
+                                value={referenceImages}
+                                onChange={setReferenceImages}
+                                variant="compact"
+                                maxFiles={maxReferenceImages}
+                                maxSizeBytes={5 * 1024 * 1024}
                                 label={
                                     <>
-                                        Reference images (up to{" "}
-                                        {pluralizeImages(maxReferenceImages)})
+                                        Drag up to{" "}
+                                        {pluralizeImages(maxReferenceImages)}{" "}
+                                        here or{" "}
+                                        <span className="underline">
+                                            browse
+                                        </span>
                                     </>
                                 }
-                            >
+                                onReject={(rejected) => {
+                                    const reason = rejected[0]?.reason;
+                                    if (reason === "size") {
+                                        setError(
+                                            "Images must be under 5 MB each.",
+                                        );
+                                    } else if (reason === "count") {
+                                        setError(
+                                            `Use up to ${pluralizeImages(
+                                                maxReferenceImages,
+                                            )}.`,
+                                        );
+                                    } else if (reason === "type") {
+                                        setError(
+                                            "Only image files are allowed.",
+                                        );
+                                    }
+                                }}
+                            />
+                        </FieldStack>
+                    )}
+
+                    {isVideoReferenceMode && (
+                        <div className="polli-playground-frame-grid">
+                            <FieldStack label="First frame">
                                 <FileUpload
-                                    value={referenceImages}
-                                    onChange={setReferenceImages}
-                                    maxFiles={maxReferenceImages}
+                                    value={firstFrameFiles}
+                                    onChange={(files) =>
+                                        setFrameImage(0, files)
+                                    }
+                                    variant="compact"
+                                    maxFiles={1}
                                     maxSizeBytes={5 * 1024 * 1024}
                                     label={
                                         <>
-                                            Drag up to{" "}
-                                            {pluralizeImages(
-                                                maxReferenceImages,
-                                            )}{" "}
-                                            here or{" "}
+                                            Drag first frame here or{" "}
                                             <span className="underline">
                                                 browse
                                             </span>
@@ -999,11 +1000,7 @@ export function Playground() {
                                                 "Images must be under 5 MB each.",
                                             );
                                         } else if (reason === "count") {
-                                            setError(
-                                                `Use up to ${pluralizeImages(
-                                                    maxReferenceImages,
-                                                )}.`,
-                                            );
+                                            setError("Use one first frame.");
                                         } else if (reason === "type") {
                                             setError(
                                                 "Only image files are allowed.",
@@ -1012,25 +1009,29 @@ export function Playground() {
                                     }}
                                 />
                             </FieldStack>
-                        )}
 
-                        {isVideoReferenceMode && (
-                            <div className="polli-playground-frame-grid">
-                                <FieldStack label="First frame">
+                            {supportsLastFrame && (
+                                <FieldStack label="Last frame">
                                     <FileUpload
-                                        value={firstFrameFiles}
+                                        value={lastFrameFiles}
                                         onChange={(files) =>
-                                            setFrameImage(0, files)
+                                            setFrameImage(1, files)
                                         }
+                                        variant="compact"
                                         maxFiles={1}
                                         maxSizeBytes={5 * 1024 * 1024}
+                                        disabled={firstFrameFiles.length === 0}
                                         label={
-                                            <>
-                                                Drag first frame here or{" "}
-                                                <span className="underline">
-                                                    browse
-                                                </span>
-                                            </>
+                                            firstFrameFiles.length === 0 ? (
+                                                "Add first frame before last frame"
+                                            ) : (
+                                                <>
+                                                    Drag last frame here or{" "}
+                                                    <span className="underline">
+                                                        browse
+                                                    </span>
+                                                </>
+                                            )
                                         }
                                         onReject={(rejected) => {
                                             const reason = rejected[0]?.reason;
@@ -1039,9 +1040,7 @@ export function Playground() {
                                                     "Images must be under 5 MB each.",
                                                 );
                                             } else if (reason === "count") {
-                                                setError(
-                                                    "Use one first frame.",
-                                                );
+                                                setError("Use one last frame.");
                                             } else if (reason === "type") {
                                                 setError(
                                                     "Only image files are allowed.",
@@ -1050,173 +1049,127 @@ export function Playground() {
                                         }}
                                     />
                                 </FieldStack>
+                            )}
+                        </div>
+                    )}
 
-                                {supportsLastFrame && (
-                                    <FieldStack label="Last frame">
-                                        <FileUpload
-                                            value={lastFrameFiles}
-                                            onChange={(files) =>
-                                                setFrameImage(1, files)
-                                            }
-                                            maxFiles={1}
-                                            maxSizeBytes={5 * 1024 * 1024}
-                                            disabled={
-                                                firstFrameFiles.length === 0
-                                            }
-                                            label={
-                                                firstFrameFiles.length === 0 ? (
-                                                    "Add first frame before last frame"
-                                                ) : (
-                                                    <>
-                                                        Drag last frame here or{" "}
-                                                        <span className="underline">
-                                                            browse
-                                                        </span>
-                                                    </>
-                                                )
-                                            }
-                                            onReject={(rejected) => {
-                                                const reason =
-                                                    rejected[0]?.reason;
-                                                if (reason === "size") {
-                                                    setError(
-                                                        "Images must be under 5 MB each.",
-                                                    );
-                                                } else if (reason === "count") {
-                                                    setError(
-                                                        "Use one last frame.",
-                                                    );
-                                                } else if (reason === "type") {
-                                                    setError(
-                                                        "Only image files are allowed.",
-                                                    );
-                                                }
-                                            }}
-                                        />
-                                    </FieldStack>
-                                )}
-                            </div>
-                        )}
-
-                        {(currentModel?.category === "image" ||
-                            currentModel?.category === "video") && (
-                            <div className="polli-playground-settings-grid">
-                                <FieldStack label="Width">
-                                    <Input
-                                        type="number"
-                                        min={256}
-                                        max={2048}
-                                        step={64}
-                                        value={width}
-                                        onChange={(event) =>
-                                            setWidth(Number(event.target.value))
-                                        }
-                                        hideNumberSteppers
-                                    />
-                                </FieldStack>
-                                <FieldStack label="Height">
-                                    <Input
-                                        type="number"
-                                        min={256}
-                                        max={2048}
-                                        step={64}
-                                        value={height}
-                                        onChange={(event) =>
-                                            setHeight(
-                                                Number(event.target.value),
-                                            )
-                                        }
-                                        hideNumberSteppers
-                                    />
-                                </FieldStack>
-                                <FieldStack label="Seed">
-                                    <Input
-                                        type="number"
-                                        value={seed}
-                                        onChange={(event) =>
-                                            setSeed(Number(event.target.value))
-                                        }
-                                        hideNumberSteppers
-                                    />
-                                </FieldStack>
-                            </div>
-                        )}
-
-                        {currentModel && currentModel.voices.length > 0 && (
-                            <FieldStack
-                                label={
-                                    <>
-                                        <ModalityDot modality="audio" />
-                                        Voice
-                                    </>
-                                }
-                                labelClassName="flex items-center gap-1.5"
-                            >
-                                <ButtonGroup aria-label="Voice">
-                                    {currentModel.voices.map((voice) => (
-                                        <TabButton
-                                            key={voice}
-                                            active={selectedVoice === voice}
-                                            size="sm"
-                                            onClick={() =>
-                                                setSelectedVoice(voice)
-                                            }
-                                        >
-                                            {voice}
-                                        </TabButton>
-                                    ))}
-                                </ButtonGroup>
+                    {(currentModel?.category === "image" ||
+                        currentModel?.category === "video") && (
+                        <div className="polli-playground-settings-grid">
+                            <FieldStack label="Width">
+                                <Input
+                                    type="number"
+                                    min={256}
+                                    max={2048}
+                                    step={64}
+                                    value={width}
+                                    onChange={(event) =>
+                                        setWidth(Number(event.target.value))
+                                    }
+                                    hideNumberSteppers
+                                />
                             </FieldStack>
-                        )}
+                            <FieldStack label="Height">
+                                <Input
+                                    type="number"
+                                    min={256}
+                                    max={2048}
+                                    step={64}
+                                    value={height}
+                                    onChange={(event) =>
+                                        setHeight(Number(event.target.value))
+                                    }
+                                    hideNumberSteppers
+                                />
+                            </FieldStack>
+                            <FieldStack label="Seed">
+                                <Input
+                                    type="number"
+                                    value={seed}
+                                    onChange={(event) =>
+                                        setSeed(Number(event.target.value))
+                                    }
+                                    hideNumberSteppers
+                                />
+                            </FieldStack>
+                        </div>
+                    )}
 
-                        {error && <Alert intent="danger">{error}</Alert>}
+                    {currentModel && currentModel.voices.length > 0 && (
+                        <FieldStack
+                            label={
+                                <>
+                                    <ModalityDot modality="audio" />
+                                    Voice
+                                </>
+                            }
+                            labelClassName="flex items-center gap-1.5"
+                        >
+                            <ButtonGroup aria-label="Voice">
+                                {currentModel.voices.map((voice) => (
+                                    <TabButton
+                                        key={voice}
+                                        active={selectedVoice === voice}
+                                        size="sm"
+                                        onClick={() => setSelectedVoice(voice)}
+                                    >
+                                        {voice}
+                                    </TabButton>
+                                ))}
+                            </ButtonGroup>
+                        </FieldStack>
+                    )}
 
-                        {/* Not connected is not a broken state, so the button
+                    {error && <Alert intent="danger">{error}</Alert>}
+
+                    {/* Not connected is not a broken state, so the button
                             does not sit there disabled under a 🚫 cursor with
-                            no explanation — it becomes the sign-in action. The
+                            no explanation — it becomes the connect action. The
                             tooltip covers the cases that genuinely are blocked
                             (nothing typed, model not on this key). */}
-                        {blockedReason ? (
-                            <Tooltip
-                                triggerAs="span"
-                                align="center"
-                                content={blockedReason}
-                                className="w-full"
-                            >
-                                <ActionButton
-                                    as="button"
-                                    disabled
-                                    className="w-full"
-                                >
-                                    {generateLabel}
-                                </ActionButton>
-                            </Tooltip>
-                        ) : (
-                            <ActionButton
-                                as="button"
-                                disabled={isGenerating}
-                                // Wrapped: login() takes an optional request
-                                // object, so passing the ref directly would
-                                // hand it the click event.
-                                onClick={needsSignIn ? () => login() : generate}
-                                className="w-full"
-                            >
-                                {isGenerating
-                                    ? "Generating…"
-                                    : needsSignIn
-                                      ? "Sign in to generate"
-                                      : generateLabel}
+                    {blockedReason ? (
+                        <Tooltip
+                            triggerAs="span"
+                            align="center"
+                            content={blockedReason}
+                            className="self-end"
+                        >
+                            <ActionButton as="button" disabled>
+                                <GenerateIcon className="mr-2 h-4 w-4" />
+                                {generateLabel}
                             </ActionButton>
-                        )}
-                    </Surface>
+                        </Tooltip>
+                    ) : (
+                        <ActionButton
+                            as="button"
+                            disabled={isGenerating}
+                            // Wrapped: login() takes an optional request
+                            // object, so passing the ref directly would
+                            // hand it the click event.
+                            onClick={needsSignIn ? () => login() : generate}
+                            className="self-end"
+                        >
+                            {needsSignIn ? (
+                                <LockIcon className="mr-2 h-4 w-4" />
+                            ) : (
+                                <GenerateIcon className="mr-2 h-4 w-4" />
+                            )}
+                            {isGenerating
+                                ? "Generating…"
+                                : needsSignIn
+                                  ? connectLabel
+                                  : generateLabel}
+                        </ActionButton>
+                    )}
                 </div>
 
-                <ResultPanel
-                    result={result}
-                    isLoading={isGenerating}
-                    className="polli-playground-output-panel"
-                />
-            </div>
+                {result && (
+                    <ResultPanel
+                        result={result}
+                        className="polli-playground-output-panel"
+                    />
+                )}
+            </Surface>
         </div>
     );
 }

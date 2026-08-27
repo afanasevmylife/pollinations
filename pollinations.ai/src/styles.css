@@ -20,14 +20,18 @@
     mask-image: linear-gradient(to bottom, black 0%, black 38%, transparent 100%);
 }
 
-.play-chat-shell {
-    min-height: 38rem;
+.play-chat-window-active {
+    height: clamp(34rem, 72dvh, 46rem);
 }
 
 .play-chat-transcript {
-    height: min(58dvh, 42rem);
-    min-height: 24rem;
+    min-height: 0;
     overscroll-behavior: contain;
+}
+
+.play-chat-composer {
+    max-height: 60%;
+    overflow-y: auto;
 }
 
 .play-chat-message {
@@ -49,13 +53,16 @@
 }
 
 @media (max-width: 639px) {
-    .play-chat-shell {
-        min-height: 32rem;
+    .play-chat-window-active {
+        height: clamp(30rem, 72dvh, 40rem);
     }
 
     .play-chat-transcript {
-        height: 54dvh;
-        min-height: 20rem;
+        min-height: 0;
+    }
+
+    .play-chat-composer {
+        max-height: 65%;
     }
 
     .play-chat-message {
@@ -79,27 +86,13 @@ main > * {
    model keeps drifting scenery toward the centre (seed 4103's stalls reached
    27% and a reroll still hit 46%), so the mask is what actually guarantees
    the text's ground. Full opacity returns by 62%, right of every character.
-   On phones the scene is layered behind the copy, so it also fades away on
-   the left. From sm to lg it is a band above the text, so only the bottom
-   fades. */
+   The same mask applies at every width because the composition itself no
+   longer changes position—the scene simply scales with the page. */
 .hero-scene {
     mask-image:
-        linear-gradient(to right, transparent 18%, transparent 42%, black 92%),
-        linear-gradient(to bottom, black 46%, transparent 100%);
+        linear-gradient(to right, transparent 38%, black 62%),
+        linear-gradient(to bottom, black 55%, transparent 100%);
     mask-composite: intersect;
-}
-@media (min-width: 40rem) and (max-width: 63.999rem) {
-    .hero-scene {
-        mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-    }
-}
-@media (min-width: 64rem) {
-    .hero-scene {
-        mask-image:
-            linear-gradient(to right, transparent 38%, black 62%),
-            linear-gradient(to bottom, black 55%, transparent 100%);
-        mask-composite: intersect;
-    }
 }
 
 /* ── Home / bee story ─────────────────────────────────────────────────
@@ -3074,10 +3067,30 @@ body.polli-ui-shell #root {
     min-height: 100dvh;
 }
 
-.polli-playground-main-grid,
+.polli-playground-main-grid {
+    display: grid;
+    gap: 0;
+    overflow: clip;
+    padding: 0;
+}
+
+.polli-playground-output-panel {
+    border-top: 1px solid var(--polli-color-border);
+}
+
+.polli-playground-audio {
+    height: 2.5rem;
+    border-radius: 9999px;
+    background: var(--polli-color-surface-opaque);
+}
+
+.polli-playground-audio::-webkit-media-controls-enclosure {
+    border-radius: 9999px;
+    background: var(--polli-color-surface-opaque);
+}
+
 .polli-playground-settings-grid {
     display: grid;
-    gap: 1rem;
 }
 
 .polli-playground-settings-grid {
@@ -3100,18 +3113,6 @@ body.polli-ui-shell #root {
 }
 
 @media (min-width: 1024px) {
-    .polli-playground-main-grid {
-        align-items: stretch;
-        grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.95fr);
-    }
-
-    .polli-playground-output-panel {
-        position: sticky;
-        top: 1rem;
-        height: 100%;
-        min-height: 560px;
-    }
-
     .polli-playground-textarea {
         min-height: 14rem;
     }
