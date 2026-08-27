@@ -1,31 +1,40 @@
 import {
+    BookIcon,
     BrandLockup,
     Button,
+    DiscordIcon,
+    Dropdown,
+    DropdownItem,
+    GitHubIcon,
+    LogInIcon,
     MenuIcon,
     TabButton,
     XIcon,
 } from "@pollinations/ui";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { GUTTER, SHELL } from "./kit";
 import { useHideOnScroll, useScrolled } from "./useHideOnScroll";
 
 const NAV = [
-    { to: "/", label: "Hello" },
     { to: "/play", label: "Play" },
     { to: "/apps", label: "Apps" },
     { to: "/community", label: "Community" },
 ] as const;
 
-/**
- * Everything here leaves the site, so every one carries ↗ — the same marker
- * Dashboard already used. An arrow on some outbound links and not others
- * reads as an inconsistency rather than as meaning.
- */
 const EXTERNAL = [
     // Not docs.pollinations.ai — that is the investor data room.
     { href: "https://gen.pollinations.ai/docs", label: "Docs" },
     { href: "https://github.com/pollinations/pollinations", label: "GitHub" },
+    {
+        href: "https://discord.gg/pollinations-ai-885844321461485618",
+        label: "Discord",
+    },
+] as const;
+
+const DESKTOP_UTILITIES = [
+    { ...EXTERNAL[1], Icon: GitHubIcon },
+    { ...EXTERNAL[2], Icon: DiscordIcon },
 ] as const;
 
 const isCurrent = (to: string, pathname: string) =>
@@ -33,7 +42,6 @@ const isCurrent = (to: string, pathname: string) =>
 
 export function SiteHeader() {
     const [menuOpen, setMenuOpen] = useState(false);
-    const headerRef = useRef<HTMLElement>(null);
     const scrolled = useScrolled();
     const scrolledAway = useHideOnScroll();
     const pathname = useRouterState({
@@ -46,35 +54,11 @@ export function SiteHeader() {
         setMenuOpen(false);
     }, [pathname]);
 
-    useEffect(() => {
-        if (!menuOpen) return;
-        const onKey = (event: KeyboardEvent) => {
-            if (event.key === "Escape") setMenuOpen(false);
-        };
-        // Escape only helps a keyboard. A tap on the page behind the panel is
-        // how most people expect to dismiss it, and without this it did
-        // nothing. Listening on pointerdown rather than click so the menu is
-        // gone before whatever was tapped reacts.
-        const onPointerDown = (event: PointerEvent) => {
-            const target = event.target as Node | null;
-            if (target && !headerRef.current?.contains(target)) {
-                setMenuOpen(false);
-            }
-        };
-        window.addEventListener("keydown", onKey);
-        window.addEventListener("pointerdown", onPointerDown);
-        return () => {
-            window.removeEventListener("keydown", onKey);
-            window.removeEventListener("pointerdown", onPointerDown);
-        };
-    }, [menuOpen]);
-
     // The header must not slide away while its own menu is open.
     const hidden = scrolledAway && !menuOpen;
 
     return (
         <header
-            ref={headerRef}
             className={`sticky top-0 z-30 bg-transparent py-4 transition-transform duration-300 focus-within:translate-y-0 sm:py-5 motion-reduce:transition-none ${
                 hidden ? "-translate-y-full" : "translate-y-0"
             }`}
@@ -92,20 +76,39 @@ export function SiteHeader() {
                     <div className="flex min-w-0 items-center gap-9">
                         <Link
                             to="/"
-                            className="flex items-center text-theme-text-strong"
+                            className="group relative flex items-center rounded-md text-theme-text-strong focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-theme-border"
                             aria-label="pollinations.ai — home"
                         >
-                            <BrandLockup
-                                variant="mark"
-                                height={32}
-                                label=""
-                                className="sm:hidden"
-                            />
-                            <BrandLockup
-                                height={30}
-                                label=""
-                                className="hidden sm:inline-block"
-                            />
+                            <span className="relative inline-flex sm:hidden">
+                                {pathname === "/" && (
+                                    <BrandLockup
+                                        variant="mark"
+                                        height={32}
+                                        label=""
+                                        className="absolute translate-x-[3px] translate-y-[3px] text-theme-bg-active"
+                                    />
+                                )}
+                                <BrandLockup
+                                    variant="mark"
+                                    height={32}
+                                    label=""
+                                    className="relative z-10"
+                                />
+                            </span>
+                            <span className="relative hidden sm:inline-flex">
+                                {pathname === "/" && (
+                                    <BrandLockup
+                                        height={30}
+                                        label=""
+                                        className="absolute translate-x-[3px] translate-y-[3px] text-theme-bg-active"
+                                    />
+                                )}
+                                <BrandLockup
+                                    height={30}
+                                    label=""
+                                    className="relative z-10"
+                                />
+                            </span>
                         </Link>
                         <nav className="hidden gap-1.5 lg:flex">
                             {NAV.map((item) => (
@@ -122,95 +125,104 @@ export function SiteHeader() {
                         </nav>
                     </div>
                     <div className="flex items-center gap-2">
-                        {EXTERNAL.map((item) => (
-                            <TabButton
-                                key={item.href}
-                                as="a"
-                                href={item.href}
-                                variant="ghost"
-                                active={false}
-                                className="hidden lg:inline-flex"
-                            >
-                                {item.label} ↗
-                            </TabButton>
-                        ))}
+                        <Button
+                            as="a"
+                            href={EXTERNAL[0].href}
+                            size="sm"
+                            aria-label="Docs"
+                            title="Docs"
+                            className="h-9 w-9 shrink-0 bg-surface-opaque p-0 text-theme-text-strong shadow-well transition-all duration-200 hover:-translate-y-0.5 hover:bg-theme-bg-hover hover:shadow-lg sm:w-auto sm:gap-1.5 sm:px-3 motion-reduce:hover:translate-y-0"
+                        >
+                            <BookIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">Docs</span>
+                        </Button>
+                        {DESKTOP_UTILITIES.map((item) => {
+                            const { href, label, Icon } = item;
+                            return (
+                                <Button
+                                    key={href}
+                                    as="a"
+                                    href={href}
+                                    size="sm"
+                                    aria-label={label}
+                                    title={label}
+                                    className="hidden h-9 w-9 shrink-0 bg-surface-opaque p-0 text-theme-text-strong shadow-well transition-all duration-200 hover:-translate-y-0.5 hover:bg-theme-bg-hover hover:shadow-lg lg:inline-flex motion-reduce:hover:translate-y-0"
+                                >
+                                    <Icon className="h-4 w-4" />
+                                </Button>
+                            );
+                        })}
                         <Button
                             as="a"
                             href="https://enter.pollinations.ai"
-                            className="hidden bg-brand-dark text-surface-opaque hover:bg-brand-dark sm:inline-flex"
+                            size="sm"
+                            aria-label="Login"
+                            title="Login"
+                            className="h-9 shrink-0 gap-1.5 bg-surface-opaque px-3 text-theme-text-strong shadow-well transition-all duration-200 hover:-translate-y-0.5 hover:bg-theme-bg-hover hover:shadow-lg motion-reduce:hover:translate-y-0"
                         >
-                            Dashboard ↗
+                            <LogInIcon className="h-4 w-4" />
+                            Login
                         </Button>
-                        {/* Below lg the nav row is gone, and Docs/GitHub wait
-                            until xl. Below sm, Dashboard moves into the menu
-                            too, leaving the mark and menu button room to fit.
-
-                            Button, not IconButton: IconButton takes a closed
-                            prop set, so aria-expanded/aria-controls are
-                            dropped, and it is fixed at 24px — under the 44px
-                            touch target this needs. */}
-                        <Button
-                            aria-label={menuOpen ? "Close menu" : "Open menu"}
-                            aria-expanded={menuOpen}
-                            aria-controls="site-menu"
-                            onClick={() => setMenuOpen((open) => !open)}
-                            // Explicit w/h and a sized icon: the bare icon
-                            // stretches to fill the flex box and drags the
-                            // button's width down with it, which lands under
-                            // the 44px touch target.
-                            className="h-11 w-11 min-w-11 p-0 [&>svg]:size-6 lg:hidden"
+                        <Dropdown
+                            align="end"
+                            open={menuOpen}
+                            onOpenChange={setMenuOpen}
+                            className="w-48 bg-surface-opaque p-2 shadow-well"
+                            trigger={(open) => (
+                                <Button
+                                    aria-label={
+                                        open ? "Close menu" : "Open menu"
+                                    }
+                                    aria-expanded={open}
+                                    aria-controls="site-menu"
+                                    className="h-11 w-11 min-w-11 p-0 [&>svg]:size-6 lg:hidden"
+                                >
+                                    {open ? <XIcon /> : <MenuIcon />}
+                                </Button>
+                            )}
                         >
-                            {menuOpen ? <XIcon /> : <MenuIcon />}
-                        </Button>
+                            {(close) => (
+                                <nav
+                                    id="site-menu"
+                                    className="flex max-h-[calc(100dvh-6rem)] flex-col gap-1 overflow-y-auto"
+                                >
+                                    {NAV.map((item) => (
+                                        <DropdownItem
+                                            key={item.to}
+                                            as={Link}
+                                            to={item.to}
+                                            onClick={close}
+                                            className={
+                                                isCurrent(item.to, pathname)
+                                                    ? "bg-theme-bg-active"
+                                                    : undefined
+                                            }
+                                        >
+                                            {item.label}
+                                        </DropdownItem>
+                                    ))}
+                                    <span className="mx-2 my-1 h-px bg-theme-border" />
+                                    <DropdownItem
+                                        as="a"
+                                        href={EXTERNAL[1].href}
+                                        onClick={close}
+                                    >
+                                        <GitHubIcon className="h-4 w-4 shrink-0" />
+                                        {EXTERNAL[1].label}
+                                    </DropdownItem>
+                                    <DropdownItem
+                                        as="a"
+                                        href={EXTERNAL[2].href}
+                                        onClick={close}
+                                    >
+                                        <DiscordIcon className="h-4 w-4 shrink-0" />
+                                        {EXTERNAL[2].label}
+                                    </DropdownItem>
+                                </nav>
+                            )}
+                        </Dropdown>
                     </div>
                 </div>
-
-                {menuOpen && (
-                    <div className={`${GUTTER} lg:hidden`}>
-                        {/* Every destination, including Dashboard when it is
-                            still in the bar — a menu that lists some of them
-                            is harder to trust than one that lists all. */}
-                        <nav
-                            id="site-menu"
-                            className="mt-4 flex max-h-[calc(100dvh-6rem)] flex-col gap-1 overflow-y-auto rounded-2xl bg-surface-opaque p-3 shadow-well"
-                        >
-                            {NAV.map((item) => (
-                                <TabButton
-                                    key={item.to}
-                                    as={Link}
-                                    to={item.to}
-                                    variant="ghost"
-                                    active={isCurrent(item.to, pathname)}
-                                    className="h-11 justify-start px-4"
-                                >
-                                    {item.label}
-                                </TabButton>
-                            ))}
-                            <span className="mx-3 my-1 h-px bg-theme-border" />
-                            {EXTERNAL.map((item) => (
-                                <TabButton
-                                    key={item.href}
-                                    as="a"
-                                    href={item.href}
-                                    variant="ghost"
-                                    active={false}
-                                    className="h-11 justify-start px-4"
-                                >
-                                    {item.label} ↗
-                                </TabButton>
-                            ))}
-                            <TabButton
-                                as="a"
-                                href="https://enter.pollinations.ai"
-                                variant="ghost"
-                                active={false}
-                                className="h-11 justify-start px-4"
-                            >
-                                Dashboard ↗
-                            </TabButton>
-                        </nav>
-                    </div>
-                )}
             </div>
         </header>
     );

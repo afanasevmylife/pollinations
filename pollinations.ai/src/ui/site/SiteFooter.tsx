@@ -52,8 +52,12 @@ export function SiteFooter() {
                         label=""
                     />
                     <p className="text-sm text-theme-text-muted">
-                        Open infrastructure for AI apps. Built with the
-                        community, in the open.
+                        <span className="block">
+                            Open infrastructure for AI apps
+                        </span>
+                        <span className="block">
+                            Built with the community, in the open
+                        </span>
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-12">
