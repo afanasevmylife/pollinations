@@ -3,13 +3,13 @@ import {
     useAuthActions,
     useAuthState,
 } from "@pollinations/sdk/react";
-import { LockIcon } from "@pollinations/ui";
+import { Button, LockIcon } from "@pollinations/ui";
 import { AppUserMenu } from "@pollinations/ui/app-user-menu/sdk";
 import { createFileRoute } from "@tanstack/react-router";
 import { ENTER_URL, POLLI_APP_KEY } from "../config";
 import { routeHead } from "../routeMeta";
 import { Playground } from "../ui/play/Playground";
-import { ActionButton, Hero, PageHeader } from "../ui/site/kit";
+import { Hero, PageHeader } from "../ui/site/kit";
 
 export const Route = createFileRoute("/play")({
     head: () => routeHead("/play"),
@@ -17,18 +17,16 @@ export const Route = createFileRoute("/play")({
 });
 
 /**
- * Connect uses the site's button style rather than the dashboard pill
- * AppUserMenu ships. Once signed in the slot becomes the account menu, which
- * stays a pill because it's an account chip, not an action.
+ * Play controls, including the signed-in profile, use the shared UI treatment.
  */
 function SignInAction() {
     const { isLoggedIn, isHydrated } = useAuthState();
     const { login } = useAuthActions();
     if (!isHydrated) {
         return (
-            <ActionButton as="button" disabled aria-label="Loading account">
+            <Button disabled size="lg" aria-label="Loading account">
                 Checking…
-            </ActionButton>
+            </Button>
         );
     }
     return isLoggedIn ? (
@@ -37,10 +35,10 @@ function SignInAction() {
             labels={{ topUpAccount: "Manage key" }}
         />
     ) : (
-        <ActionButton as="button" onClick={() => login()}>
+        <Button size="lg" onClick={() => login()}>
             <LockIcon className="mr-2 h-4 w-4" />
             Connect
-        </ActionButton>
+        </Button>
     );
 }
 

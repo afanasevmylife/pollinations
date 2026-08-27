@@ -20,18 +20,59 @@
     mask-image: linear-gradient(to bottom, black 0%, black 38%, transparent 100%);
 }
 
-.play-chat-window-active {
-    height: clamp(34rem, 72dvh, 46rem);
+.play-chat-window {
+    height: 42rem;
 }
 
 .play-chat-transcript {
     min-height: 0;
     overscroll-behavior: contain;
+    scrollbar-width: auto;
 }
 
-.play-chat-composer {
-    max-height: 60%;
-    overflow-y: auto;
+.play-chat-transcript::-webkit-scrollbar {
+    width: 16px;
+}
+
+.play-chat-transcript::-webkit-scrollbar-thumb {
+    min-height: 64px;
+    border-width: 3px;
+}
+
+.play-chat-transcript[data-scrollbar-active="true"] {
+    scrollbar-color: color-mix(
+            in oklab,
+            var(--polli-color-bg-active) 48%,
+            transparent
+        )
+        transparent;
+}
+
+.play-chat-transcript[data-scrollbar-active="true"]::-webkit-scrollbar-thumb {
+    background-color: color-mix(
+        in oklab,
+        var(--polli-color-bg-active) 48%,
+        transparent
+    );
+}
+
+.play-chat-input {
+    overflow: hidden;
+    border: 1px solid var(--polli-color-border);
+    border-radius: 0.5rem;
+    background: var(--polli-color-bg-pale);
+}
+
+.play-chat-input:focus-within {
+    box-shadow: 0 0 0 1px var(--polli-color-border);
+}
+
+.play-chat-input .polli-textarea,
+.play-chat-input .polli-textarea:focus,
+.play-chat-input .polli-textarea:focus-visible {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
 }
 
 .play-chat-message {
@@ -53,21 +94,18 @@
 }
 
 @media (max-width: 639px) {
-    .play-chat-window-active {
-        height: clamp(30rem, 72dvh, 40rem);
+    .play-chat-window {
+        height: 38rem;
     }
 
     .play-chat-transcript {
         min-height: 0;
     }
 
-    .play-chat-composer {
-        max-height: 65%;
-    }
-
     .play-chat-message {
         max-width: 96%;
     }
+
 }
 
 /* The hero scene is positioned and dips below its section, so every later

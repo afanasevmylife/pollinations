@@ -34,7 +34,6 @@ import {
 import { categoryLabel, ModalityDot, ModalityTab } from "@pollinations/ui/gen";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { ActionButton } from "../site/kit";
 import { Chat } from "./Chat";
 
 type ViteImportMeta = ImportMeta & {
@@ -273,7 +272,10 @@ function ModelPicker({
     const selected = models.find((model) => model.id === selectedModel);
 
     return (
-        <FieldStack label="Model">
+        <div className="flex min-w-0 items-center gap-3">
+            <Text as="span" size="sm" weight="bold" className="shrink-0">
+                Model
+            </Text>
             <Dropdown
                 className="w-max max-w-[calc(100vw-2rem)] p-2"
                 trigger={(open) => (
@@ -319,7 +321,7 @@ function ModelPicker({
                     </ScrollArea>
                 )}
             </Dropdown>
-        </FieldStack>
+        </div>
     );
 }
 
@@ -847,7 +849,7 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                     onSelectCategory={selectCategory}
                 />
                 {toolbarAction && (
-                    <div className="absolute right-0 bottom-full z-20 mb-4 shrink-0">
+                    <div className="absolute right-0 bottom-full z-20 mb-8 shrink-0">
                         {toolbarAction}
                     </div>
                 )}
@@ -1134,14 +1136,14 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                             content={blockedReason}
                             className="self-end"
                         >
-                            <ActionButton as="button" disabled>
+                            <Button size="lg" disabled>
                                 <GenerateIcon className="mr-2 h-4 w-4" />
                                 {generateLabel}
-                            </ActionButton>
+                            </Button>
                         </Tooltip>
                     ) : (
-                        <ActionButton
-                            as="button"
+                        <Button
+                            size="lg"
                             disabled={isGenerating}
                             // Wrapped: login() takes an optional request
                             // object, so passing the ref directly would
@@ -1159,7 +1161,7 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                                 : needsSignIn
                                   ? connectLabel
                                   : generateLabel}
-                        </ActionButton>
+                        </Button>
                     )}
                 </div>
 

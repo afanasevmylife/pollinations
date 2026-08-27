@@ -16,29 +16,30 @@ import {
     ChatIcon,
     ChevronIcon,
     Chip,
+    CloudUploadIcon,
     cn,
     Dropdown,
     FileUpload,
     ImageIcon,
-    PlusIcon,
     RocketIcon,
     ScrollArea,
     Surface,
     TabButton,
     Text,
     Textarea,
+    TrashIcon,
 } from "@pollinations/ui";
 import { Markdown } from "@pollinations/ui/markdown";
 import {
     type ClipboardEvent,
+    type DragEvent,
     type FormEvent,
-    type KeyboardEvent,
+    type KeyboardEvent as ReactKeyboardEvent,
     useEffect,
     useMemo,
     useRef,
     useState,
 } from "react";
-import { ActionButton } from "../site/kit";
 import {
     AUTO_ROUTING,
     arrayBufferToBase64,
@@ -69,8 +70,8 @@ const CHAT_ROUTING_FIELDS = [
 const ROUTING_LABELS: Record<ChatRoutingCapability, string> = {
     text: "Text",
     web_search: "Web search",
-    image_generation: "Image generation",
-    image_editing: "Image editing",
+    image_generation: "Image",
+    image_editing: "Image edit",
     video: "Video",
     audio: "Audio",
 };
@@ -212,7 +213,7 @@ function AttachmentView({ attachment }: { attachment: PreparedAttachment }) {
                     src={attachment.url}
                     alt={attachment.name}
                     loading="lazy"
-                    className="play-chat-media max-h-52 rounded-lg"
+                    className="play-chat-media rounded-lg"
                 />
             </a>
         );
@@ -225,7 +226,7 @@ function AttachmentView({ attachment }: { attachment: PreparedAttachment }) {
                     src={attachment.url}
                     controls
                     preload="metadata"
-                    className="play-chat-media max-h-52 rounded-lg"
+                    className="play-chat-media rounded-lg"
                 />
             </>
         );
@@ -408,8 +409,14 @@ function RoutingSelector({
 }) {
     const selected = choices.find((choice) => choice.id === value);
     return (
-        <div className="flex min-w-0 flex-col gap-1.5">
-            <Text size="xs" tone="muted" weight="bold">
+        <div className="flex min-w-0 items-center gap-2">
+            <Text
+                as="span"
+                size="xs"
+                tone="muted"
+                weight="bold"
+                className="shrink-0"
+            >
                 {ROUTING_LABELS[field]}
             </Text>
             <Dropdown
@@ -418,8 +425,9 @@ function RoutingSelector({
                     <Button
                         type="button"
                         size="sm"
+                        intent={value === null ? "neutral" : undefined}
                         disabled={disabled}
-                        className="w-fit max-w-full self-start justify-between gap-2"
+                        className="w-fit max-w-full justify-between gap-2"
                         aria-label={`${ROUTING_LABELS[field]} routing: ${selected?.title ?? "Auto"}`}
                     >
                         <span className="truncate">
@@ -499,14 +507,6 @@ function RoutingPanel({
     );
 }
 
-function activeRoutingLabel(
-    field: ChatRoutingCapability,
-    id: string,
-    choices: RoutingChoice[],
-): string {
-    return `${ROUTING_LABELS[field]}: ${choices.find((choice) => choice.id === id)?.title ?? "Model"}`;
-}
-
 export function Chat() {
     const { apiKey, isLoggedIn, isHydrated } = useAuthState();
     const { login } = useAuthActions();
@@ -527,6 +527,7 @@ export function Chat() {
     const transcriptRef = useRef<HTMLDivElement | null>(null);
     const followOutputRef = useRef(true);
     const composerRef = useRef<HTMLTextAreaElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const client = useMemo(
         () =>
@@ -573,6 +574,14 @@ export function Chat() {
     useEffect(() => {
         if (!isLoggedIn) abortRef.current?.abort();
     }, [isLoggedIn]);
+    useEffect(() => {
+        if (!advancedOpen) return;
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setAdvancedOpen(false);
+        };
+        window.addEventListener("keydown", closeOnEscape);
+        return () => window.removeEventListener("keydown", closeOnEscape);
+    }, [advancedOpen]);
 
     async function streamAssistant(
         history: ConversationMessage[],
@@ -760,11 +769,17 @@ export function Chat() {
         addFiles(pastedFiles);
     }
 
+    function onComposerDrop(event: DragEvent<HTMLFieldSetElement>) {
+        event.preventDefault();
+        if (!canAttach) return;
+        addFiles(Array.from(event.dataTransfer.files));
+    }
+
     function submit(event: FormEvent) {
         event.preventDefault();
         void send();
     }
-    function onComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    function onComposerKeyDown(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
         if (
             event.key === "Enter" &&
             !event.shiftKey &&
@@ -775,11 +790,11 @@ export function Chat() {
         }
     }
 
-    const activeOverrides = CHAT_ROUTING_FIELDS.filter(
-        (field) => routing[field],
-    );
     const canRetryLast = (id: string) =>
         messages[messages.length - 1]?.id === id && !sending;
+    const routingOverrideCount = CHAT_ROUTING_FIELDS.filter(
+        (field) => routing[field] !== null,
+    ).length;
 
     return (
         <section
@@ -790,12 +805,7 @@ export function Chat() {
                 variant="panel"
                 className="play-chat-shell flex flex-col overflow-hidden p-0"
             >
-                <div
-                    className={cn(
-                        "flex min-h-0 flex-col",
-                        messages.length > 0 && "play-chat-window-active",
-                    )}
-                >
+                <div className="play-chat-window flex min-h-0 flex-col">
                     <ScrollArea
                         ref={transcriptRef}
                         className="play-chat-transcript min-h-0 flex-1 px-3 py-4 sm:px-5"
@@ -811,7 +821,7 @@ export function Chat() {
                                 96;
                         }}
                     >
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-5">
                             <MessageCard
                                 message={WELCOME_MESSAGE}
                                 canRetry={false}
@@ -833,7 +843,7 @@ export function Chat() {
                     </ScrollArea>
                     <form
                         onSubmit={submit}
-                        className="play-chat-composer relative flex flex-col gap-3 border-t border-theme-border bg-surface-opaque p-3 sm:p-4"
+                        className="relative flex shrink-0 flex-col gap-3 p-3 sm:p-4"
                     >
                         {catalog.error && (
                             <Alert
@@ -858,113 +868,118 @@ export function Chat() {
                             </Alert>
                         )}
 
-                        {activeOverrides.length > 0 && (
-                            <fieldset
-                                className="flex flex-wrap gap-2"
-                                aria-label="Active routing overrides"
-                            >
-                                {activeOverrides.map((field) => {
-                                    const id = routing[field];
-                                    if (!id) return null;
-                                    return (
-                                        <Chip key={field}>
-                                            {activeRoutingLabel(
-                                                field,
-                                                id,
-                                                modelChoices[field],
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setRouting((current) => ({
-                                                        ...current,
-                                                        [field]: null,
-                                                    }))
-                                                }
-                                                aria-label={`Reset ${ROUTING_LABELS[field]} routing to Auto`}
-                                                className="ml-1 font-bold"
-                                            >
-                                                ×
-                                            </button>
-                                        </Chip>
-                                    );
-                                })}
-                            </fieldset>
-                        )}
-
-                        <Textarea
-                            aria-label="Message"
-                            ref={composerRef}
-                            value={draft}
-                            onChange={(event) => setDraft(event.target.value)}
-                            onKeyDown={onComposerKeyDown}
-                            onPaste={onComposerPaste}
-                            disabled={!isHydrated || sending}
-                            placeholder="Message Floret…"
-                            rows={3}
-                        />
-                        <FileUpload
-                            value={files}
-                            onChange={handleFiles}
-                            onReject={(rejected) => {
-                                const problems = new Set(
-                                    rejected.map(({ file, reason }) => {
-                                        if (reason === "count")
-                                            return `You can attach up to ${MAX_ATTACHMENTS} files.`;
-                                        if (reason === "size")
-                                            return `${file.name} is larger than 20 MB.`;
-                                        return `${file.name} is not a supported file type.`;
-                                    }),
-                                );
-                                setError([...problems].join(" "));
+                        <fieldset
+                            className="play-chat-input m-0 min-w-0 p-0"
+                            aria-label="Message and attachments"
+                            onDragOver={(event) => {
+                                event.preventDefault();
+                                if (canAttach)
+                                    event.dataTransfer.dropEffect = "copy";
                             }}
-                            maxFiles={MAX_ATTACHMENTS}
-                            maxSizeBytes={MAX_ATTACHMENT_BYTES}
-                            accept={ATTACHMENT_ACCEPT}
-                            variant="compact"
-                            disabled={!canAttach}
-                            icon={<PlusIcon className="h-5 w-5" />}
-                            label={
-                                <>
-                                    Drop media or files here, or{" "}
-                                    <span className="underline">browse</span>
-                                </>
-                            }
-                            previewIcon={<ImageIcon className="h-5 w-5" />}
-                        />
+                            onDrop={onComposerDrop}
+                        >
+                            <FileUpload
+                                value={files}
+                                onChange={handleFiles}
+                                onReject={(rejected) => {
+                                    const problems = new Set(
+                                        rejected.map(({ file, reason }) => {
+                                            if (reason === "count")
+                                                return `You can attach up to ${MAX_ATTACHMENTS} files.`;
+                                            if (reason === "size")
+                                                return `${file.name} is larger than 20 MB.`;
+                                            return `${file.name} is not a supported file type.`;
+                                        }),
+                                    );
+                                    setError([...problems].join(" "));
+                                }}
+                                maxFiles={MAX_ATTACHMENTS}
+                                maxSizeBytes={MAX_ATTACHMENT_BYTES}
+                                accept={ATTACHMENT_ACCEPT}
+                                variant="inline"
+                                disabled={!canAttach}
+                                className="px-3 pt-3"
+                                previewIcon={<ImageIcon className="h-5 w-5" />}
+                            />
+                            <Textarea
+                                aria-label="Message"
+                                ref={composerRef}
+                                value={draft}
+                                onChange={(event) =>
+                                    setDraft(event.target.value)
+                                }
+                                onKeyDown={onComposerKeyDown}
+                                onPaste={onComposerPaste}
+                                disabled={!isHydrated || sending}
+                                placeholder="Message Floret…"
+                                rows={3}
+                                className="resize-none"
+                            />
+                        </fieldset>
                         <div className="flex flex-wrap items-end gap-2">
-                            <button
+                            <TabButton
                                 type="button"
+                                active={advancedOpen}
+                                intent="neutral"
+                                size="lg"
+                                disabled={sending}
                                 aria-expanded={advancedOpen}
                                 aria-controls="play-chat-routing"
+                                ariaLabel={`Routing${routingOverrideCount > 0 ? `, ${routingOverrideCount} customized` : ""}`}
                                 onClick={() => setAdvancedOpen((open) => !open)}
-                                className="ml-2 inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-0 py-1 text-sm font-semibold text-theme-text-base hover:text-theme-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-border"
+                                className="gap-2"
                             >
-                                Model routing
                                 <ChevronIcon
-                                    className={cn(
-                                        "h-4 w-4",
-                                        advancedOpen && "rotate-180",
-                                    )}
+                                    expanded={advancedOpen}
+                                    className="h-4 w-4"
                                 />
-                            </button>
-                            {messages.length > 0 && (
-                                <ActionButton
-                                    as="button"
-                                    size="sm"
-                                    tone="plain"
-                                    onClick={() => {
-                                        abortRef.current?.abort();
-                                        setMessages([]);
-                                        setDraft("");
-                                        setFiles([]);
-                                        setError(null);
-                                        setStatus("Ready");
-                                        composerRef.current?.focus();
-                                    }}
-                                >
-                                    New chat
-                                </ActionButton>
+                                Routing
+                                {routingOverrideCount > 0 && (
+                                    <Chip
+                                        size="sm"
+                                        aria-label={`${routingOverrideCount} routes customized`}
+                                        className="min-w-6 justify-center px-1.5"
+                                    >
+                                        {routingOverrideCount}
+                                    </Chip>
+                                )}
+                            </TabButton>
+                            {isLoggedIn && (
+                                <span className="inline-flex">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept={ATTACHMENT_ACCEPT}
+                                        multiple
+                                        hidden
+                                        onChange={(event) => {
+                                            addFiles(
+                                                Array.from(
+                                                    event.currentTarget.files ??
+                                                        [],
+                                                ),
+                                            );
+                                            event.currentTarget.value = "";
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="lg"
+                                        intent="info"
+                                        aria-label="Add media"
+                                        title="Add media"
+                                        disabled={
+                                            !canAttach ||
+                                            files.length >= MAX_ATTACHMENTS
+                                        }
+                                        className="h-12 w-12 shrink-0 p-0"
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
+                                    >
+                                        <CloudUploadIcon className="h-5 w-5" />
+                                    </Button>
+                                </span>
                             )}
                             {(!isHydrated || sending) && (
                                 <Text size="xs" tone="muted" aria-live="polite">
@@ -973,38 +988,58 @@ export function Chat() {
                                         : status}
                                 </Text>
                             )}
-                            <div className="ml-auto">
+                            <div className="ml-auto flex items-center gap-2">
+                                {messages.length > 0 && (
+                                    <Button
+                                        intent="danger"
+                                        size="lg"
+                                        aria-label="New chat"
+                                        title="New chat"
+                                        className="h-12 w-12 shrink-0 p-0"
+                                        onClick={() => {
+                                            abortRef.current?.abort();
+                                            setMessages([]);
+                                            setDraft("");
+                                            setFiles([]);
+                                            setError(null);
+                                            setStatus("Ready");
+                                            composerRef.current?.focus();
+                                        }}
+                                    >
+                                        <TrashIcon className="h-5 w-5" />
+                                    </Button>
+                                )}
                                 {sending ? (
-                                    <ActionButton
-                                        as="button"
-                                        tone="plain"
+                                    <Button
+                                        intent="danger"
+                                        size="lg"
                                         type="button"
                                         onClick={() =>
                                             abortRef.current?.abort()
                                         }
                                     >
                                         Stop
-                                    </ActionButton>
+                                    </Button>
                                 ) : !isHydrated ? (
-                                    <ActionButton
-                                        as="button"
+                                    <Button
+                                        size="lg"
                                         disabled
                                         aria-label="Loading account"
                                     >
                                         Checking…
-                                    </ActionButton>
+                                    </Button>
                                 ) : !isLoggedIn ? (
-                                    <ActionButton
-                                        as="button"
+                                    <Button
+                                        size="lg"
                                         type="button"
                                         onClick={() => login()}
                                     >
                                         <ChatIcon className="mr-2 h-4 w-4" />
                                         Connect to chat
-                                    </ActionButton>
+                                    </Button>
                                 ) : (
-                                    <ActionButton
-                                        as="button"
+                                    <Button
+                                        size="lg"
                                         type="submit"
                                         disabled={
                                             !draft.trim() && files.length === 0
@@ -1012,14 +1047,14 @@ export function Chat() {
                                     >
                                         <RocketIcon className="mr-2 h-4 w-4" />
                                         Send
-                                    </ActionButton>
+                                    </Button>
                                 )}
                             </div>
                         </div>
                     </form>
                 </div>
                 {advancedOpen && (
-                    <div className="bg-surface-opaque p-3 pt-0 sm:p-4 sm:pt-0">
+                    <div className="px-3 pb-3 sm:px-4 sm:pb-4">
                         <RoutingPanel
                             selection={routing}
                             choices={modelChoices}
