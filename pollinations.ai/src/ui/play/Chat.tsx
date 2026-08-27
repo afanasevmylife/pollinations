@@ -18,13 +18,13 @@ import {
     Chip,
     cn,
     Dropdown,
-    DropdownItem,
     FileUpload,
     ImageIcon,
     PlusIcon,
     RocketIcon,
     ScrollArea,
     Surface,
+    TabButton,
     Text,
     Textarea,
 } from "@pollinations/ui";
@@ -417,63 +417,51 @@ function RoutingSelector({
                 trigger={(open) => (
                     <Button
                         type="button"
+                        size="sm"
                         disabled={disabled}
-                        className="w-full justify-between gap-2"
+                        className="w-fit max-w-full self-start justify-between gap-2"
                         aria-label={`${ROUTING_LABELS[field]} routing: ${selected?.title ?? "Auto"}`}
                     >
                         <span className="truncate">
-                            {selected?.title ?? "Auto — Floret chooses"}
+                            {selected?.title ?? "Auto"}
                         </span>
-                        <ChevronIcon
-                            className={cn(
-                                "h-4 w-4 shrink-0",
-                                open && "rotate-180",
-                            )}
-                        />
+                        <ChevronIcon expanded={open} />
                     </Button>
                 )}
             >
                 {(close) => (
-                    <ScrollArea className="max-h-72">
-                        <DropdownItem
-                            onClick={() => {
-                                onChange(null);
-                                close();
-                            }}
-                        >
-                            <span className="flex flex-col">
-                                <strong>Auto</strong>
-                                <small>Floret chooses</small>
-                            </span>
-                        </DropdownItem>
-                        {choices.map((choice) => (
-                            <DropdownItem
-                                key={choice.id}
+                    <ScrollArea className="max-h-72 pr-2">
+                        <div className="flex flex-col gap-1">
+                            <TabButton
+                                active={value === null}
+                                size="sm"
+                                variant="ghost"
+                                className="w-full justify-start text-left"
                                 onClick={() => {
-                                    onChange(choice.id);
+                                    onChange(null);
                                     close();
                                 }}
                             >
-                                <span className="flex min-w-0 flex-col">
-                                    <strong className="truncate">
+                                Auto
+                            </TabButton>
+                            {choices.map((choice) => (
+                                <TabButton
+                                    key={choice.id}
+                                    active={choice.id === value}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="w-full justify-start text-left"
+                                    onClick={() => {
+                                        onChange(choice.id);
+                                        close();
+                                    }}
+                                >
+                                    <span className="truncate">
                                         {choice.title}
-                                    </strong>
-                                    <small className="truncate">
-                                        {choice.id}
-                                    </small>
-                                </span>
-                            </DropdownItem>
-                        ))}
-                        {choices.length === 0 && (
-                            <Text
-                                as="div"
-                                size="sm"
-                                tone="muted"
-                                className="px-3 py-2"
-                            >
-                                No compatible models available.
-                            </Text>
-                        )}
+                                    </span>
+                                </TabButton>
+                            ))}
+                        </div>
                     </ScrollArea>
                 )}
             </Dropdown>
@@ -516,7 +504,7 @@ function activeRoutingLabel(
     id: string,
     choices: RoutingChoice[],
 ): string {
-    return `${ROUTING_LABELS[field]}: ${choices.find((choice) => choice.id === id)?.title ?? id}`;
+    return `${ROUTING_LABELS[field]}: ${choices.find((choice) => choice.id === id)?.title ?? "Model"}`;
 }
 
 export function Chat() {
