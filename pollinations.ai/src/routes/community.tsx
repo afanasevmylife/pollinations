@@ -26,7 +26,6 @@ import {
     PageHeader,
     PixelLabel,
     SectionHeader,
-    StatRow,
 } from "../ui/site/kit";
 
 export const Route = createFileRoute("/community")({
@@ -37,25 +36,36 @@ export const Route = createFileRoute("/community")({
 /** The three doors in, in the order they cost you effort. */
 const WAYS_IN = [
     {
-        label: "Ship",
-        title: "Ship an app",
-        body: "Share what you built, get feedback, and help users discover it.",
-        linkLabel: "Submit your app",
-        href: "https://github.com/pollinations/pollinations/issues/new?template=APP-SUBMISSION.yml",
+        label: "Publish",
+        title: "Publish an app or model",
+        body: "Share your app with users or bring your own model to the public catalog.",
+        links: [
+            {
+                label: "Publish an app",
+                href: "https://github.com/pollinations/pollinations/issues/new?template=APP-SUBMISSION.yml",
+            },
+            {
+                label: "Publish a model",
+                href: "https://github.com/pollinations/pollinations/issues/new?template=community-model-allowlist.yml",
+            },
+        ],
     },
     {
         label: "Code",
         title: "Fix a bug or improve the docs",
         body: "Open a PR, close an issue, or improve the examples.",
-        linkLabel: "Good first issues",
-        href: `${REPO_URL}/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22`,
+        links: [
+            {
+                label: "Good first issues",
+                href: `${REPO_URL}/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22`,
+            },
+        ],
     },
     {
         label: "Talk",
         title: "Help in Discord",
         body: "Answer questions, share experiments, and tell the team what feels missing.",
-        linkLabel: "Join the Discord",
-        href: DISCORD_URL,
+        links: [{ label: "Join the Discord", href: DISCORD_URL }],
     },
 ];
 
@@ -101,20 +111,70 @@ function FeedState({
     );
 }
 
-function BuildWithCommunity() {
+function CommunityParticipation() {
     const { data: issues, loading, failed } = useVotingIssues();
+    const { data: online } = useDiscordPresence();
+    const { data: contributorCount } = useContributorCount();
+    const { data: platform } = usePlatformStats();
+    const { data: apps } = useAppDirectory();
     const bare = loading || failed || issues.length === 0;
+    const ways = [
+        {
+            ...WAYS_IN[0],
+            metrics: [
+                {
+                    value: apps.length > 0 ? String(apps.length) : null,
+                    label: "published apps",
+                },
+                {
+                    value:
+                        platform !== null ? compact(platform.community) : null,
+                    label: "published models",
+                },
+            ],
+        },
+        {
+            ...WAYS_IN[1],
+            metrics: [
+                {
+                    value: compact(
+                        contributorCount ?? CONTRIBUTOR_COUNT_FALLBACK,
+                    ),
+                    label: "code contributors",
+                },
+            ],
+        },
+        {
+            ...WAYS_IN[2],
+            metrics: [
+                {
+                    value: online !== null ? String(online) : null,
+                    label: "Discord online",
+                },
+            ],
+        },
+    ];
 
     return (
         <section className="flex flex-col gap-7">
-            <SectionHeader
-                eyebrow="Build together"
-                title="Build with the community"
-                subtitle="Ship what you made, improve the open source platform, join the conversation, and vote on what comes next."
-            />
+            <Hero scene="/heroes/community.webp">
+                <PageHeader
+                    eyebrow="Open source, open roadmap"
+                    title="Contribute"
+                    subtitle={
+                        <>
+                            <strong>
+                                Builders shape the platform directly.
+                            </strong>{" "}
+                            Share what you need, meet the people already using
+                            it, and help decide what comes next.
+                        </>
+                    }
+                />
+            </Hero>
 
             <div className="grid grid-cols-1 gap-5 min-[700px]:grid-cols-3">
-                {WAYS_IN.map((way) => (
+                {ways.map((way) => (
                     <Card
                         key={way.label}
                         className="gap-2.5 p-7 min-[700px]:p-5 lg:p-7"
@@ -126,9 +186,33 @@ function BuildWithCommunity() {
                         <p className="text-sm leading-relaxed text-theme-text-base">
                             {way.body}
                         </p>
-                        <ArrowLink href={way.href} className="mt-auto pt-2">
-                            {way.linkLabel}
-                        </ArrowLink>
+                        <dl className="mt-auto flex flex-wrap gap-x-6 gap-y-3 pt-3">
+                            {way.metrics.map((metric) => (
+                                <div
+                                    key={metric.label}
+                                    className="flex flex-col gap-0.5"
+                                >
+                                    <dt className="font-heading text-3xl text-theme-text-soft tabular-nums">
+                                        {metric.value ?? (
+                                            <span
+                                                aria-hidden="true"
+                                                className="block h-8 w-14 animate-pulse rounded-md bg-theme-bg-subtle"
+                                            />
+                                        )}
+                                    </dt>
+                                    <dd className="text-xs text-theme-text-muted">
+                                        {metric.label}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                        <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2">
+                            {way.links.map((link) => (
+                                <ArrowLink key={link.label} href={link.href}>
+                                    {link.label}
+                                </ArrowLink>
+                            ))}
+                        </div>
                     </Card>
                 ))}
             </div>
@@ -509,60 +593,9 @@ function Contributors() {
 }
 
 function CommunityPage() {
-    const { data: online } = useDiscordPresence();
-    const { data: contributorCount } = useContributorCount();
-    const { data: platform } = usePlatformStats();
-    const { data: apps } = useAppDirectory();
-    const totalApps = apps.length;
-
-    /** Only what we can actually measure — a missing feed drops its stat. */
-    const stats = [
-        online !== null && {
-            value: String(online),
-            label: "Discord online",
-        },
-        {
-            value: compact(contributorCount ?? CONTRIBUTOR_COUNT_FALLBACK),
-            label: "code contributors",
-        },
-        platform !== null && {
-            value: compact(platform.community),
-            label: "published models",
-        },
-        totalApps > 0 && {
-            value: String(totalApps),
-            label: "published apps",
-        },
-    ].filter((stat): stat is { value: string; label: string } => Boolean(stat));
-
     return (
         <>
-            {/* The whole cast, together — the page is about the three of us
-                being more than one of us. */}
-            <Hero scene="/heroes/community.webp">
-                <PageHeader
-                    eyebrow="Open source, open roadmap"
-                    title="Contribute"
-                    subtitle={
-                        <>
-                            <strong>
-                                Builders shape the platform directly.
-                            </strong>{" "}
-                            Share what you need, meet the people already using
-                            it, and help decide what comes next.
-                        </>
-                    }
-                />
-                <StatRow stats={stats} placeholders={4} />
-                <div className="flex flex-wrap gap-3">
-                    <ActionButton href={DISCORD_URL}>Join Discord</ActionButton>
-                    <ActionButton href={REPO_URL} tone="plain">
-                        Star &amp; contribute
-                    </ActionButton>
-                </div>
-            </Hero>
-
-            <BuildWithCommunity />
+            <CommunityParticipation />
 
             <BuildDiary />
 
