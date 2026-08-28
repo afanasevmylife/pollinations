@@ -1,0 +1,4 @@
+interface:
+  display_name: "Animation Director"
+  short_description: "Turn one animation brief into consistent assets and shot prompts"
+  default_prompt: "Use $animation-director to turn this idea into a production-ready animation prompt pack."

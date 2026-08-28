@@ -1,7 +1,10 @@
-import { execFileSync } from "node:child_process";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { execFile } from "node:child_process";
+import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 const workspace = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const currentRoot = join(
@@ -12,12 +15,22 @@ const outputRoot = join(
     workspace,
     "pollinations.ai/public/characters/bee-story/nanobanana-2",
 );
-const rawRoot = join(workspace, "temp/nanobanana-2/raw");
-const characterReference = join(
+const beeStoryRoot = join(
     workspace,
-    "social/prompts/brand/characters-ref.jpg",
+    "pollinations.ai/public/characters/bee-story",
 );
-const polliReference = join(workspace, "temp/nanobanana-2/polli-reference.jpg");
+const websiteSourceRoot = join(workspace, "pollinations.ai/src");
+const builtBeeStoryRoot = join(
+    workspace,
+    "pollinations.ai/dist/client/characters/bee-story",
+);
+const rawRoot = join(workspace, "temp/nanobanana-2/raw");
+const characterReferences = [
+    "polli-strip.png",
+    "robot-strip.png",
+    "nomnom-strip.png",
+].map((filename) => join(beeStoryRoot, filename));
+const polliReference = join(beeStoryRoot, "polli-strip.png");
 const removeChroma = join(
     process.env.HOME,
     ".codex/skills/.system/imagegen/scripts/remove_chroma_key.py",
@@ -179,13 +192,14 @@ const assets = [
     ],
 ];
 
-const requestedOnly = process.argv
-    .filter((arg) => arg.startsWith("--only="))
-    .map((arg) => arg.slice("--only=".length));
-const selectedAssets = requestedOnly.length
-    ? assets.filter(([path]) => requestedOnly.includes(path))
-    : assets;
-const force = process.argv.includes("--force");
+const args = process.argv.slice(2);
+const force = args.includes("--force");
+const directionPrefix = "--direction=";
+const batchDirection = args
+    .filter((arg) => arg.startsWith(directionPrefix))
+    .at(-1)
+    ?.slice(directionPrefix.length)
+    .trim();
 const iconOnlyAssets = new Set([
     "byop/byop-paid-coin.png",
     "quest/quest-pollen-coin.png",
@@ -380,10 +394,61 @@ const focusedRepairs = new Map([
     ],
 ]);
 
-const apiKey = process.env.POLLINATIONS_API_KEY;
-if (!apiKey) throw new Error("POLLINATIONS_API_KEY is required");
+const MODEL = "nanobanana-2";
+const MAX_CONCURRENCY = 10;
+const dependencies = new Map([
+    ["developer-tools/sdk-idle.png", ["developer-tools/sdk-active.png"]],
+    ["hosting/hosting-active.png", ["hosting/hosting-idle.png"]],
+    ["login/login-connected.png", ["login/login-idle.png"]],
+]);
+const imageExtensions = new Set([
+    ".avif",
+    ".gif",
+    ".jpeg",
+    ".jpg",
+    ".png",
+    ".svg",
+    ".webp",
+]);
+const videoExtensions = new Set([".mp4", ".mov", ".webm"]);
+const audioExtensions = new Set([".m4a", ".mp3", ".ogg", ".wav"]);
+const captionExtensions = new Set([".srt", ".vtt"]);
+const fontExtensions = new Set([".otf", ".ttf", ".woff", ".woff2"]);
 
-const characterBytes = await readFile(characterReference);
+function groupFor(path) {
+    return path.includes("/") ? path.split("/")[0] : "world";
+}
+
+function roleFor(path) {
+    if (
+        path.startsWith("storyboards/") ||
+        path.startsWith("catalogue/") ||
+        path.startsWith("hosting/") ||
+        path.startsWith("login/") ||
+        path.startsWith("multimodal/") ||
+        path === "community-universe.png"
+    ) {
+        return "scene";
+    }
+    if (path.includes("coin") || path.includes("wallet")) return "prop";
+    if (
+        path.includes("polli") ||
+        path.includes("nomnom") ||
+        path.includes("maker-earns") ||
+        path.includes("user-spends")
+    ) {
+        return "character-scene";
+    }
+    return "interface";
+}
+
+const visualManifest = assets.map(([path, scene]) => ({
+    dependencies: dependencies.get(path) || [],
+    group: groupFor(path),
+    path,
+    role: roleFor(path),
+    scene,
+}));
 
 function outputSize(path) {
     if (
@@ -401,7 +466,17 @@ function outputSize(path) {
     return "1024x1024";
 }
 
-function promptFor(path, scene, hasPairReference, hasCharacterReference) {
+const MASTER_VISUAL_DIRECTION = [
+    "Use the official Pollinations social art direction: cozy chunky 8-bit pixel art, clean large readable pixels, emotionally warm, serene warm-hug energy, subtle CRT glow and scanlines where relevant, soft lighting and gentle pastel gradients inside the artwork.",
+    "Use lime green #ecf874 prominently where compatible, supported by warm cream, mint, lavender and peach, with dark purple #110518 outlines and high-contrast text.",
+    "Preserve gold for Quest Pollen and purple for Paid Pollen.",
+    "Weave text naturally into physical pixel signboards, book covers, terminal screens, banners, pockets, or machinery—never floating text imposed over the art. Keep all text large, centered, correctly spelled, and readable.",
+    "Include small flowers, leaves, vines, seeds, honeycomb, code-plants, or other nature-and-growth details where they support the existing composition.",
+    "Keep the image nostalgic, beautiful, technically playful, and consistent with Stardew Valley or A Short Hike only as general cozy pixel-art references.",
+    "Avoid cyberpunk, harsh neon, hot pink, electric blue, realistic rendering, 3D materials, corporate vectors, sterile grids, tiny text, extra text, watermarks, duplicate characters, and unrelated props.",
+].join(" ");
+
+function promptFor(path, scene, hasPairReference, characterReferenceCount) {
     const focusedRepair = focusedRepairs.get(path);
     if (focusedRepair) return focusedRepair;
 
@@ -421,13 +496,13 @@ function promptFor(path, scene, hasPairReference, hasCharacterReference) {
         hasPairReference
             ? "Image 2 is the matching active-state artwork. Use it to keep the machinery, book, characters, scale, and visual identity consistent while preserving the quieter state from Image 1."
             : "",
-        hasCharacterReference
-            ? `Image ${hasPairReference ? "3" : "2"} is the official Pollinations character model sheet. Whenever Polli, the CRT monitor robot, or Nomnom appears, match the corresponding character identity, proportions, face, and colors from that model sheet.`
+        characterReferenceCount
+            ? `The final ${characterReferenceCount} reference image${characterReferenceCount === 1 ? " is" : "s are"} the official Pollinations character sprite ${characterReferenceCount === 1 ? "sheet" : "sheets"}. Whenever Polli, the CRT monitor robot, or Nomnom appears, match the corresponding character identity, proportions, face, and colors from those references.`
             : "",
-        "Use the official Pollinations social art direction: cozy chunky 8-bit pixel art, clean large readable pixels, emotionally warm, serene warm-hug energy, subtle CRT glow and scanlines where relevant, soft lighting and gentle pastel gradients inside the artwork. Use lime green #ecf874 prominently where compatible, supported by warm cream, mint, lavender and peach, with dark purple #110518 outlines and high-contrast text. Preserve gold for Quest Pollen and purple for Paid Pollen.",
-        "Weave text naturally into physical pixel signboards, book covers, terminal screens, banners, pockets, or machinery—never floating text imposed over the art. Keep all text large, centered, correctly spelled, and readable.",
-        "Include small flowers, leaves, vines, seeds, honeycomb, code-plants, or other nature-and-growth details where they support the existing composition. Keep the image nostalgic, beautiful, technically playful, and consistent with Stardew Valley or A Short Hike only as general cozy pixel-art references.",
-        "Avoid cyberpunk, harsh neon, hot pink, electric blue, realistic rendering, 3D materials, corporate vectors, sterile grids, tiny text, extra text, watermarks, duplicate characters, and unrelated props.",
+        MASTER_VISUAL_DIRECTION,
+        batchDirection
+            ? `Apply this batch-wide creative direction consistently across the entire visual world while preserving every asset-specific requirement: ${batchDirection}`
+            : "",
         extraRules.get(path) || "",
         storyboardCorrections.get(path) || "",
         isStoryboard
@@ -439,90 +514,485 @@ function promptFor(path, scene, hasPairReference, hasCharacterReference) {
     ].join(" ");
 }
 
-async function generateAsset(path, scene) {
+function optionValues(name) {
+    return args
+        .filter((arg) => arg.startsWith(`--${name}=`))
+        .flatMap((arg) => arg.slice(name.length + 3).split(","))
+        .map((value) => value.trim())
+        .filter(Boolean);
+}
+
+async function exists(path) {
+    try {
+        await access(path);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function walkFiles(root) {
+    if (!(await exists(root))) return [];
+    const entries = await readdir(root, { withFileTypes: true });
+    const files = await Promise.all(
+        entries.map(async (entry) => {
+            const path = join(root, entry.name);
+            return entry.isDirectory() ? walkFiles(path) : [path];
+        }),
+    );
+    return files.flat();
+}
+
+function portableRelative(root, path) {
+    return relative(root, path).replaceAll("\\", "/");
+}
+
+function assetType(path) {
+    const extension = extname(path).toLowerCase();
+    if (imageExtensions.has(extension)) return "images";
+    if (videoExtensions.has(extension)) return "video";
+    if (audioExtensions.has(extension)) return "audio";
+    if (captionExtensions.has(extension)) return "captions";
+    if (fontExtensions.has(extension)) return "fonts";
+    return "other";
+}
+
+function registerUsage(usage, asset, source) {
+    if (!usage.has(asset)) usage.set(asset, new Set());
+    usage.get(asset).add(source);
+}
+
+async function collectWebsiteUsage() {
+    const usage = new Map();
+    const sourceExtensions = new Set([
+        ".css",
+        ".html",
+        ".js",
+        ".json",
+        ".jsx",
+        ".md",
+        ".ts",
+        ".tsx",
+    ]);
+    const pattern = /\/characters\/bee-story\/[^"'`\s)]+/g;
+    for (const sourcePath of await walkFiles(websiteSourceRoot)) {
+        if (!sourceExtensions.has(extname(sourcePath).toLowerCase())) continue;
+        const source = await readFile(sourcePath, "utf8");
+        const sourceName = portableRelative(
+            join(workspace, "pollinations.ai"),
+            sourcePath,
+        );
+        for (const match of source.matchAll(pattern)) {
+            const asset = match[0]
+                .slice("/characters/bee-story/".length)
+                .split(/[?#]/)[0];
+            registerUsage(usage, asset, sourceName);
+        }
+    }
+    return usage;
+}
+
+async function collectPrototypeUsage() {
+    const usage = new Map();
+    const prototypePath = join(
+        beeStoryRoot,
+        "journey-v2/journey-progress.html",
+    );
+    if (!(await exists(prototypePath))) return usage;
+    const source = await readFile(prototypePath, "utf8");
+    const references = [
+        ...[...source.matchAll(/(?:src|href)=["']([^"']+)["']/g)].map(
+            (match) => match[1],
+        ),
+        ...[...source.matchAll(/url\(["']?([^"')]+)["']?\)/g)].map(
+            (match) => match[1],
+        ),
+    ];
+    for (const reference of references) {
+        if (/^(?:data:|https?:|#)/.test(reference)) continue;
+        const absolutePath = resolve(
+            dirname(prototypePath),
+            reference.split(/[?#]/)[0],
+        );
+        const asset = portableRelative(beeStoryRoot, absolutePath);
+        if (asset.startsWith("../")) continue;
+        registerUsage(usage, asset, "journey-v2/journey-progress.html");
+    }
+    return usage;
+}
+
+function printUsage(title, usage) {
+    console.log(`\n${title}: ${usage.size}`);
+    for (const [asset, sources] of [...usage.entries()].sort(([a], [b]) =>
+        a.localeCompare(b),
+    )) {
+        console.log(`  ${asset} <- ${[...sources].sort().join(", ")}`);
+    }
+}
+
+async function auditAssets() {
+    const files = await walkFiles(beeStoryRoot);
+    const collections = new Map();
+    for (const file of files) {
+        const asset = portableRelative(beeStoryRoot, file);
+        const collection = asset.includes("/") ? asset.split("/")[0] : "(root)";
+        if (!collections.has(collection)) {
+            collections.set(collection, {
+                all: 0,
+                audio: 0,
+                captions: 0,
+                collection,
+                fonts: 0,
+                images: 0,
+                other: 0,
+                video: 0,
+            });
+        }
+        const row = collections.get(collection);
+        row.all += 1;
+        row[assetType(file)] += 1;
+    }
+
+    console.log("Bee Story visual asset audit");
+    console.table(
+        [...collections.values()].sort((a, b) =>
+            a.collection.localeCompare(b.collection),
+        ),
+    );
+    console.log(`Library files: ${files.length}`);
+    console.log(
+        `Media assets: ${files.filter((file) => assetType(file) !== "other").length}`,
+    );
+    if (await exists(builtBeeStoryRoot)) {
+        const builtFiles = await walkFiles(builtBeeStoryRoot);
+        const sourcePaths = new Set(
+            files.map((file) => portableRelative(beeStoryRoot, file)),
+        );
+        const builtPaths = new Set(
+            builtFiles.map((file) => portableRelative(builtBeeStoryRoot, file)),
+        );
+        const missingFromBuild = [...sourcePaths].filter(
+            (path) => !builtPaths.has(path),
+        );
+        const extraInBuild = [...builtPaths].filter(
+            (path) => !sourcePaths.has(path),
+        );
+        console.log(
+            `Website V2 build copy: ${builtFiles.length}/${files.length} files, ${missingFromBuild.length} missing, ${extraInBuild.length} extra`,
+        );
+    } else {
+        console.log("Website V2 build copy: not built yet");
+    }
+
+    const outputStatuses = await Promise.all(
+        visualManifest.map(async (asset) => ({
+            ...asset,
+            present: await exists(join(outputRoot, asset.path)),
+        })),
+    );
+    const presentOutputs = outputStatuses.filter((asset) => asset.present);
+    console.log(
+        `\n${MODEL} manifest: ${presentOutputs.length}/${visualManifest.length} outputs present`,
+    );
+    const groupedManifest = new Map();
+    for (const asset of outputStatuses) {
+        if (!groupedManifest.has(asset.group)) {
+            groupedManifest.set(asset.group, {
+                group: asset.group,
+                missing: 0,
+                planned: 0,
+                present: 0,
+            });
+        }
+        const row = groupedManifest.get(asset.group);
+        row.planned += 1;
+        row[asset.present ? "present" : "missing"] += 1;
+    }
+    console.table([...groupedManifest.values()]);
+
+    const outputFiles = (await walkFiles(outputRoot))
+        .filter((file) => imageExtensions.has(extname(file).toLowerCase()))
+        .map((file) => portableRelative(outputRoot, file));
+    const manifestPaths = new Set(visualManifest.map((asset) => asset.path));
+    const untracked = outputFiles
+        .filter((path) => !manifestPaths.has(path))
+        .sort();
+    console.log(`Untracked ${MODEL} outputs: ${untracked.length}`);
+    for (const path of untracked) console.log(`  ${path}`);
+
+    const [websiteUsage, prototypeUsage] = await Promise.all([
+        collectWebsiteUsage(),
+        collectPrototypeUsage(),
+    ]);
+    printUsage(
+        "Website source references (includes conditional and legacy CSS)",
+        websiteUsage,
+    );
+    printUsage("Journey prototype references", prototypeUsage);
+
+    const referenced = new Set([
+        ...websiteUsage.keys(),
+        ...prototypeUsage.keys(),
+    ]);
+    const mediaAssets = files
+        .filter((file) => assetType(file) !== "other")
+        .map((file) => portableRelative(beeStoryRoot, file));
+    const unreferenced = mediaAssets.filter((asset) => !referenced.has(asset));
+    console.log(
+        `\nReferenced media: ${mediaAssets.length - unreferenced.length}/${mediaAssets.length}`,
+    );
+    console.log(`Unreferenced media: ${unreferenced.length}`);
+}
+
+function selectAssets() {
+    const requestedPaths = optionValues("only");
+    const requestedGroups = optionValues("group");
+    const knownPaths = new Set(visualManifest.map((asset) => asset.path));
+    const knownGroups = new Set(visualManifest.map((asset) => asset.group));
+    const unknownPaths = requestedPaths.filter((path) => !knownPaths.has(path));
+    const unknownGroups = requestedGroups.filter(
+        (group) => !knownGroups.has(group),
+    );
+    if (unknownPaths.length) {
+        throw new Error(`Unknown asset path(s): ${unknownPaths.join(", ")}`);
+    }
+    if (unknownGroups.length) {
+        throw new Error(`Unknown asset group(s): ${unknownGroups.join(", ")}`);
+    }
+
+    const selected = visualManifest.filter(
+        (asset) =>
+            (!requestedPaths.length || requestedPaths.includes(asset.path)) &&
+            (!requestedGroups.length || requestedGroups.includes(asset.group)),
+    );
+    if (!selected.length) throw new Error("No assets matched the selection");
+    return selected;
+}
+
+function buildWaves(selected) {
+    const selectedPaths = new Set(selected.map((asset) => asset.path));
+    const complete = new Set();
+    let pending = [...selected];
+    const waves = [];
+    while (pending.length) {
+        const ready = pending.filter((asset) =>
+            asset.dependencies.every(
+                (dependency) =>
+                    !selectedPaths.has(dependency) || complete.has(dependency),
+            ),
+        );
+        if (!ready.length) {
+            throw new Error(
+                `Cyclic generation dependencies: ${pending
+                    .map((asset) => asset.path)
+                    .join(", ")}`,
+            );
+        }
+        waves.push(ready);
+        for (const asset of ready) complete.add(asset.path);
+        const readyPaths = new Set(ready.map((asset) => asset.path));
+        pending = pending.filter((asset) => !readyPaths.has(asset.path));
+    }
+    return waves;
+}
+
+function inputPathsFor(asset) {
+    const hasCharacterReference = !iconOnlyAssets.has(asset.path);
+    return [
+        sourceOverrides.get(asset.path) || join(currentRoot, asset.path),
+        pairedReferences.get(asset.path),
+        ...(hasCharacterReference
+            ? focusedCharacterReferences.has(asset.path)
+                ? [focusedCharacterReferences.get(asset.path)]
+                : characterReferences
+            : []),
+        fullFrameAssets.has(asset.path) ? undefined : removeChroma,
+    ].filter(Boolean);
+}
+
+async function missingInputsFor(selected) {
+    const missing = [];
+    for (const asset of selected) {
+        if (!force && (await exists(join(outputRoot, asset.path)))) continue;
+        const dependencyOutputs = new Set(
+            asset.dependencies.map((dependency) =>
+                resolve(join(outputRoot, dependency)),
+            ),
+        );
+        for (const inputPath of inputPathsFor(asset)) {
+            if (
+                !(await exists(inputPath)) &&
+                !dependencyOutputs.has(resolve(inputPath))
+            ) {
+                missing.push({ asset: asset.path, input: inputPath });
+            }
+        }
+    }
+    return missing;
+}
+
+async function printPlan(selected, concurrency) {
+    const waves = buildWaves(selected);
+    const existing = (
+        await Promise.all(
+            selected.map((asset) => exists(join(outputRoot, asset.path))),
+        )
+    ).filter(Boolean).length;
+    console.log(
+        `${MODEL} plan: ${selected.length} selected, ${existing} already present, concurrency ${concurrency}`,
+    );
+    console.log(
+        `Batch direction: ${batchDirection || "built-in Pollinations visual direction"}`,
+    );
+    console.table(
+        selected.map((asset) => ({
+            dependencies: asset.dependencies.join(", ") || "-",
+            group: asset.group,
+            path: asset.path,
+            role: asset.role,
+            size: outputSize(asset.path),
+        })),
+    );
+    waves.forEach((wave, index) => {
+        console.log(
+            `Wave ${index + 1}: ${wave.length} asset(s) — ${wave
+                .map((asset) => asset.path)
+                .join(", ")}`,
+        );
+    });
+    const missing = await missingInputsFor(selected);
+    if (missing.length) {
+        console.log(`Missing inputs: ${missing.length}`);
+        for (const item of missing) {
+            console.log(`  ${item.asset} <- ${item.input}`);
+        }
+    } else {
+        console.log("Missing inputs: 0");
+    }
+    return { missing, waves };
+}
+
+function mimeTypeFor(path) {
+    const extension = extname(path).toLowerCase();
+    if (extension === ".jpg" || extension === ".jpeg") return "image/jpeg";
+    if (extension === ".webp") return "image/webp";
+    return "image/png";
+}
+
+function retryDelay(response, attempt) {
+    const retryAfter = response?.headers.get("retry-after");
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds > 0) {
+        return Math.min(seconds * 1_000, 15_000);
+    }
+    return Math.min(attempt * 2_000, 8_000);
+}
+
+async function generateAsset(asset, apiKey, characterReferenceData, progress) {
+    const { path, scene } = asset;
     const inputPath = sourceOverrides.get(path) || join(currentRoot, path);
     const rawPath = join(rawRoot, path);
     const outputPath = join(outputRoot, path);
-    if (!force) {
-        try {
-            await access(outputPath);
-            console.log(`skipped ${path}`);
-            return;
-        } catch {
-            // Generate missing assets.
-        }
+    if (!force && (await exists(outputPath))) {
+        console.log(`[${progress}] skipped ${path}`);
+        return "skipped";
     }
     await mkdir(dirname(rawPath), { recursive: true });
     await mkdir(dirname(outputPath), { recursive: true });
 
     const form = new FormData();
-    const sourceBytes = await readFile(inputPath);
     form.append(
         "image",
-        new Blob([sourceBytes], { type: "image/png" }),
+        new Blob([await readFile(inputPath)], { type: mimeTypeFor(inputPath) }),
         basename(inputPath),
     );
     const pairReference = pairedReferences.get(path);
     if (pairReference) {
         form.append(
             "image",
-            new Blob([await readFile(pairReference)], { type: "image/png" }),
+            new Blob([await readFile(pairReference)], {
+                type: mimeTypeFor(pairReference),
+            }),
             basename(pairReference),
         );
     }
     const hasCharacterReference = !iconOnlyAssets.has(path);
     if (hasCharacterReference) {
         const focusedReference = focusedCharacterReferences.get(path);
-        form.append(
-            "image",
-            new Blob(
-                [
-                    focusedReference
-                        ? await readFile(focusedReference)
-                        : characterBytes,
-                ],
-                { type: "image/jpeg" },
-            ),
-            focusedReference
-                ? basename(focusedReference)
-                : "characters-ref.jpg",
-        );
+        const references = focusedReference
+            ? [
+                  {
+                      bytes: await readFile(focusedReference),
+                      path: focusedReference,
+                  },
+              ]
+            : characterReferenceData;
+        for (const reference of references) {
+            form.append(
+                "image",
+                new Blob([reference.bytes], {
+                    type: mimeTypeFor(reference.path),
+                }),
+                basename(reference.path),
+            );
+        }
     }
+    const characterReferenceCount = hasCharacterReference
+        ? focusedCharacterReferences.has(path)
+            ? 1
+            : characterReferenceData.length
+        : 0;
     form.append(
         "prompt",
-        promptFor(path, scene, Boolean(pairReference), hasCharacterReference),
+        promptFor(path, scene, Boolean(pairReference), characterReferenceCount),
     );
-    form.append("model", "nanobanana-2");
+    form.append("model", MODEL);
     form.append("size", outputSize(path));
     form.append("quality", "high");
 
     let response;
+    let requestError;
     for (let attempt = 1; attempt <= 3; attempt += 1) {
-        response = await fetch("https://gen.pollinations.ai/v1/images/edits", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${apiKey}` },
-            body: form,
-        });
-        if (response.status !== 503 || attempt === 3) break;
-        await new Promise((resolve) => setTimeout(resolve, attempt * 2_000));
+        try {
+            response = await fetch(
+                "https://gen.pollinations.ai/v1/images/edits",
+                {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${apiKey}` },
+                    body: form,
+                },
+            );
+            if (![429, 502, 503].includes(response.status) || attempt === 3) {
+                break;
+            }
+            await new Promise((resolve) =>
+                setTimeout(resolve, retryDelay(response, attempt)),
+            );
+        } catch (error) {
+            requestError = error;
+            if (attempt === 3) throw error;
+            await new Promise((resolve) =>
+                setTimeout(resolve, retryDelay(undefined, attempt)),
+            );
+        }
     }
-    if (!response.ok) {
+    if (!response?.ok) {
+        const detail = response ? (await response.text()).slice(0, 500) : "";
         throw new Error(
-            `${path}: generation failed (${response.status}) ${(
-                await response.text()
-            ).slice(0, 500)}`,
+            `${path}: generation failed (${response?.status || requestError?.message || "network error"}) ${detail}`,
         );
     }
 
     const payload = await response.json();
     const encoded = payload.data?.[0]?.b64_json;
     if (!encoded) throw new Error(`${path}: response contained no image`);
-    await writeFile(rawPath, Buffer.from(encoded, "base64"));
+    const generatedBytes = Buffer.from(encoded, "base64");
+    await writeFile(rawPath, generatedBytes);
 
     if (fullFrameAssets.has(path)) {
-        await writeFile(outputPath, Buffer.from(encoded, "base64"));
+        await writeFile(outputPath, generatedBytes);
     } else {
-        execFileSync(
+        await execFileAsync(
             "python3",
             [
                 removeChroma,
@@ -540,15 +1010,146 @@ async function generateAsset(path, scene) {
                 "--despill",
                 "--force",
             ],
-            { stdio: "pipe" },
+            { maxBuffer: 10 * 1024 * 1024 },
         );
     }
 
-    console.log(`generated ${path}`);
+    console.log(`[${progress}] generated ${path}`);
+    return "generated";
 }
 
-for (const [path, scene] of selectedAssets) {
-    await generateAsset(path, scene);
+async function runPool(items, concurrency, worker) {
+    let cursor = 0;
+    const failures = [];
+    const workers = Array.from(
+        { length: Math.min(concurrency, items.length) },
+        async () => {
+            while (cursor < items.length) {
+                const item = items[cursor];
+                cursor += 1;
+                try {
+                    await worker(item);
+                } catch (error) {
+                    failures.push({ error, item });
+                    console.error(`failed ${item.path}: ${error.message}`);
+                }
+            }
+        },
+    );
+    await Promise.all(workers);
+    return failures;
 }
 
-console.log(`complete ${selectedAssets.length} asset(s)`);
+function printHelp() {
+    console.log(`Bee Story visual control point
+
+  --audit                 Count assets and show source/prototype usage (default)
+  --list                  List the ${visualManifest.length} managed visual outputs
+  --dry-run               Validate inputs and show dependency-safe request waves
+  --generate              Generate the selected visuals with ${MODEL}
+  --group=<name>          Select a visual group; repeat or comma-separate
+  --only=<path>           Select an exact manifest path; repeat or comma-separate
+  --direction="<prompt>"  Apply one creative direction to the whole selected world
+  --concurrency=<1-10>    Parallel requests per wave (default: 10)
+  --force                 Replace outputs that already exist
+  --help                  Show this help
+
+Examples:
+  npm run visuals:audit
+  npm run visuals:plan -- --group=storyboards
+  npm run visuals:generate -- --force --direction="autumn at dusk, warmer windows"`);
+}
+
+async function main() {
+    if (args.includes("--help")) {
+        printHelp();
+        return;
+    }
+
+    const modes = ["audit", "list", "dry-run", "generate"].filter((mode) =>
+        args.includes(`--${mode}`),
+    );
+    if (modes.length > 1) {
+        throw new Error(`Choose one mode, received: ${modes.join(", ")}`);
+    }
+    const mode = modes[0] || "audit";
+    if (mode === "audit") {
+        await auditAssets();
+        return;
+    }
+
+    const selected = selectAssets();
+    const concurrencyOption = optionValues("concurrency").at(-1) || "10";
+    const concurrency = Number(concurrencyOption);
+    if (
+        !Number.isInteger(concurrency) ||
+        concurrency < 1 ||
+        concurrency > MAX_CONCURRENCY
+    ) {
+        throw new Error(
+            `Concurrency must be an integer between 1 and ${MAX_CONCURRENCY}`,
+        );
+    }
+    if (mode === "list") {
+        console.table(
+            selected.map((asset) => ({
+                dependencies: asset.dependencies.join(", ") || "-",
+                group: asset.group,
+                path: asset.path,
+                role: asset.role,
+                size: outputSize(asset.path),
+            })),
+        );
+        return;
+    }
+
+    const { missing, waves } = await printPlan(selected, concurrency);
+    if (missing.length) {
+        throw new Error(
+            "Cannot generate until the missing inputs are restored",
+        );
+    }
+    if (mode === "dry-run") return;
+
+    const apiKey = process.env.POLLINATIONS_API_KEY;
+    if (!apiKey) throw new Error("POLLINATIONS_API_KEY is required");
+    const characterReferenceData = selected.some(
+        (asset) => !iconOnlyAssets.has(asset.path),
+    )
+        ? await Promise.all(
+              characterReferences.map(async (path) => ({
+                  bytes: await readFile(path),
+                  path,
+              })),
+          )
+        : [];
+    const progress = new Map(
+        selected.map((asset, index) => [
+            asset.path,
+            `${String(index + 1).padStart(2, "0")}/${selected.length}`,
+        ]),
+    );
+
+    let failures = [];
+    for (const wave of waves) {
+        const waveFailures = await runPool(wave, concurrency, (asset) =>
+            generateAsset(
+                asset,
+                apiKey,
+                characterReferenceData,
+                progress.get(asset.path),
+            ),
+        );
+        failures = failures.concat(waveFailures);
+        if (waveFailures.length) break;
+    }
+    if (failures.length) {
+        throw new AggregateError(
+            failures.map((failure) => failure.error),
+            `${failures.length} asset generation(s) failed`,
+        );
+    }
+    console.log(`complete ${selected.length} asset(s)`);
+}
+
+await main();
