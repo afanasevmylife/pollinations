@@ -6,12 +6,11 @@ import {
     ClockIcon,
     Dropdown,
     Input,
-    KeyIcon,
     MultiSelect,
     ScrollArea,
-    Surface,
     TabButton,
     TrendUpIcon,
+    WalletIcon,
 } from "@pollinations/ui";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -49,13 +48,13 @@ export const Route = createFileRoute("/apps")({
 const SORT_LABELS: Record<AppSort, string> = {
     fresh: "Fresh",
     buzz: "Buzz",
-    byop: "BYOP",
+    pollen: "Pollen",
 };
 
 const SORT_ICONS = {
     fresh: ClockIcon,
     buzz: TrendUpIcon,
-    byop: KeyIcon,
+    pollen: WalletIcon,
 } satisfies Record<AppSort, typeof ClockIcon>;
 
 const newestFirst = (a: DirectoryApp, b: DirectoryApp) =>
@@ -68,7 +67,7 @@ function compareApps(sort: AppSort) {
             const traffic = Number(b.requests_24h) - Number(a.requests_24h);
             if (traffic) return traffic;
         }
-        if (sort === "byop" && isPollen(a) !== isPollen(b)) {
+        if (sort === "pollen" && isPollen(a) !== isPollen(b)) {
             return isPollen(a) ? -1 : 1;
         }
         return newestFirst(a, b) || a.name.localeCompare(b.name);
@@ -339,24 +338,21 @@ function AppsPage() {
 
             <div className="-mt-5 flex flex-col gap-5 sm:-mt-8">
                 <FeaturedAppsCarousel apps={spotlight} />
-                <Surface
-                    variant="card"
-                    className="mx-auto flex w-fit flex-wrap items-center justify-center gap-4 rounded-2xl px-5 py-4"
-                >
+                <div className="mx-auto flex w-fit flex-wrap items-center justify-center gap-4">
                     <span className="font-semibold text-sm text-theme-text-strong">
                         Built something with Pollinations?
                     </span>
                     <ActionButton href="https://github.com/pollinations/pollinations/issues/new?template=APP-SUBMISSION.yml">
                         Share your App
                     </ActionButton>
-                </Surface>
+                </div>
             </div>
 
             <section className="flex flex-col gap-5">
                 <SectionHeader
                     eyebrow="Directory"
                     title="Browse them all"
-                    subtitle="Browse by category or platform, then sort by what’s fresh, buzzing or built with BYOP."
+                    subtitle="Explore apps built with Pollinations, from creative experiments to tools people use every day."
                 />
 
                 <div className="flex flex-col gap-3">
@@ -386,7 +382,6 @@ function AppsPage() {
                     />
                     <div className="flex flex-wrap items-center gap-3 pt-1">
                         <MultiSelect
-                            label="Platform"
                             placeholder="All platforms"
                             options={APP_PLATFORMS.map((value) => ({
                                 value,

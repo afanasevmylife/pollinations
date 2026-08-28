@@ -73,7 +73,7 @@ export const PLATFORM_LABELS: Record<AppPlatform, string> = {
     api: "API",
 };
 
-export const APP_SORTS = ["fresh", "buzz", "byop"] as const;
+export const APP_SORTS = ["fresh", "buzz", "pollen"] as const;
 export type AppSort = (typeof APP_SORTS)[number];
 
 /**

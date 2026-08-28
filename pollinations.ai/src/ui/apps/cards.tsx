@@ -1,4 +1,9 @@
-import { ClockIcon, GitHubIcon, KeyIcon, TrendUpIcon } from "@pollinations/ui";
+import {
+    ClockIcon,
+    GitHubIcon,
+    TrendUpIcon,
+    WalletIcon,
+} from "@pollinations/ui";
 import { Markdown } from "@pollinations/ui/markdown";
 import { type ReactNode, useState } from "react";
 import {
@@ -35,8 +40,8 @@ function AppSignals({ app }: { app: DirectoryApp }) {
                 </span>
             ) : null}
             {isPollen(app) ? (
-                <span role="img" title="BYOP" aria-label="BYOP">
-                    <KeyIcon className="size-4" />
+                <span role="img" title="Pollen" aria-label="Pollen">
+                    <WalletIcon className="size-4" />
                 </span>
             ) : null}
         </span>
