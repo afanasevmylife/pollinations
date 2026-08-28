@@ -36,14 +36,21 @@ export const Route = createFileRoute("/community")({
 /** The three doors in, in the order they cost you effort. */
 const WAYS_IN = [
     {
-        label: "Publish",
-        title: "Publish an app or model",
-        body: "Share your app with users or bring your own model to the public catalog.",
+        label: "Apps",
+        title: "Publish an app",
+        body: "Share what you built, get feedback, and help users discover it.",
         links: [
             {
                 label: "Publish an app",
                 href: "https://github.com/pollinations/pollinations/issues/new?template=APP-SUBMISSION.yml",
             },
+        ],
+    },
+    {
+        label: "Models",
+        title: "Publish a model",
+        body: "Bring your own model to the public catalog and make it available to builders.",
+        links: [
             {
                 label: "Publish a model",
                 href: "https://github.com/pollinations/pollinations/issues/new?template=community-model-allowlist.yml",
@@ -126,6 +133,11 @@ function CommunityParticipation() {
                     value: apps.length > 0 ? String(apps.length) : null,
                     label: "published apps",
                 },
+            ],
+        },
+        {
+            ...WAYS_IN[1],
+            metrics: [
                 {
                     value:
                         platform !== null ? compact(platform.community) : null,
@@ -134,7 +146,7 @@ function CommunityParticipation() {
             ],
         },
         {
-            ...WAYS_IN[1],
+            ...WAYS_IN[2],
             metrics: [
                 {
                     value: compact(
@@ -145,7 +157,7 @@ function CommunityParticipation() {
             ],
         },
         {
-            ...WAYS_IN[2],
+            ...WAYS_IN[3],
             metrics: [
                 {
                     value: online !== null ? String(online) : null,
@@ -173,7 +185,7 @@ function CommunityParticipation() {
                 />
             </Hero>
 
-            <div className="grid grid-cols-1 gap-5 min-[700px]:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 min-[540px]:grid-cols-2 min-[960px]:grid-cols-4">
                 {ways.map((way) => (
                     <Card
                         key={way.label}
@@ -206,11 +218,17 @@ function CommunityParticipation() {
                                 </div>
                             ))}
                         </dl>
-                        <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2">
+                        <div className="flex flex-wrap gap-2 pt-2">
                             {way.links.map((link) => (
-                                <ArrowLink key={link.label} href={link.href}>
+                                <ActionButton
+                                    key={link.label}
+                                    href={link.href}
+                                    size="sm"
+                                    className="gap-2"
+                                >
                                     {link.label}
-                                </ArrowLink>
+                                    <ArrowRightIcon className="size-3.5" />
+                                </ActionButton>
                             ))}
                         </div>
                     </Card>
@@ -232,11 +250,6 @@ function CommunityParticipation() {
                             to the ideas you want the project to build next.
                         </p>
                     </div>
-                    {!bare && (
-                        <Chip size="sm" className="shrink-0 tabular-nums">
-                            {issues.length} open
-                        </Chip>
-                    )}
                 </div>
 
                 {bare ? (
@@ -250,9 +263,7 @@ function CommunityParticipation() {
                         {issues.map((issue) => (
                             <Card
                                 key={issue.number}
-                                as="a"
-                                href={issue.url}
-                                className="group gap-5 rounded-2xl p-5"
+                                className="gap-5 rounded-2xl p-5"
                             >
                                 <span className="font-semibold leading-snug text-theme-text-strong">
                                     {issue.title}
@@ -265,10 +276,14 @@ function CommunityParticipation() {
                                         {issue.votes} vote
                                         {issue.votes === 1 ? "" : "s"}
                                     </PixelLabel>
-                                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-theme-text-soft group-hover:text-theme-text-strong">
+                                    <ActionButton
+                                        href={issue.url}
+                                        size="sm"
+                                        className="gap-1.5"
+                                    >
                                         Vote
-                                        <ArrowRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
-                                    </span>
+                                        <ArrowRightIcon className="size-3.5" />
+                                    </ActionButton>
                                 </span>
                             </Card>
                         ))}

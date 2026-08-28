@@ -452,7 +452,7 @@ export function ArrowLink<T extends ElementType = "a">({
 
 /* ── Surfaces ───────────────────────────────────────────────────────────── */
 
-/** Cards lift on hover so the page feels responsive rather than static. */
+/** Clickable cards lift on hover; passive cards stay visually still. */
 const HOVER_LIFT =
     "transition-shadow duration-150 hover:shadow-[4px_4px_0_var(--polli-color-bg-active)] motion-reduce:transition-none";
 
@@ -465,13 +465,21 @@ export function Card<T extends ElementType = "div">({
     ComponentPropsWithoutRef<T>,
     "as" | "className" | "children"
 >) {
+    const Component = as || "div";
+    const interactive = Component === "a" || Component === "button";
+
     // One cast, at the hand-off: TypeScript cannot prove a generic component's
     // props satisfy another generic component's props, even when they do.
     const props = {
         ...rest,
-        as: as || "div",
+        as: Component,
         variant: "card",
-        className: cn("flex flex-col", HOVER_LIFT, FOCUS_RING, className),
+        className: cn(
+            "flex flex-col",
+            interactive && HOVER_LIFT,
+            interactive && FOCUS_RING,
+            className,
+        ),
     } as SurfaceProps<ElementType>;
 
     return <Surface {...props}>{children}</Surface>;
