@@ -2,16 +2,20 @@ import { CardGrid, SectionHeader } from "../site/kit";
 
 const UPCOMING = [
     {
-        title: "More Quests",
-        body: "More ways to earn free Pollen by building and contributing.",
+        title: "Agent micropayments",
+        body: "Let agents purchase models, tools, and other agents’ services autonomously.",
     },
     {
-        title: "App Discovery",
-        body: "A clearer way for people to find useful community apps.",
+        title: "Permanent media hosting",
+        body: "Keep generated images, audio, and video available with paid storage and delivery.",
     },
     {
-        title: "Ads SDK",
-        body: "Optional ad slots. Earnings go to your wallet.",
+        title: "Developer cashouts",
+        body: "Turn earnings from apps, agents, and community models into real payouts.",
+    },
+    {
+        title: "App hosting",
+        body: "Deploy Pollinations-powered apps with domains, logs, usage, and billing.",
     },
 ];
 
