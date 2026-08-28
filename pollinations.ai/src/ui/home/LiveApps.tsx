@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useAppShowcase } from "../../data/publicStats";
-import { AppTile } from "../apps/cards";
+import { AppCarousel } from "../apps/AppCarousel";
 import { ArrowLink, ScrollStrip, SectionHeader } from "../site/kit";
 
 /**
@@ -47,16 +47,11 @@ export function LiveApps() {
                     The app directory couldn’t be loaded right now.
                 </p>
             ) : (
-                <ScrollStrip ariaLabel="Apps built on Pollinations">
-                    {featured.map((app) => (
-                        <AppTile
-                            key={app.name}
-                            app={app}
-                            imageClassName="h-30"
-                            className="w-59 flex-none"
-                        />
-                    ))}
-                </ScrollStrip>
+                <AppCarousel
+                    apps={featured}
+                    size="compact"
+                    ariaLabel="Apps built on Pollinations"
+                />
             )}
         </section>
     );

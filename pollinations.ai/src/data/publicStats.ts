@@ -91,12 +91,32 @@ export function useAppDirectory() {
 
 export type ShowcaseApp = DirectoryApp & { total_apps: number };
 
-/** Eight active apps plus the complete directory count for lightweight pages. */
+/** Eight active apps plus the complete directory count for the home page. */
 export function useAppShowcase() {
-    return useAsync<ShowcaseApp[]>(
-        () => tinybird<ShowcaseApp>("app_showcase_public", "&limit=8"),
-        [],
-    );
+    return useAsync<ShowcaseApp[]>(async () => {
+        const rows = await tinybird<DirectoryApp>(
+            "app_directory_public",
+            "&limit=1000",
+        );
+        const seen = new Set<string>();
+        const apps = rows.filter((app) => {
+            const key = app.name?.toLowerCase();
+            if (!key || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        const totalApps = apps.length;
+
+        return apps
+            .filter((app) => app.description && Number(app.requests_24h) >= 100)
+            .sort(
+                (a, b) =>
+                    Number(b.requests_24h) - Number(a.requests_24h) ||
+                    b.approved_date.localeCompare(a.approved_date),
+            )
+            .slice(0, 8)
+            .map((app) => ({ ...app, total_apps: totalApps }));
+    }, []);
 }
 
 type PlatformStats = {

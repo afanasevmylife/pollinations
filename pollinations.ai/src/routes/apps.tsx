@@ -7,13 +7,12 @@ import {
     Dropdown,
     Input,
     MultiSelect,
-    ScrollArea,
     TabButton,
     TrendUpIcon,
     WalletIcon,
 } from "@pollinations/ui";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
     type DirectoryApp,
     isPollen,
@@ -26,7 +25,8 @@ import {
 // same list to decide which apps get cover art.
 import SPOTLIGHT from "../data/spotlight.json";
 import { routeHead } from "../routeMeta";
-import { AppRow, AppTile } from "../ui/apps/cards";
+import { AppCarousel } from "../ui/apps/AppCarousel";
+import { AppRow } from "../ui/apps/cards";
 import { ActionButton, Hero, PageHeader, SectionHeader } from "../ui/site/kit";
 import {
     APP_CATEGORIES,
@@ -106,142 +106,6 @@ function FilterAxis<T extends string>({
                 </TabButton>
             ))}
         </fieldset>
-    );
-}
-
-function FeaturedAppsCarousel({ apps }: { apps: DirectoryApp[] }) {
-    const scroller = useRef<HTMLDivElement>(null);
-    const drag = useRef<{
-        pointerId: number;
-        startX: number;
-        startScroll: number;
-    } | null>(null);
-    const suppressClick = useRef(false);
-    const [paused, setPaused] = useState(false);
-
-    useEffect(() => {
-        if (
-            paused ||
-            apps.length < 2 ||
-            window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ) {
-            return;
-        }
-        const container = scroller.current;
-        if (!container) return;
-
-        let frame = 0;
-        let previous: number | null = null;
-        const tick = (time: number) => {
-            const first = container.querySelector<HTMLElement>(
-                '[data-loop-copy="0"][data-loop-index="0"]',
-            );
-            const repeated = container.querySelector<HTMLElement>(
-                '[data-loop-copy="1"][data-loop-index="0"]',
-            );
-            const cycle =
-                first && repeated ? repeated.offsetLeft - first.offsetLeft : 0;
-            if (previous !== null && cycle > 0) {
-                const elapsed = Math.min(time - previous, 32);
-                container.scrollLeft += (cycle / 40_000) * elapsed;
-                if (container.scrollLeft >= cycle) {
-                    container.scrollLeft -= cycle;
-                }
-            }
-            previous = time;
-            frame = window.requestAnimationFrame(tick);
-        };
-        frame = window.requestAnimationFrame(tick);
-        return () => window.cancelAnimationFrame(frame);
-    }, [apps.length, paused]);
-
-    if (apps.length === 0) return null;
-
-    return (
-        <section
-            aria-roledescription="carousel"
-            aria-label="Featured apps"
-            className="flex min-w-0 flex-col gap-3"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-            onFocus={() => setPaused(true)}
-            onBlur={() => setPaused(false)}
-        >
-            <ScrollArea
-                ref={scroller}
-                axis="x"
-                tabIndex={0}
-                className="apps-featured-rail cursor-grab select-none active:cursor-grabbing"
-                onClickCapture={(event) => {
-                    if (suppressClick.current) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        suppressClick.current = false;
-                    }
-                }}
-                onPointerDown={(event) => {
-                    setPaused(true);
-                    suppressClick.current = false;
-                    if (event.pointerType === "mouse" && event.button === 0) {
-                        drag.current = {
-                            pointerId: event.pointerId,
-                            startX: event.clientX,
-                            startScroll: event.currentTarget.scrollLeft,
-                        };
-                        event.currentTarget.setPointerCapture(event.pointerId);
-                    }
-                }}
-                onPointerMove={(event) => {
-                    if (drag.current?.pointerId !== event.pointerId) return;
-                    const distance = event.clientX - drag.current.startX;
-                    if (Math.abs(distance) > 5) suppressClick.current = true;
-                    event.currentTarget.scrollLeft =
-                        drag.current.startScroll - distance;
-                }}
-                onPointerUp={(event) => {
-                    if (drag.current?.pointerId === event.pointerId) {
-                        drag.current = null;
-                        event.currentTarget.releasePointerCapture(
-                            event.pointerId,
-                        );
-                    }
-                    setPaused(false);
-                }}
-                onPointerCancel={() => {
-                    drag.current = null;
-                    setPaused(false);
-                }}
-            >
-                <div className="flex items-stretch gap-4">
-                    {[0, 1].map((copy) =>
-                        apps.map((app, index) => (
-                            <article
-                                key={`${copy}-${app.name}`}
-                                data-loop-copy={copy}
-                                data-loop-index={index}
-                                aria-hidden={copy === 1 ? true : undefined}
-                                aria-roledescription={
-                                    copy === 0 ? "slide" : undefined
-                                }
-                                aria-label={
-                                    copy === 0
-                                        ? `${index + 1} of ${apps.length}`
-                                        : undefined
-                                }
-                                className="w-[92%] shrink-0 sm:w-[64%] lg:w-[44%]"
-                            >
-                                <AppTile
-                                    app={app}
-                                    imageClassName="aspect-[16/7]"
-                                    className="h-full w-full"
-                                    tabIndex={copy === 1 ? -1 : undefined}
-                                />
-                            </article>
-                        )),
-                    )}
-                </div>
-            </ScrollArea>
-        </section>
     );
 }
 
@@ -337,7 +201,7 @@ function AppsPage() {
             </Hero>
 
             <div className="-mt-5 flex flex-col gap-5 sm:-mt-8">
-                <FeaturedAppsCarousel apps={spotlight} />
+                <AppCarousel apps={spotlight} />
                 <div className="mx-auto flex w-fit flex-wrap items-center justify-center gap-4">
                     <span className="font-semibold text-sm text-theme-text-strong">
                         Built something with Pollinations?
