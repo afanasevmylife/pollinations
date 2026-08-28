@@ -101,6 +101,14 @@
     text-decoration-color: currentColor;
 }
 
+.apps-featured-rail {
+    scrollbar-width: none;
+}
+
+.apps-featured-rail::-webkit-scrollbar {
+    display: none;
+}
+
 .polli-playground-modality-button {
     background-color: var(--playground-mode-background);
 }

@@ -1,4 +1,5 @@
-import { GitHubIcon } from "@pollinations/ui";
+import { ClockIcon, GitHubIcon, KeyIcon, TrendUpIcon } from "@pollinations/ui";
+import { Markdown } from "@pollinations/ui/markdown";
 import { type ReactNode, useState } from "react";
 import {
     type DirectoryApp,
@@ -18,10 +19,28 @@ import { appCover, isAppScreenshot, MISSING_SCREENSHOT } from "./cover";
  * they were written separately they drifted immediately.
  */
 
-function badgesFor(app: DirectoryApp): string {
-    return [isBuzz(app) && "🐝", isPollen(app) && "🏵️", isFresh(app) && "🫧"]
-        .filter(Boolean)
-        .join(" ");
+function AppSignals({ app }: { app: DirectoryApp }) {
+    if (!isBuzz(app) && !isPollen(app) && !isFresh(app)) return null;
+
+    return (
+        <span className="flex shrink-0 items-center gap-1.5 text-theme-text-muted">
+            {isFresh(app) ? (
+                <span role="img" title="Fresh" aria-label="Fresh">
+                    <ClockIcon className="size-4" />
+                </span>
+            ) : null}
+            {isBuzz(app) ? (
+                <span role="img" title="Buzz" aria-label="Buzz">
+                    <TrendUpIcon className="size-4" />
+                </span>
+            ) : null}
+            {isPollen(app) ? (
+                <span role="img" title="BYOP" aria-label="BYOP">
+                    <KeyIcon className="size-4" />
+                </span>
+            ) : null}
+        </span>
+    );
 }
 
 const appHref = (app: DirectoryApp) => app.web_url || app.github_repository_url;
@@ -64,10 +83,12 @@ export function AppTile({
     app,
     imageClassName = "h-[150px]",
     className,
+    tabIndex,
 }: {
     app: DirectoryApp;
     imageClassName?: string;
     className?: string;
+    tabIndex?: number;
 }) {
     const cover = appCover(app.name, app.screenshot_url);
 
@@ -75,6 +96,7 @@ export function AppTile({
         <Card
             as="a"
             href={appHref(app)}
+            tabIndex={tabIndex}
             className={`overflow-hidden rounded-2xl p-0 ${className ?? ""}`}
         >
             <AppCoverImage src={cover} className={imageClassName} />
@@ -144,8 +166,8 @@ export function AppHero({
     );
 }
 
-/** Browse card: real screenshot when available, shared Polli fallback otherwise. */
-export function AppCard({ app }: { app: DirectoryApp }) {
+/** Compact directory row: the screenshot sets the mood without dominating. */
+export function AppRow({ app }: { app: DirectoryApp }) {
     const stars = formatStars(app.github_repository_stars);
     const profile = githubProfileUrl(app.github_username);
     const platform = platformsOf(app)[0];
@@ -153,19 +175,36 @@ export function AppCard({ app }: { app: DirectoryApp }) {
     const cover = appCover(app.name, app.screenshot_url);
 
     return (
-        <Card className="min-h-35 overflow-hidden p-0">
-            <AppCoverImage src={cover} className="aspect-[2/1]" />
-            <div className="flex flex-1 flex-col gap-2 p-5">
-                <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-body text-lg font-semibold text-theme-text-strong">
-                        {app.name}
-                    </h3>
-                    <span className="shrink-0 text-sm">{badgesFor(app)}</span>
+        <article className="grid grid-cols-[6rem_minmax(0,1fr)] items-start gap-3 border-theme-border/70 border-b py-3.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5 sm:py-4">
+            {href && (
+                <a
+                    href={href}
+                    aria-label={`Open ${app.name}`}
+                    className="overflow-hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-border-strong"
+                >
+                    <AppCoverImage src={cover} className="aspect-[16/10]" />
+                </a>
+            )}
+            <div className="flex min-h-full min-w-0 flex-col gap-1.5">
+                <div className="flex items-start justify-between gap-3">
+                    {href ? (
+                        <a
+                            href={href}
+                            className="rounded-sm font-body text-base font-semibold text-theme-text-strong hover:text-theme-text-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-border-strong sm:text-lg"
+                        >
+                            {app.name}
+                        </a>
+                    ) : (
+                        <h3 className="font-body text-base font-semibold text-theme-text-strong sm:text-lg">
+                            {app.name}
+                        </h3>
+                    )}
+                    <AppSignals app={app} />
                 </div>
-                <p className="text-sm leading-relaxed text-theme-text-base">
+                <Markdown className="line-clamp-2 text-sm text-theme-text-base [&_p]:m-0">
                     {app.description}
-                </p>
-                <div className="mt-auto flex flex-wrap items-center gap-2 pt-1.5 text-xs text-theme-text-muted">
+                </Markdown>
+                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-theme-text-muted">
                     {profile && (
                         <a
                             href={profile}
@@ -188,6 +227,6 @@ export function AppCard({ app }: { app: DirectoryApp }) {
                     )}
                 </div>
             </div>
-        </Card>
+        </article>
     );
 }

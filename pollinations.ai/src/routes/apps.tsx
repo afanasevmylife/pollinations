@@ -1,16 +1,22 @@
 import {
+    AppIcon,
     Button,
     ChevronIcon,
+    Chip,
+    ClockIcon,
     Dropdown,
     Input,
+    KeyIcon,
     MultiSelect,
+    ScrollArea,
+    Surface,
     TabButton,
+    TrendUpIcon,
 } from "@pollinations/ui";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     type DirectoryApp,
-    isBuzz,
     isPollen,
     platformsOf,
     useAppDirectory,
@@ -21,18 +27,8 @@ import {
 // same list to decide which apps get cover art.
 import SPOTLIGHT from "../data/spotlight.json";
 import { routeHead } from "../routeMeta";
-import { AppCard, AppHero, AppTile } from "../ui/apps/cards";
-import { appCover } from "../ui/apps/cover";
-import {
-    ActionButton,
-    CardGrid,
-    Hero,
-    PageHeader,
-    PixelLabel,
-    PixelRule,
-    ScrollStrip,
-    SectionHeader,
-} from "../ui/site/kit";
+import { AppRow, AppTile } from "../ui/apps/cards";
+import { ActionButton, Hero, PageHeader, SectionHeader } from "../ui/site/kit";
 import {
     APP_CATEGORIES,
     APP_PLATFORMS,
@@ -56,6 +52,12 @@ const SORT_LABELS: Record<AppSort, string> = {
     byop: "BYOP",
 };
 
+const SORT_ICONS = {
+    fresh: ClockIcon,
+    buzz: TrendUpIcon,
+    byop: KeyIcon,
+} satisfies Record<AppSort, typeof ClockIcon>;
+
 const newestFirst = (a: DirectoryApp, b: DirectoryApp) =>
     (b.approved_date || "").localeCompare(a.approved_date || "");
 
@@ -71,15 +73,6 @@ function compareApps(sort: AppSort) {
         }
         return newestFirst(a, b) || a.name.localeCompare(b.name);
     };
-}
-
-/** A small filled pill, for the one official card on the page. */
-function OpenPill({ children }: { children: string }) {
-    return (
-        <span className="rounded-[10px] bg-theme-bg-active px-4.5 py-2 text-sm font-semibold text-theme-text-strong shadow-[2px_2px_0_rgba(17,5,24,0.18)]">
-            {children}
-        </span>
-    );
 }
 
 function FilterAxis<T extends string>({
@@ -114,6 +107,142 @@ function FilterAxis<T extends string>({
                 </TabButton>
             ))}
         </fieldset>
+    );
+}
+
+function FeaturedAppsCarousel({ apps }: { apps: DirectoryApp[] }) {
+    const scroller = useRef<HTMLDivElement>(null);
+    const drag = useRef<{
+        pointerId: number;
+        startX: number;
+        startScroll: number;
+    } | null>(null);
+    const suppressClick = useRef(false);
+    const [paused, setPaused] = useState(false);
+
+    useEffect(() => {
+        if (
+            paused ||
+            apps.length < 2 ||
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+            return;
+        }
+        const container = scroller.current;
+        if (!container) return;
+
+        let frame = 0;
+        let previous: number | null = null;
+        const tick = (time: number) => {
+            const first = container.querySelector<HTMLElement>(
+                '[data-loop-copy="0"][data-loop-index="0"]',
+            );
+            const repeated = container.querySelector<HTMLElement>(
+                '[data-loop-copy="1"][data-loop-index="0"]',
+            );
+            const cycle =
+                first && repeated ? repeated.offsetLeft - first.offsetLeft : 0;
+            if (previous !== null && cycle > 0) {
+                const elapsed = Math.min(time - previous, 32);
+                container.scrollLeft += (cycle / 40_000) * elapsed;
+                if (container.scrollLeft >= cycle) {
+                    container.scrollLeft -= cycle;
+                }
+            }
+            previous = time;
+            frame = window.requestAnimationFrame(tick);
+        };
+        frame = window.requestAnimationFrame(tick);
+        return () => window.cancelAnimationFrame(frame);
+    }, [apps.length, paused]);
+
+    if (apps.length === 0) return null;
+
+    return (
+        <section
+            aria-roledescription="carousel"
+            aria-label="Featured apps"
+            className="flex min-w-0 flex-col gap-3"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
+        >
+            <ScrollArea
+                ref={scroller}
+                axis="x"
+                tabIndex={0}
+                className="apps-featured-rail cursor-grab select-none active:cursor-grabbing"
+                onClickCapture={(event) => {
+                    if (suppressClick.current) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        suppressClick.current = false;
+                    }
+                }}
+                onPointerDown={(event) => {
+                    setPaused(true);
+                    suppressClick.current = false;
+                    if (event.pointerType === "mouse" && event.button === 0) {
+                        drag.current = {
+                            pointerId: event.pointerId,
+                            startX: event.clientX,
+                            startScroll: event.currentTarget.scrollLeft,
+                        };
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                    }
+                }}
+                onPointerMove={(event) => {
+                    if (drag.current?.pointerId !== event.pointerId) return;
+                    const distance = event.clientX - drag.current.startX;
+                    if (Math.abs(distance) > 5) suppressClick.current = true;
+                    event.currentTarget.scrollLeft =
+                        drag.current.startScroll - distance;
+                }}
+                onPointerUp={(event) => {
+                    if (drag.current?.pointerId === event.pointerId) {
+                        drag.current = null;
+                        event.currentTarget.releasePointerCapture(
+                            event.pointerId,
+                        );
+                    }
+                    setPaused(false);
+                }}
+                onPointerCancel={() => {
+                    drag.current = null;
+                    setPaused(false);
+                }}
+            >
+                <div className="flex items-stretch gap-4">
+                    {[0, 1].map((copy) =>
+                        apps.map((app, index) => (
+                            <article
+                                key={`${copy}-${app.name}`}
+                                data-loop-copy={copy}
+                                data-loop-index={index}
+                                aria-hidden={copy === 1 ? true : undefined}
+                                aria-roledescription={
+                                    copy === 0 ? "slide" : undefined
+                                }
+                                aria-label={
+                                    copy === 0
+                                        ? `${index + 1} of ${apps.length}`
+                                        : undefined
+                                }
+                                className="w-[92%] shrink-0 sm:w-[64%] lg:w-[44%]"
+                            >
+                                <AppTile
+                                    app={app}
+                                    imageClassName="aspect-[16/7]"
+                                    className="h-full w-full"
+                                    tabIndex={copy === 1 ? -1 : undefined}
+                                />
+                            </article>
+                        )),
+                    )}
+                </div>
+            </ScrollArea>
+        </section>
     );
 }
 
@@ -180,7 +309,6 @@ function AppsPage() {
             }),
         });
 
-    const [lead, ...strip] = spotlight;
     // A short first page keeps the one-column phone view browseable; Show more
     // still makes the whole directory reachable without a separate paginator.
     const PAGE = 18;
@@ -189,9 +317,6 @@ function AppsPage() {
 
     return (
         <>
-            {/* The nomnom, buried under a stack of apps. "Submit your app"
-                moves below the subtitle rather than sitting top-right, so the
-                right side belongs to the character — the same shape as Hello. */}
             <Hero scene="/heroes/apps.webp">
                 <PageHeader
                     eyebrow={
@@ -210,75 +335,27 @@ function AppsPage() {
                         </>
                     }
                 />
-                <div className="flex flex-wrap gap-3">
-                    <ActionButton href="https://github.com/pollinations/pollinations/issues/new?template=APP-SUBMISSION.yml">
-                        Submit your app
-                    </ActionButton>
-                </div>
             </Hero>
 
-            {/* Hand-picked is a section like Browse is a section — it was
-                the only block on the page without a title. */}
-            <section className="flex flex-col gap-5">
-                <SectionHeader
-                    eyebrow="Spotlight"
-                    title="Picked by hand."
-                    subtitle="Not the busiest — the ones we'd actually send a friend to."
-                />
-
-                {/* The hero pair: what we made, then the best of what you made. */}
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(380px,100%),1fr))] gap-5">
-                    <AppHero
-                        href="/play"
-                        title="Playground"
-                        badge="Official"
-                        badgeTone="accent"
-                        description="Official text, image, audio and video models in the browser. Connect and generate with your own Pollen — nothing to install."
-                        meta="pollinations.ai/play"
-                        image={appCover("Pollinations Playground")}
-                        action={<OpenPill>Open →</OpenPill>}
-                    />
-                    {lead && (
-                        <AppHero
-                            href={lead.web_url || lead.github_repository_url}
-                            title={lead.name}
-                            badge={isBuzz(lead) ? "Buzz" : "Picked"}
-                            description={lead.description}
-                            meta={
-                                lead.github_username
-                                    ? `by ${lead.github_username}`
-                                    : "community built"
-                            }
-                            image={appCover(lead.name, lead.screenshot_url)}
-                            action={
-                                <span className="text-sm font-semibold text-theme-text-soft">
-                                    Open ↗
-                                </span>
-                            }
-                        />
-                    )}
-                </div>
-
-                {strip.length > 0 && (
-                    <ScrollStrip ariaLabel="More hand-picked apps">
-                        {strip.map((app) => (
-                            <AppTile
-                                key={app.name}
-                                app={app}
-                                imageClassName="h-30"
-                                className="w-59 flex-none"
-                            />
-                        ))}
-                    </ScrollStrip>
-                )}
-            </section>
-
-            <PixelRule />
+            <div className="-mt-5 flex flex-col gap-5 sm:-mt-8">
+                <FeaturedAppsCarousel apps={spotlight} />
+                <Surface
+                    variant="card"
+                    className="mx-auto flex w-fit flex-wrap items-center justify-center gap-4 rounded-2xl px-5 py-4"
+                >
+                    <span className="font-semibold text-sm text-theme-text-strong">
+                        Built something with Pollinations?
+                    </span>
+                    <ActionButton href="https://github.com/pollinations/pollinations/issues/new?template=APP-SUBMISSION.yml">
+                        Share your App
+                    </ActionButton>
+                </Surface>
+            </div>
 
             <section className="flex flex-col gap-5">
                 <SectionHeader
-                    eyebrow="Browse"
-                    title="Everything else."
+                    eyebrow="Directory"
+                    title="Browse them all"
                     subtitle="Browse by category or platform, then sort by what’s fresh, buzzing or built with BYOP."
                 />
 
@@ -338,23 +415,40 @@ function AppsPage() {
 
                         <div className="ml-auto flex min-h-11 items-center gap-3">
                             {!loading && (
-                                <PixelLabel variant="eyebrow">
-                                    {filtered.length} of {apps.length}
-                                </PixelLabel>
+                                <Chip
+                                    size="lg"
+                                    aria-live="polite"
+                                    className="gap-1.5 bg-theme-bg-subtle px-3 text-theme-text-soft"
+                                >
+                                    <AppIcon className="size-4" />
+                                    <span className="tabular-nums">
+                                        {filtered.length === apps.length
+                                            ? `${apps.length} apps`
+                                            : `${filtered.length} / ${apps.length} apps`}
+                                    </span>
+                                </Chip>
                             )}
                             <Dropdown
                                 align="end"
                                 className="polli:min-w-40 polli:p-1"
-                                trigger={(open) => (
-                                    <Button
-                                        type="button"
-                                        aria-label={`Sort apps: ${SORT_LABELS[sort]}`}
-                                        className="polli:gap-2"
-                                    >
-                                        Sort: {SORT_LABELS[sort]}
-                                        <ChevronIcon expanded={open} />
-                                    </Button>
-                                )}
+                                trigger={(open) => {
+                                    const SortIcon = SORT_ICONS[sort];
+                                    return (
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            aria-label={`Sort apps: ${SORT_LABELS[sort]}`}
+                                            className="min-h-8 gap-2 whitespace-nowrap px-3 py-1.5 text-xs"
+                                        >
+                                            <SortIcon className="size-4 shrink-0" />
+                                            {SORT_LABELS[sort]}
+                                            <ChevronIcon
+                                                expanded={open}
+                                                className="size-3 shrink-0"
+                                            />
+                                        </Button>
+                                    );
+                                }}
                             >
                                 {(close) => (
                                     <div className="polli:flex polli:flex-col polli:gap-1">
@@ -362,31 +456,36 @@ function AppsPage() {
                                             Object.keys(
                                                 SORT_LABELS,
                                             ) as AppSort[]
-                                        ).map((value) => (
-                                            <TabButton
-                                                key={value}
-                                                active={sort === value}
-                                                size="sm"
-                                                variant="ghost"
-                                                className="polli:w-full polli:justify-start"
-                                                onClick={() => {
-                                                    navigate({
-                                                        resetScroll: false,
-                                                        search: (prev) => ({
-                                                            ...prev,
-                                                            sort:
-                                                                value ===
-                                                                "fresh"
-                                                                    ? undefined
-                                                                    : value,
-                                                        }),
-                                                    });
-                                                    close();
-                                                }}
-                                            >
-                                                {SORT_LABELS[value]}
-                                            </TabButton>
-                                        ))}
+                                        ).map((value) => {
+                                            const OptionIcon =
+                                                SORT_ICONS[value];
+                                            return (
+                                                <TabButton
+                                                    key={value}
+                                                    active={sort === value}
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="w-full justify-start gap-2"
+                                                    onClick={() => {
+                                                        navigate({
+                                                            resetScroll: false,
+                                                            search: (prev) => ({
+                                                                ...prev,
+                                                                sort:
+                                                                    value ===
+                                                                    "fresh"
+                                                                        ? undefined
+                                                                        : value,
+                                                            }),
+                                                        });
+                                                        close();
+                                                    }}
+                                                >
+                                                    <OptionIcon className="size-4 shrink-0" />
+                                                    {SORT_LABELS[value]}
+                                                </TabButton>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </Dropdown>
@@ -409,11 +508,11 @@ function AppsPage() {
                     </div>
                 ) : (
                     <>
-                        <CardGrid min="gallery" gap="gap-4">
+                        <div className="border-theme-border/70 border-t">
                             {visible.map((app) => (
-                                <AppCard key={app.name} app={app} />
+                                <AppRow key={app.name} app={app} />
                             ))}
-                        </CardGrid>
+                        </div>
                         {filtered.length > visible.length && (
                             <div className="flex flex-col items-center gap-2">
                                 <ActionButton
