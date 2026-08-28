@@ -1,5 +1,4 @@
 import {
-    AppIcon,
     BookIcon,
     BrandLockup,
     Button,
@@ -8,29 +7,26 @@ import {
     Dropdown,
     DropdownItem,
     GitHubIcon,
-    GlobeIcon,
     InstagramIcon,
     LinkedInIcon,
     LogInIcon,
     MenuIcon,
-    RocketIcon,
-    SproutIcon,
     TabButton,
     XIcon,
     XSocialIcon,
 } from "@pollinations/ui";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDiscordPresence, useRepoStars } from "../../data/community";
 import { compact } from "../../data/publicStats";
 import { GUTTER, SHELL } from "./kit";
 import { useHideOnScroll, useScrolled } from "./useHideOnScroll";
 
 const NAV = [
-    { to: "/", label: "Hello", Icon: null },
-    { to: "/play", label: "Play", Icon: RocketIcon },
-    { to: "/apps", label: "Apps", Icon: AppIcon },
-    { to: "/community", label: "Community", Icon: GlobeIcon },
+    { to: "/", label: "Hello" },
+    { to: "/play", label: "Play" },
+    { to: "/apps", label: "Apps" },
+    { to: "/community", label: "Community" },
 ] as const;
 
 const EXTERNAL = [
@@ -81,12 +77,6 @@ export function SiteHeader() {
     const pathname = useRouterState({
         select: (state) => state.location.pathname,
     });
-
-    // Navigating is what the menu is for, so it closes itself on arrival.
-    // biome-ignore lint/correctness/useExhaustiveDependencies: close on navigation
-    useEffect(() => {
-        setMenuOpen(false);
-    }, [pathname]);
 
     // The header must not slide away while its own menu is open.
     const hidden = scrolledAway && !menuOpen;
@@ -151,7 +141,6 @@ export function SiteHeader() {
                         <nav className="hidden gap-1.5 min-[700px]:flex">
                             {NAV.map((item) => {
                                 const active = isCurrent(item.to, pathname);
-                                const { Icon } = item;
                                 return (
                                     <TabButton
                                         key={item.to}
@@ -165,9 +154,6 @@ export function SiteHeader() {
                                                 : ""
                                         }`}
                                     >
-                                        {active && Icon && (
-                                            <Icon className="h-4 w-4 shrink-0" />
-                                        )}
                                         {item.label}
                                     </TabButton>
                                 );
@@ -260,7 +246,6 @@ export function SiteHeader() {
                                                 item.to,
                                                 pathname,
                                             );
-                                            const { Icon } = item;
                                             return (
                                                 <TabButton
                                                     key={item.to}
@@ -268,48 +253,49 @@ export function SiteHeader() {
                                                     to={item.to}
                                                     variant="ghost"
                                                     active={active}
-                                                    onClick={close}
                                                     className="site-primary-nav-button w-full justify-start"
                                                 >
-                                                    {active &&
-                                                        (item.to === "/" ? (
-                                                            <SproutIcon className="h-4 w-4 shrink-0" />
-                                                        ) : Icon ? (
-                                                            <Icon className="h-4 w-4 shrink-0" />
-                                                        ) : null)}
                                                     {item.label}
                                                 </TabButton>
                                             );
                                         })}
                                         <span className="mx-2 my-1 h-px bg-theme-border" />
                                     </div>
-                                    <DropdownItem
-                                        as="a"
-                                        href={EXTERNAL[0].href}
-                                        onClick={close}
-                                        className="site-external-link min-[700px]:hidden"
-                                    >
-                                        <BookIcon className="h-4 w-4 shrink-0" />
-                                        {EXTERNAL[0].label}
-                                    </DropdownItem>
-                                    <DropdownItem
-                                        as="a"
-                                        href="https://enter.pollinations.ai"
-                                        onClick={close}
-                                        className="min-[700px]:hidden"
-                                    >
-                                        <LogInIcon className="h-4 w-4 shrink-0" />
-                                        Login
-                                    </DropdownItem>
+                                    <div className="grid grid-cols-2 gap-2 px-1 py-1 min-[700px]:hidden">
+                                        <Button
+                                            as="a"
+                                            href={EXTERNAL[0].href}
+                                            intent="info"
+                                            size="sm"
+                                            onClick={close}
+                                            className="w-full gap-2"
+                                        >
+                                            <BookIcon className="h-4 w-4 shrink-0" />
+                                            {EXTERNAL[0].label}
+                                        </Button>
+                                        <Button
+                                            as="a"
+                                            href="https://enter.pollinations.ai"
+                                            intent="info"
+                                            size="sm"
+                                            onClick={close}
+                                            className="w-full gap-2"
+                                        >
+                                            <LogInIcon className="h-4 w-4 shrink-0" />
+                                            Login
+                                        </Button>
+                                    </div>
                                     <span className="mx-2 my-1 h-px bg-theme-border min-[700px]:hidden" />
                                     <DropdownItem
                                         as="a"
                                         href={EXTERNAL[1].href}
                                         onClick={close}
-                                        className="site-external-link"
+                                        className="site-drawer-social-link site-external-link"
                                     >
                                         <GitHubIcon className="h-4 w-4 shrink-0" />
-                                        {EXTERNAL[1].label}
+                                        <span className="site-drawer-social-label">
+                                            {EXTERNAL[1].label}
+                                        </span>
                                         {repoStars !== null && (
                                             <Chip
                                                 intent="alpha"
@@ -324,10 +310,12 @@ export function SiteHeader() {
                                         as="a"
                                         href={EXTERNAL[2].href}
                                         onClick={close}
-                                        className="site-external-link"
+                                        className="site-drawer-social-link site-external-link"
                                     >
                                         <DiscordIcon className="h-4 w-4 shrink-0" />
-                                        {EXTERNAL[2].label}
+                                        <span className="site-drawer-social-label">
+                                            {EXTERNAL[2].label}
+                                        </span>
                                         {discordOnline !== null && (
                                             <Chip
                                                 intent="info"
