@@ -68,6 +68,9 @@ function PlayPage() {
                     <ActionButton href={`${ENTER_URL}/keys`}>
                         Get an API key
                     </ActionButton>
+                    <ActionButton href="/animate" tone="plain">
+                        Plan an animation
+                    </ActionButton>
                 </div>
             </Hero>
             <Playground toolbarAction={<SignInAction />} />

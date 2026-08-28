@@ -15,6 +15,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PlayRouteImport } from './routes/play'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as AppsRouteImport } from './routes/apps'
+import { Route as AnimateRouteImport } from './routes/animate'
 import { Route as IndexRouteImport } from './routes/index'
 
 const TermsRoute = TermsRouteImport.update({
@@ -47,6 +48,11 @@ const AppsRoute = AppsRouteImport.update({
   path: '/apps',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnimateRoute = AnimateRouteImport.update({
+  id: '/animate',
+  path: '/animate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +61,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/animate': typeof AnimateRoute
   '/apps': typeof AppsRoute
   '/community': typeof CommunityRoute
   '/play': typeof PlayRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/animate': typeof AnimateRoute
   '/apps': typeof AppsRoute
   '/community': typeof CommunityRoute
   '/play': typeof PlayRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/animate': typeof AnimateRoute
   '/apps': typeof AppsRoute
   '/community': typeof CommunityRoute
   '/play': typeof PlayRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/animate'
     | '/apps'
     | '/community'
     | '/play'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/animate'
     | '/apps'
     | '/community'
     | '/play'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/animate'
     | '/apps'
     | '/community'
     | '/play'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnimateRoute: typeof AnimateRoute
   AppsRoute: typeof AppsRoute
   CommunityRoute: typeof CommunityRoute
   PlayRoute: typeof PlayRoute
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/animate': {
+      id: '/animate'
+      path: '/animate'
+      fullPath: '/animate'
+      preLoaderRoute: typeof AnimateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnimateRoute: AnimateRoute,
   AppsRoute: AppsRoute,
   CommunityRoute: CommunityRoute,
   PlayRoute: PlayRoute,

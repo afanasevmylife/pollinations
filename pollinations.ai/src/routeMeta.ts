@@ -10,6 +10,11 @@ export const ROUTE_META: Record<string, RouteMeta> = {
         title: "Play | pollinations.ai",
         description: "Generate images, text, audio and video with AI models",
     },
+    "/animate": {
+        title: "Animation Prompt Machine | pollinations.ai",
+        description:
+            "Turn one animation idea into consistent assets, keyframes and motion prompts",
+    },
     "/apps": {
         title: "Apps | pollinations.ai",
         description: "Community-built apps powered by Pollinations AI",
