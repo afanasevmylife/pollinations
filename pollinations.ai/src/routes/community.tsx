@@ -1,4 +1,6 @@
+import { ArrowRightIcon, Button, Chip, Surface } from "@pollinations/ui";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import {
     DISCORD_URL,
     REPO_URL,
@@ -136,49 +138,261 @@ function OpenVotes() {
 }
 
 function BuildDiary() {
-    const { data: entries, loading, failed } = useBuildDiary();
+    const [rangeEnd, setRangeEnd] = useState<string | null>(null);
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const {
+        data: diary,
+        loading,
+        failed,
+    } = useBuildDiary(14, rangeEnd ?? undefined);
+    const { days, hasEarlier, hasLater } = diary;
+    const entries = days.filter((day) => day.title !== null);
+    const selected =
+        entries.find((day) => day.date === selectedDate) ??
+        entries[entries.length - 1];
+    const selectedIndex = selected
+        ? entries.findIndex((day) => day.date === selected.date)
+        : -1;
+    const previous = selectedIndex > 0 ? entries[selectedIndex - 1] : null;
+    const next =
+        selectedIndex >= 0 && selectedIndex < entries.length - 1
+            ? entries[selectedIndex + 1]
+            : null;
+    const maxPrs = Math.max(...days.map((day) => day.prCount), 1);
+    const points = days.map((day, index) => ({
+        day,
+        x: days.length === 1 ? 50 : 2 + (index / (days.length - 1)) * 96,
+        y: 92 - (day.prCount / maxPrs) * 84,
+    }));
+    const curve = points.reduce((path, point, index) => {
+        if (index === 0) return `M ${point.x} ${point.y}`;
+        const previousPoint = points[index - 1];
+        const midpoint = (previousPoint.x + point.x) / 2;
+        return `${path} C ${midpoint} ${previousPoint.y}, ${midpoint} ${point.y}, ${point.x} ${point.y}`;
+    }, "");
+    const area = points.length
+        ? `${curve} L ${points[points.length - 1].x} 100 L ${points[0].x} 100 Z`
+        : "";
     const bare = loading || failed || entries.length === 0;
 
+    const formatDate = (date: string, full = false) =>
+        new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            ...(full ? { year: "numeric" } : {}),
+            timeZone: "UTC",
+        });
+
+    const shiftRange = (amount: number) => {
+        const edge = amount < 0 ? days[0] : days[days.length - 1];
+        if (!edge) return;
+        const date = new Date(`${edge.date}T00:00:00Z`);
+        date.setUTCDate(date.getUTCDate() + amount);
+        setRangeEnd(date.toISOString().slice(0, 10));
+        setSelectedDate(null);
+    };
+
     return (
-        <div className="flex flex-col gap-4.5">
+        <section className="flex flex-col gap-5">
             <SectionHeader
                 eyebrow="Build diary"
-                title="What we shipped"
-                subtitle="A log of what lands, straight from the repo."
+                title="What we shipped in the community"
+                subtitle="One day, one picture, and the pull requests that moved the project forward."
             />
-            <div className="flex flex-col">
-                {bare && (
-                    <FeedState
-                        loading={loading}
-                        failed={failed}
-                        what="The build diary"
-                        rows={4}
-                    />
-                )}
-                {entries.map((entry) => (
-                    <a
-                        key={entry.url}
-                        href={entry.url}
-                        className="flex items-start gap-4 border-theme-border border-b border-dashed py-3.5 hover:text-theme-text-strong"
+            {bare ? (
+                <FeedState
+                    loading={loading}
+                    failed={failed}
+                    what="The build diary"
+                    rows={2}
+                />
+            ) : (
+                <>
+                    <Surface
+                        variant="card-themed"
+                        className="flex flex-col gap-4 p-5 sm:p-6"
                     >
-                        <PixelLabel
-                            variant="chrome"
-                            className="w-16 shrink-0 pt-0.5 text-theme-text-soft"
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <PixelLabel variant="chrome">
+                                PRs merged per day
+                            </PixelLabel>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {selected && (
+                                    <Chip size="sm">
+                                        {selected.prCount} merged
+                                    </Chip>
+                                )}
+                                <Button
+                                    size="sm"
+                                    intent="neutral"
+                                    disabled={!hasEarlier}
+                                    onClick={() => shiftRange(-1)}
+                                    className="gap-1.5"
+                                >
+                                    <ArrowRightIcon className="h-3.5 w-3.5 rotate-180" />
+                                    Earlier
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    intent="neutral"
+                                    disabled={!hasLater}
+                                    onClick={() => shiftRange(14)}
+                                    className="gap-1.5"
+                                >
+                                    Later
+                                    <ArrowRightIcon className="h-3.5 w-3.5" />
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="relative h-44 min-w-0 pl-9 sm:h-52">
+                            <span className="sr-only">
+                                Pull requests merged per day
+                            </span>
+                            <span className="absolute top-0 left-0 text-micro text-theme-text-muted tabular-nums">
+                                {maxPrs}
+                            </span>
+                            <span className="absolute top-1/2 left-0 -translate-y-1/2 text-micro text-theme-text-muted tabular-nums">
+                                {Math.ceil(maxPrs / 2)}
+                            </span>
+                            <span className="absolute bottom-7 left-0 text-micro text-theme-text-muted tabular-nums">
+                                0
+                            </span>
+                            <div className="absolute top-2 right-1 bottom-7 left-9">
+                                <span className="absolute top-[8%] right-0 left-0 border-theme-border border-t border-dashed" />
+                                <span className="absolute top-1/2 right-0 left-0 border-theme-border border-t border-dashed" />
+                                <span className="absolute top-[92%] right-0 left-0 border-theme-border border-t border-dashed" />
+                                <svg
+                                    aria-hidden="true"
+                                    viewBox="0 0 100 100"
+                                    preserveAspectRatio="none"
+                                    className="absolute inset-0 h-full w-full overflow-visible"
+                                >
+                                    <path
+                                        d={area}
+                                        fill="color-mix(in oklab, var(--polli-color-bg-active) 32%, transparent)"
+                                    />
+                                    <path
+                                        d={curve}
+                                        fill="none"
+                                        stroke="var(--polli-color-text-soft)"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        vectorEffect="non-scaling-stroke"
+                                    />
+                                </svg>
+                                {points.map(({ day, x, y }) => {
+                                    const active = day.date === selected?.date;
+                                    const available = day.title !== null;
+                                    return (
+                                        <button
+                                            key={day.date}
+                                            type="button"
+                                            disabled={!available}
+                                            onClick={() =>
+                                                setSelectedDate(day.date)
+                                            }
+                                            aria-label={`${formatDate(day.date, true)}: ${day.prCount} pull request${day.prCount === 1 ? "" : "s"} merged`}
+                                            aria-pressed={active}
+                                            title={`${formatDate(day.date, true)} · ${day.prCount} PR${day.prCount === 1 ? "" : "s"}`}
+                                            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-transform motion-reduce:transition-none ${
+                                                active
+                                                    ? "size-5 border-theme-text-strong bg-theme-bg-active"
+                                                    : available
+                                                      ? "size-3 border-theme-text-soft bg-surface-opaque hover:scale-125"
+                                                      : "size-2 cursor-default border-theme-border bg-theme-bg-subtle"
+                                            }`}
+                                            style={{
+                                                left: `${x}%`,
+                                                top: `${y}%`,
+                                            }}
+                                        />
+                                    );
+                                })}
+                            </div>
+                            <div className="absolute right-1 bottom-0 left-9 flex justify-between text-micro text-theme-text-muted">
+                                <span>{formatDate(days[0].date)}</span>
+                                <span>
+                                    {formatDate(
+                                        days[days.length - 1]?.date ?? "",
+                                    )}
+                                </span>
+                            </div>
+                        </div>
+                    </Surface>
+
+                    {selected && (
+                        <Surface
+                            variant="card"
+                            className="grid overflow-hidden p-0 md:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.1fr)]"
                         >
-                            {entry.date}
-                        </PixelLabel>
-                        <span className="flex-1 text-sm leading-relaxed text-theme-text-base">
-                            {entry.summary}
-                        </span>
-                    </a>
-                ))}
-                <div className="pt-3.5">
-                    <ArrowLink href={`${REPO_URL}/commits/main`}>
-                        See every commit
-                    </ArrowLink>
-                </div>
-            </div>
-        </div>
+                            <img
+                                key={selected.imageUrl}
+                                src={selected.imageUrl ?? undefined}
+                                alt=""
+                                aria-hidden="true"
+                                loading="lazy"
+                                className="aspect-[4/3] h-full min-h-0 w-full bg-theme-bg-subtle object-cover md:aspect-auto md:min-h-72"
+                            />
+                            <div className="flex min-w-0 flex-col gap-4 p-5 sm:p-7">
+                                <div className="flex flex-wrap items-center gap-2.5">
+                                    <PixelLabel variant="chrome">
+                                        {formatDate(selected.date, true)}
+                                    </PixelLabel>
+                                    <Chip size="sm">
+                                        {selected.prCount} PR
+                                        {selected.prCount === 1 ? "" : "s"}
+                                    </Chip>
+                                </div>
+                                <h3 className="font-subheading text-2xl leading-tight text-theme-text-strong sm:text-3xl">
+                                    {selected.title}
+                                </h3>
+                                <p className="text-sm leading-relaxed text-theme-text-base sm:text-base">
+                                    {selected.summary}
+                                </p>
+                                <div className="mt-auto flex flex-wrap items-center justify-between gap-4 pt-2">
+                                    {selected.url && (
+                                        <ArrowLink href={selected.url}>
+                                            See the day’s PRs
+                                        </ArrowLink>
+                                    )}
+                                    <div className="ml-auto flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            intent="neutral"
+                                            disabled={!previous}
+                                            onClick={() =>
+                                                previous &&
+                                                setSelectedDate(previous.date)
+                                            }
+                                            aria-label="Previous diary entry"
+                                            title="Previous day"
+                                            className="h-9 w-9 p-0"
+                                        >
+                                            <ArrowRightIcon className="h-4 w-4 rotate-180" />
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            intent="neutral"
+                                            disabled={!next}
+                                            onClick={() =>
+                                                next &&
+                                                setSelectedDate(next.date)
+                                            }
+                                            aria-label="Next diary entry"
+                                            title="Next day"
+                                            className="h-9 w-9 p-0"
+                                        >
+                                            <ArrowRightIcon className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </Surface>
+                    )}
+                </>
+            )}
+        </section>
     );
 }
 
@@ -292,7 +506,7 @@ function CommunityPage() {
                     {WAYS_IN.map((way) => (
                         <Card key={way.label} className="gap-2.5 p-7">
                             <PixelLabel>{way.label}</PixelLabel>
-                            <h3 className="font-subheading text-xl text-theme-text-strong">
+                            <h3 className="font-body text-xl font-semibold text-theme-text-strong">
                                 {way.title}
                             </h3>
                             <p className="text-sm leading-relaxed text-theme-text-base">
@@ -318,10 +532,9 @@ function CommunityPage() {
 
             <PixelRule />
 
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(360px,100%),1fr))] items-start gap-8">
-                <OpenVotes />
-                <BuildDiary />
-            </div>
+            <OpenVotes />
+
+            <BuildDiary />
 
             <Contributors />
 
@@ -336,9 +549,24 @@ function CommunityPage() {
                         <a
                             key={supporter.name}
                             href={supporter.url}
-                            className="flex flex-col gap-1.5 rounded-2xl border border-theme-border border-dashed px-5 py-4 transition-colors hover:border-theme-bg-active hover:bg-surface-opaque motion-reduce:transition-none"
+                            aria-label={supporter.name}
+                            className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3 rounded-2xl border border-theme-border border-dashed px-5 py-4 transition-colors hover:border-theme-bg-active hover:bg-surface-opaque motion-reduce:transition-none"
                         >
-                            <span className="font-subheading text-base text-theme-text-strong">
+                            <span
+                                aria-hidden="true"
+                                className="row-span-2 h-9 w-9 bg-theme-text-strong"
+                                style={{
+                                    maskImage: `url(${supporter.logo})`,
+                                    WebkitMaskImage: `url(${supporter.logo})`,
+                                    maskRepeat: "no-repeat",
+                                    WebkitMaskRepeat: "no-repeat",
+                                    maskPosition: "center",
+                                    WebkitMaskPosition: "center",
+                                    maskSize: "contain",
+                                    WebkitMaskSize: "contain",
+                                }}
+                            />
+                            <span className="font-body text-base font-semibold text-theme-text-strong">
                                 {supporter.name}
                             </span>
                             <span className="text-sm leading-snug text-theme-text-muted">
