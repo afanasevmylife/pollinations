@@ -25,7 +25,6 @@ import {
     RobotIcon,
     RocketIcon,
     ScrollArea,
-    Surface,
     TabButton,
     Text,
     Textarea,
@@ -827,285 +826,269 @@ export function Chat() {
     ).length;
 
     return (
-        <section
-            className="flex w-full flex-col gap-4"
-            aria-label="Floret chat"
-        >
-            <Surface
-                variant="panel"
-                className="play-chat-shell flex flex-col overflow-hidden p-0"
-            >
-                <div className="play-chat-window flex min-h-0 flex-col">
-                    <ScrollArea
-                        ref={transcriptRef}
-                        className="play-chat-transcript min-h-0 flex-1 px-3 py-4 sm:px-5"
-                        aria-label="Conversation"
-                        aria-live="polite"
-                        aria-busy={sending}
-                        onScroll={(event) => {
-                            const target = event.currentTarget;
-                            followOutputRef.current =
-                                target.scrollHeight -
-                                    target.scrollTop -
-                                    target.clientHeight <
-                                96;
-                        }}
-                    >
-                        <div className="flex flex-col gap-5">
+        <section className="min-w-0" aria-label="Floret chat">
+            <div className="play-chat-window flex min-h-0 flex-col">
+                <ScrollArea
+                    ref={transcriptRef}
+                    className="play-chat-transcript min-h-0 flex-1 px-3 py-4 sm:px-5"
+                    aria-label="Conversation"
+                    aria-live="polite"
+                    aria-busy={sending}
+                    onScroll={(event) => {
+                        const target = event.currentTarget;
+                        followOutputRef.current =
+                            target.scrollHeight -
+                                target.scrollTop -
+                                target.clientHeight <
+                            96;
+                    }}
+                >
+                    <div className="flex flex-col gap-5">
+                        <MessageCard
+                            message={WELCOME_MESSAGE}
+                            canRetry={false}
+                            onRetry={() => undefined}
+                        />
+                        {messages.map((message) => (
                             <MessageCard
-                                message={WELCOME_MESSAGE}
-                                canRetry={false}
-                                onRetry={() => undefined}
-                            />
-                            {messages.map((message) => (
-                                <MessageCard
-                                    key={message.id}
-                                    message={message}
-                                    canRetry={
-                                        canRetryLast(message.id) &&
-                                        (message.status === "error" ||
-                                            message.status === "cancelled")
-                                    }
-                                    onRetry={() => void retry(message.id)}
-                                />
-                            ))}
-                        </div>
-                    </ScrollArea>
-                    <form
-                        onSubmit={submit}
-                        className="relative flex shrink-0 flex-col gap-3 p-3 sm:p-4"
-                    >
-                        {catalog.error && (
-                            <Alert
-                                intent="warning"
-                                title="Model settings unavailable"
-                            >
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span>Auto routing still works.</span>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        onClick={() => void catalog.refresh()}
-                                    >
-                                        Retry catalog
-                                    </Button>
-                                </div>
-                            </Alert>
-                        )}
-                        {error && (
-                            <Alert intent="danger" title="Could not send">
-                                {error}
-                            </Alert>
-                        )}
-
-                        <fieldset
-                            className="play-chat-input m-0 min-w-0 p-0"
-                            aria-label="Message and attachments"
-                            onDragOver={(event) => {
-                                event.preventDefault();
-                                if (canAttach)
-                                    event.dataTransfer.dropEffect = "copy";
-                            }}
-                            onDrop={onComposerDrop}
-                        >
-                            <FileUpload
-                                value={files}
-                                onChange={handleFiles}
-                                onReject={(rejected) => {
-                                    const problems = new Set(
-                                        rejected.map(({ file, reason }) => {
-                                            if (reason === "count")
-                                                return `You can attach up to ${MAX_ATTACHMENTS} files.`;
-                                            if (reason === "size")
-                                                return `${file.name} is larger than 20 MB.`;
-                                            return `${file.name} is not a supported file type.`;
-                                        }),
-                                    );
-                                    setError([...problems].join(" "));
-                                }}
-                                maxFiles={MAX_ATTACHMENTS}
-                                maxSizeBytes={MAX_ATTACHMENT_BYTES}
-                                accept={ATTACHMENT_ACCEPT}
-                                variant="inline"
-                                disabled={!canAttach}
-                                className="px-3 pt-3"
-                                previewIcon={<ImageIcon className="h-5 w-5" />}
-                            />
-                            <Textarea
-                                aria-label="Message"
-                                ref={composerRef}
-                                value={draft}
-                                onChange={(event) =>
-                                    setDraft(event.target.value)
+                                key={message.id}
+                                message={message}
+                                canRetry={
+                                    canRetryLast(message.id) &&
+                                    (message.status === "error" ||
+                                        message.status === "cancelled")
                                 }
-                                onKeyDown={onComposerKeyDown}
-                                onPaste={onComposerPaste}
-                                disabled={!isHydrated || sending}
-                                placeholder="Message Floret…"
-                                rows={3}
-                                className="resize-none"
+                                onRetry={() => void retry(message.id)}
                             />
-                        </fieldset>
-                        <div className="flex flex-wrap items-end gap-2">
-                            <TabButton
-                                type="button"
-                                active={advancedOpen}
-                                intent="neutral"
-                                size="lg"
-                                disabled={sending}
-                                aria-expanded={advancedOpen}
-                                aria-controls="play-chat-routing"
-                                ariaLabel={`Routing, ${routingOverrideCount > 0 ? `${routingOverrideCount} customized` : "Auto"}`}
-                                onClick={() => setAdvancedOpen((open) => !open)}
-                                className="play-routing-toggle h-12 gap-2"
-                            >
-                                <BeakerIcon className="h-5 w-5" />
-                                <Chip
-                                    size="sm"
-                                    aria-label={
-                                        routingOverrideCount > 0
-                                            ? `${routingOverrideCount} routes customized`
-                                            : "Automatic routing"
-                                    }
-                                    className="play-routing-badge min-w-6 justify-center px-1.5"
-                                >
-                                    {routingOverrideCount > 0
-                                        ? routingOverrideCount
-                                        : "Auto"}
-                                </Chip>
-                                <ChevronIcon
-                                    expanded={advancedOpen}
-                                    className="h-4 w-4"
-                                />
-                            </TabButton>
-                            <span className="inline-flex">
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept={ATTACHMENT_ACCEPT}
-                                    multiple
-                                    hidden
-                                    onChange={(event) => {
-                                        addFiles(
-                                            Array.from(
-                                                event.currentTarget.files ?? [],
-                                            ),
-                                        );
-                                        event.currentTarget.value = "";
-                                    }}
-                                />
+                        ))}
+                    </div>
+                </ScrollArea>
+                <form
+                    onSubmit={submit}
+                    className="relative flex shrink-0 flex-col gap-3 p-3 sm:p-4"
+                >
+                    {catalog.error && (
+                        <Alert
+                            intent="warning"
+                            title="Model settings unavailable"
+                        >
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span>Auto routing still works.</span>
                                 <Button
                                     type="button"
+                                    size="sm"
+                                    onClick={() => void catalog.refresh()}
+                                >
+                                    Retry catalog
+                                </Button>
+                            </div>
+                        </Alert>
+                    )}
+                    {error && (
+                        <Alert intent="danger" title="Could not send">
+                            {error}
+                        </Alert>
+                    )}
+
+                    <fieldset
+                        className="play-chat-input m-0 min-w-0 p-0"
+                        aria-label="Message and attachments"
+                        onDragOver={(event) => {
+                            event.preventDefault();
+                            if (canAttach)
+                                event.dataTransfer.dropEffect = "copy";
+                        }}
+                        onDrop={onComposerDrop}
+                    >
+                        <FileUpload
+                            value={files}
+                            onChange={handleFiles}
+                            onReject={(rejected) => {
+                                const problems = new Set(
+                                    rejected.map(({ file, reason }) => {
+                                        if (reason === "count")
+                                            return `You can attach up to ${MAX_ATTACHMENTS} files.`;
+                                        if (reason === "size")
+                                            return `${file.name} is larger than 20 MB.`;
+                                        return `${file.name} is not a supported file type.`;
+                                    }),
+                                );
+                                setError([...problems].join(" "));
+                            }}
+                            maxFiles={MAX_ATTACHMENTS}
+                            maxSizeBytes={MAX_ATTACHMENT_BYTES}
+                            accept={ATTACHMENT_ACCEPT}
+                            variant="inline"
+                            disabled={!canAttach}
+                            className="px-3 pt-3"
+                            previewIcon={<ImageIcon className="h-5 w-5" />}
+                        />
+                        <Textarea
+                            aria-label="Message"
+                            ref={composerRef}
+                            value={draft}
+                            onChange={(event) => setDraft(event.target.value)}
+                            onKeyDown={onComposerKeyDown}
+                            onPaste={onComposerPaste}
+                            disabled={!isHydrated || sending}
+                            placeholder="Message Floret…"
+                            rows={3}
+                            className="resize-none"
+                        />
+                    </fieldset>
+                    <div className="flex flex-wrap items-end gap-2">
+                        <TabButton
+                            type="button"
+                            active={advancedOpen}
+                            intent="neutral"
+                            size="lg"
+                            disabled={sending}
+                            aria-expanded={advancedOpen}
+                            aria-controls="play-chat-routing"
+                            ariaLabel={`Routing, ${routingOverrideCount > 0 ? `${routingOverrideCount} customized` : "Auto"}`}
+                            onClick={() => setAdvancedOpen((open) => !open)}
+                            className="play-routing-toggle h-12 gap-2"
+                        >
+                            <BeakerIcon className="h-5 w-5" />
+                            <Chip
+                                size="sm"
+                                aria-label={
+                                    routingOverrideCount > 0
+                                        ? `${routingOverrideCount} routes customized`
+                                        : "Automatic routing"
+                                }
+                                className="play-routing-badge min-w-6 justify-center px-1.5"
+                            >
+                                {routingOverrideCount > 0
+                                    ? routingOverrideCount
+                                    : "Auto"}
+                            </Chip>
+                            <ChevronIcon
+                                expanded={advancedOpen}
+                                className="h-4 w-4"
+                            />
+                        </TabButton>
+                        <span className="inline-flex">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept={ATTACHMENT_ACCEPT}
+                                multiple
+                                hidden
+                                onChange={(event) => {
+                                    addFiles(
+                                        Array.from(
+                                            event.currentTarget.files ?? [],
+                                        ),
+                                    );
+                                    event.currentTarget.value = "";
+                                }}
+                            />
+                            <Button
+                                type="button"
+                                size="lg"
+                                intent="info"
+                                aria-label="Add media"
+                                title={
+                                    isLoggedIn
+                                        ? "Add media"
+                                        : "Connect to add media"
+                                }
+                                disabled={
+                                    !canAttach ||
+                                    files.length >= MAX_ATTACHMENTS
+                                }
+                                className="h-12 w-12 shrink-0 p-0"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <CloudUploadIcon className="h-5 w-5 text-theme-text-strong" />
+                            </Button>
+                        </span>
+                        {(!isHydrated || sending) && (
+                            <Text size="xs" tone="muted" aria-live="polite">
+                                {!isHydrated
+                                    ? "Checking your session…"
+                                    : status}
+                            </Text>
+                        )}
+                        <div className="ml-auto flex items-center gap-2">
+                            {messages.length > 0 && (
+                                <Button
+                                    intent="danger"
                                     size="lg"
-                                    intent="info"
-                                    aria-label="Add media"
-                                    title={
-                                        isLoggedIn
-                                            ? "Add media"
-                                            : "Connect to add media"
-                                    }
-                                    disabled={
-                                        !canAttach ||
-                                        files.length >= MAX_ATTACHMENTS
-                                    }
+                                    aria-label="New chat"
+                                    title="New chat"
                                     className="h-12 w-12 shrink-0 p-0"
-                                    onClick={() =>
-                                        fileInputRef.current?.click()
+                                    onClick={() => {
+                                        abortRef.current?.abort();
+                                        setMessages([]);
+                                        setDraft("");
+                                        setFiles([]);
+                                        setError(null);
+                                        setStatus("Ready");
+                                        composerRef.current?.focus();
+                                    }}
+                                >
+                                    <TrashIcon className="h-5 w-5" />
+                                </Button>
+                            )}
+                            {sending ? (
+                                <Button
+                                    intent="danger"
+                                    size="lg"
+                                    type="button"
+                                    onClick={() => abortRef.current?.abort()}
+                                >
+                                    Stop
+                                </Button>
+                            ) : !isHydrated ? (
+                                <Button
+                                    size="lg"
+                                    disabled
+                                    aria-label="Loading account"
+                                >
+                                    Checking…
+                                </Button>
+                            ) : !isLoggedIn ? (
+                                <Button
+                                    size="lg"
+                                    type="button"
+                                    onClick={() => login()}
+                                >
+                                    <ChatIcon className="mr-2 h-4 w-4" />
+                                    Connect to chat
+                                </Button>
+                            ) : (
+                                <Button
+                                    size="lg"
+                                    type="submit"
+                                    disabled={
+                                        !draft.trim() && files.length === 0
                                     }
                                 >
-                                    <CloudUploadIcon className="h-5 w-5 text-theme-text-strong" />
+                                    <RocketIcon className="mr-2 h-4 w-4" />
+                                    Send
                                 </Button>
-                            </span>
-                            {(!isHydrated || sending) && (
-                                <Text size="xs" tone="muted" aria-live="polite">
-                                    {!isHydrated
-                                        ? "Checking your session…"
-                                        : status}
-                                </Text>
                             )}
-                            <div className="ml-auto flex items-center gap-2">
-                                {messages.length > 0 && (
-                                    <Button
-                                        intent="danger"
-                                        size="lg"
-                                        aria-label="New chat"
-                                        title="New chat"
-                                        className="h-12 w-12 shrink-0 p-0"
-                                        onClick={() => {
-                                            abortRef.current?.abort();
-                                            setMessages([]);
-                                            setDraft("");
-                                            setFiles([]);
-                                            setError(null);
-                                            setStatus("Ready");
-                                            composerRef.current?.focus();
-                                        }}
-                                    >
-                                        <TrashIcon className="h-5 w-5" />
-                                    </Button>
-                                )}
-                                {sending ? (
-                                    <Button
-                                        intent="danger"
-                                        size="lg"
-                                        type="button"
-                                        onClick={() =>
-                                            abortRef.current?.abort()
-                                        }
-                                    >
-                                        Stop
-                                    </Button>
-                                ) : !isHydrated ? (
-                                    <Button
-                                        size="lg"
-                                        disabled
-                                        aria-label="Loading account"
-                                    >
-                                        Checking…
-                                    </Button>
-                                ) : !isLoggedIn ? (
-                                    <Button
-                                        size="lg"
-                                        type="button"
-                                        onClick={() => login()}
-                                    >
-                                        <ChatIcon className="mr-2 h-4 w-4" />
-                                        Connect to chat
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        size="lg"
-                                        type="submit"
-                                        disabled={
-                                            !draft.trim() && files.length === 0
-                                        }
-                                    >
-                                        <RocketIcon className="mr-2 h-4 w-4" />
-                                        Send
-                                    </Button>
-                                )}
-                            </div>
                         </div>
-                    </form>
-                </div>
-                {advancedOpen && (
-                    <div className="px-3 pb-3 sm:px-4 sm:pb-4">
-                        <RoutingPanel
-                            selection={routing}
-                            choices={modelChoices}
-                            disabled={
-                                !isLoggedIn || catalog.isLoading || sending
-                            }
-                            onChange={(field, model) =>
-                                setRouting((current) => ({
-                                    ...current,
-                                    [field]: model,
-                                }))
-                            }
-                        />
                     </div>
-                )}
-            </Surface>
+                </form>
+            </div>
+            {advancedOpen && (
+                <div className="px-3 pb-3 sm:px-4 sm:pb-4">
+                    <RoutingPanel
+                        selection={routing}
+                        choices={modelChoices}
+                        disabled={!isLoggedIn || catalog.isLoading || sending}
+                        onChange={(field, model) =>
+                            setRouting((current) => ({
+                                ...current,
+                                [field]: model,
+                            }))
+                        }
+                    />
+                </div>
+            )}
         </section>
     );
 }

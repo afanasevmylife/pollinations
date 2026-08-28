@@ -327,7 +327,7 @@ function ModalityTabs({
     return (
         <fieldset
             aria-label="Modality"
-            className="m-0 flex min-w-0 flex-wrap gap-2 border-0 p-0"
+            className="order-2 m-0 flex min-w-0 basis-full flex-wrap gap-2 border-0 p-0 sm:order-none sm:basis-auto sm:flex-1"
         >
             {CATEGORY_ORDER.map((category) => {
                 const active = category === activeCategory;
@@ -1074,179 +1074,106 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
             className="flex w-full flex-col gap-5 text-theme-text-base"
             style={activeThemeStyle}
         >
-            <div className="relative flex w-full flex-wrap items-start gap-3">
-                <ModalityTabs
-                    activeCategory={activeCategory}
-                    onSelectCategory={selectCategory}
-                />
-                {toolbarAction && (
-                    <div className="absolute right-0 bottom-full z-20 mb-8 shrink-0">
-                        {toolbarAction}
-                    </div>
-                )}
-            </div>
-
-            {activeCategory === "text" && <Chat />}
-
-            {activeCategory !== "text" && catalogError && (
-                <Alert intent="danger">
-                    Model catalog failed to load: {catalogError.message}
-                </Alert>
-            )}
-
             <Surface
                 variant="panel"
-                className="polli-playground-main-grid"
-                hidden={activeCategory === "text"}
+                className="play-chat-shell flex flex-col overflow-hidden p-0"
             >
-                <div className="polli-playground-input-panel flex flex-col gap-4 bg-surface-opaque p-4">
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                        {activeCategory === "audio" && (
-                            <AudioTaskPicker
-                                value={audioTask}
-                                onChange={selectAudioTask}
-                                themeStyle={activeThemeStyle}
-                            />
+                <div className="flex w-full flex-wrap items-center gap-3 px-3 pt-3 sm:px-4 sm:pt-4">
+                    <ModalityTabs
+                        activeCategory={activeCategory}
+                        onSelectCategory={selectCategory}
+                    />
+                    {toolbarAction && (
+                        <div className="order-1 ml-auto shrink-0 sm:order-none">
+                            {toolbarAction}
+                        </div>
+                    )}
+                </div>
+
+                {activeCategory === "text" && <Chat />}
+
+                {activeCategory !== "text" && (
+                    <div className="polli-playground-main-grid">
+                        {catalogError && (
+                            <div className="px-4 pt-4">
+                                <Alert intent="danger">
+                                    Model catalog failed to load:{" "}
+                                    {catalogError.message}
+                                </Alert>
+                            </div>
                         )}
-                        <ModelPicker
-                            models={categoryModels}
-                            selectedModel={selectedModel}
-                            isLoading={isLoading || !isHydrated}
-                            onSelectModel={selectModel}
-                            themeStyle={activeThemeStyle}
-                        />
-                    </div>
-                    {isAudioTranscription && audioInput}
-                    {showPromptInput && (
-                        <FieldStack label={promptLabel}>
-                            <Textarea
-                                value={prompt}
-                                rows={isAudioTranscription ? 3 : 7}
-                                onChange={(event) =>
-                                    setPrompt(event.target.value)
-                                }
-                                placeholder={promptPlaceholder(
-                                    activeCategory,
-                                    activeCategory === "audio"
-                                        ? audioTask
-                                        : undefined,
+                        <div className="polli-playground-input-panel flex flex-col gap-4 bg-surface-opaque p-4">
+                            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                                {activeCategory === "audio" && (
+                                    <AudioTaskPicker
+                                        value={audioTask}
+                                        onChange={selectAudioTask}
+                                        themeStyle={activeThemeStyle}
+                                    />
                                 )}
-                                className={cn(
-                                    "polli-playground-textarea",
-                                    isAudioTranscription
-                                        ? "min-h-24"
-                                        : "min-h-44",
-                                )}
-                            />
-                        </FieldStack>
-                    )}
-                    {!isAudioTranscription && audioInput}
+                                <ModelPicker
+                                    models={categoryModels}
+                                    selectedModel={selectedModel}
+                                    isLoading={isLoading || !isHydrated}
+                                    onSelectModel={selectModel}
+                                    themeStyle={activeThemeStyle}
+                                />
+                            </div>
+                            {isAudioTranscription && audioInput}
+                            {showPromptInput && (
+                                <FieldStack label={promptLabel}>
+                                    <Textarea
+                                        value={prompt}
+                                        rows={isAudioTranscription ? 3 : 7}
+                                        onChange={(event) =>
+                                            setPrompt(event.target.value)
+                                        }
+                                        placeholder={promptPlaceholder(
+                                            activeCategory,
+                                            activeCategory === "audio"
+                                                ? audioTask
+                                                : undefined,
+                                        )}
+                                        className={cn(
+                                            "polli-playground-textarea",
+                                            isAudioTranscription
+                                                ? "min-h-24"
+                                                : "min-h-44",
+                                        )}
+                                    />
+                                </FieldStack>
+                            )}
+                            {!isAudioTranscription && audioInput}
 
-                    {isReferenceImageListMode && (
-                        <FieldStack
-                            label={
-                                <>
-                                    Reference images (up to{" "}
-                                    {pluralizeImages(maxReferenceImages)})
-                                </>
-                            }
-                        >
-                            <FileUpload
-                                value={referenceImages}
-                                onChange={setReferenceImages}
-                                variant="compact"
-                                maxFiles={maxReferenceImages}
-                                maxSizeBytes={5 * 1024 * 1024}
-                                label={
-                                    <>
-                                        Drag up to{" "}
-                                        {pluralizeImages(maxReferenceImages)}{" "}
-                                        here or{" "}
-                                        <span className="underline">
-                                            browse
-                                        </span>
-                                    </>
-                                }
-                                onReject={(rejected) => {
-                                    const reason = rejected[0]?.reason;
-                                    if (reason === "size") {
-                                        setError(
-                                            "Images must be under 5 MB each.",
-                                        );
-                                    } else if (reason === "count") {
-                                        setError(
-                                            `Use up to ${pluralizeImages(
-                                                maxReferenceImages,
-                                            )}.`,
-                                        );
-                                    } else if (reason === "type") {
-                                        setError(
-                                            "Only image files are allowed.",
-                                        );
-                                    }
-                                }}
-                            />
-                        </FieldStack>
-                    )}
-
-                    {isVideoReferenceMode && (
-                        <div className="polli-playground-frame-grid">
-                            <FieldStack label="First frame">
-                                <FileUpload
-                                    value={firstFrameFiles}
-                                    onChange={(files) =>
-                                        setFrameImage(0, files)
-                                    }
-                                    variant="compact"
-                                    maxFiles={1}
-                                    maxSizeBytes={5 * 1024 * 1024}
+                            {isReferenceImageListMode && (
+                                <FieldStack
                                     label={
                                         <>
-                                            Drag first frame here or{" "}
-                                            <span className="underline">
-                                                browse
-                                            </span>
+                                            Reference images (up to{" "}
+                                            {pluralizeImages(
+                                                maxReferenceImages,
+                                            )}
+                                            )
                                         </>
                                     }
-                                    onReject={(rejected) => {
-                                        const reason = rejected[0]?.reason;
-                                        if (reason === "size") {
-                                            setError(
-                                                "Images must be under 5 MB each.",
-                                            );
-                                        } else if (reason === "count") {
-                                            setError("Use one first frame.");
-                                        } else if (reason === "type") {
-                                            setError(
-                                                "Only image files are allowed.",
-                                            );
-                                        }
-                                    }}
-                                />
-                            </FieldStack>
-
-                            {supportsLastFrame && (
-                                <FieldStack label="Last frame">
+                                >
                                     <FileUpload
-                                        value={lastFrameFiles}
-                                        onChange={(files) =>
-                                            setFrameImage(1, files)
-                                        }
+                                        value={referenceImages}
+                                        onChange={setReferenceImages}
                                         variant="compact"
-                                        maxFiles={1}
+                                        maxFiles={maxReferenceImages}
                                         maxSizeBytes={5 * 1024 * 1024}
-                                        disabled={firstFrameFiles.length === 0}
                                         label={
-                                            firstFrameFiles.length === 0 ? (
-                                                "Add first frame before last frame"
-                                            ) : (
-                                                <>
-                                                    Drag last frame here or{" "}
-                                                    <span className="underline">
-                                                        browse
-                                                    </span>
-                                                </>
-                                            )
+                                            <>
+                                                Drag up to{" "}
+                                                {pluralizeImages(
+                                                    maxReferenceImages,
+                                                )}{" "}
+                                                here or{" "}
+                                                <span className="underline">
+                                                    browse
+                                                </span>
+                                            </>
                                         }
                                         onReject={(rejected) => {
                                             const reason = rejected[0]?.reason;
@@ -1255,7 +1182,11 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                                                     "Images must be under 5 MB each.",
                                                 );
                                             } else if (reason === "count") {
-                                                setError("Use one last frame.");
+                                                setError(
+                                                    `Use up to ${pluralizeImages(
+                                                        maxReferenceImages,
+                                                    )}.`,
+                                                );
                                             } else if (reason === "type") {
                                                 setError(
                                                     "Only image files are allowed.",
@@ -1265,116 +1196,219 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                                     />
                                 </FieldStack>
                             )}
-                        </div>
-                    )}
 
-                    {(currentModel?.category === "image" ||
-                        currentModel?.category === "video") && (
-                        <div className="polli-playground-settings-grid">
-                            <FieldStack label="Width">
-                                <Input
-                                    type="number"
-                                    min={256}
-                                    max={2048}
-                                    step={64}
-                                    value={width}
-                                    onChange={(event) =>
-                                        setWidth(Number(event.target.value))
-                                    }
-                                    hideNumberSteppers
-                                />
-                            </FieldStack>
-                            <FieldStack label="Height">
-                                <Input
-                                    type="number"
-                                    min={256}
-                                    max={2048}
-                                    step={64}
-                                    value={height}
-                                    onChange={(event) =>
-                                        setHeight(Number(event.target.value))
-                                    }
-                                    hideNumberSteppers
-                                />
-                            </FieldStack>
-                            <FieldStack label="Seed">
-                                <Input
-                                    type="number"
-                                    value={seed}
-                                    onChange={(event) =>
-                                        setSeed(Number(event.target.value))
-                                    }
-                                    hideNumberSteppers
-                                />
-                            </FieldStack>
-                        </div>
-                    )}
+                            {isVideoReferenceMode && (
+                                <div className="polli-playground-frame-grid">
+                                    <FieldStack label="First frame">
+                                        <FileUpload
+                                            value={firstFrameFiles}
+                                            onChange={(files) =>
+                                                setFrameImage(0, files)
+                                            }
+                                            variant="compact"
+                                            maxFiles={1}
+                                            maxSizeBytes={5 * 1024 * 1024}
+                                            label={
+                                                <>
+                                                    Drag first frame here or{" "}
+                                                    <span className="underline">
+                                                        browse
+                                                    </span>
+                                                </>
+                                            }
+                                            onReject={(rejected) => {
+                                                const reason =
+                                                    rejected[0]?.reason;
+                                                if (reason === "size") {
+                                                    setError(
+                                                        "Images must be under 5 MB each.",
+                                                    );
+                                                } else if (reason === "count") {
+                                                    setError(
+                                                        "Use one first frame.",
+                                                    );
+                                                } else if (reason === "type") {
+                                                    setError(
+                                                        "Only image files are allowed.",
+                                                    );
+                                                }
+                                            }}
+                                        />
+                                    </FieldStack>
 
-                    {currentModel && currentModel.voices.length > 0 && (
-                        <FieldStack label="Voice">
-                            <ButtonGroup aria-label="Voice">
-                                {currentModel.voices.map((voice) => (
-                                    <TabButton
-                                        key={voice}
-                                        active={selectedVoice === voice}
-                                        size="sm"
-                                        onClick={() => setSelectedVoice(voice)}
-                                    >
-                                        {voice}
-                                    </TabButton>
-                                ))}
-                            </ButtonGroup>
-                        </FieldStack>
-                    )}
+                                    {supportsLastFrame && (
+                                        <FieldStack label="Last frame">
+                                            <FileUpload
+                                                value={lastFrameFiles}
+                                                onChange={(files) =>
+                                                    setFrameImage(1, files)
+                                                }
+                                                variant="compact"
+                                                maxFiles={1}
+                                                maxSizeBytes={5 * 1024 * 1024}
+                                                disabled={
+                                                    firstFrameFiles.length === 0
+                                                }
+                                                label={
+                                                    firstFrameFiles.length ===
+                                                    0 ? (
+                                                        "Add first frame before last frame"
+                                                    ) : (
+                                                        <>
+                                                            Drag last frame here
+                                                            or{" "}
+                                                            <span className="underline">
+                                                                browse
+                                                            </span>
+                                                        </>
+                                                    )
+                                                }
+                                                onReject={(rejected) => {
+                                                    const reason =
+                                                        rejected[0]?.reason;
+                                                    if (reason === "size") {
+                                                        setError(
+                                                            "Images must be under 5 MB each.",
+                                                        );
+                                                    } else if (
+                                                        reason === "count"
+                                                    ) {
+                                                        setError(
+                                                            "Use one last frame.",
+                                                        );
+                                                    } else if (
+                                                        reason === "type"
+                                                    ) {
+                                                        setError(
+                                                            "Only image files are allowed.",
+                                                        );
+                                                    }
+                                                }}
+                                            />
+                                        </FieldStack>
+                                    )}
+                                </div>
+                            )}
 
-                    {error && <Alert intent="danger">{error}</Alert>}
+                            {(currentModel?.category === "image" ||
+                                currentModel?.category === "video") && (
+                                <div className="polli-playground-settings-grid">
+                                    <FieldStack label="Width">
+                                        <Input
+                                            type="number"
+                                            min={256}
+                                            max={2048}
+                                            step={64}
+                                            value={width}
+                                            onChange={(event) =>
+                                                setWidth(
+                                                    Number(event.target.value),
+                                                )
+                                            }
+                                            hideNumberSteppers
+                                        />
+                                    </FieldStack>
+                                    <FieldStack label="Height">
+                                        <Input
+                                            type="number"
+                                            min={256}
+                                            max={2048}
+                                            step={64}
+                                            value={height}
+                                            onChange={(event) =>
+                                                setHeight(
+                                                    Number(event.target.value),
+                                                )
+                                            }
+                                            hideNumberSteppers
+                                        />
+                                    </FieldStack>
+                                    <FieldStack label="Seed">
+                                        <Input
+                                            type="number"
+                                            value={seed}
+                                            onChange={(event) =>
+                                                setSeed(
+                                                    Number(event.target.value),
+                                                )
+                                            }
+                                            hideNumberSteppers
+                                        />
+                                    </FieldStack>
+                                </div>
+                            )}
 
-                    {/* Not connected is not a broken state, so the button
+                            {currentModel && currentModel.voices.length > 0 && (
+                                <FieldStack label="Voice">
+                                    <ButtonGroup aria-label="Voice">
+                                        {currentModel.voices.map((voice) => (
+                                            <TabButton
+                                                key={voice}
+                                                active={selectedVoice === voice}
+                                                size="sm"
+                                                onClick={() =>
+                                                    setSelectedVoice(voice)
+                                                }
+                                            >
+                                                {voice}
+                                            </TabButton>
+                                        ))}
+                                    </ButtonGroup>
+                                </FieldStack>
+                            )}
+
+                            {error && <Alert intent="danger">{error}</Alert>}
+
+                            {/* Not connected is not a broken state, so the button
                             does not sit there disabled under a 🚫 cursor with
                             no explanation — it becomes the connect action. The
                             tooltip covers the cases that genuinely are blocked
                             (nothing typed, model not on this key). */}
-                    {blockedReason ? (
-                        <Tooltip
-                            triggerAs="span"
-                            align="center"
-                            content={blockedReason}
-                            className="self-end"
-                        >
-                            <Button size="lg" disabled>
-                                <GenerateIcon className="mr-2 h-4 w-4" />
-                                {generateLabel}
-                            </Button>
-                        </Tooltip>
-                    ) : (
-                        <Button
-                            size="lg"
-                            disabled={isGenerating}
-                            // Wrapped: login() takes an optional request
-                            // object, so passing the ref directly would
-                            // hand it the click event.
-                            onClick={needsSignIn ? () => login() : generate}
-                            className="self-end"
-                        >
-                            {needsSignIn ? (
-                                <LockIcon className="mr-2 h-4 w-4" />
+                            {blockedReason ? (
+                                <Tooltip
+                                    triggerAs="span"
+                                    align="center"
+                                    content={blockedReason}
+                                    className="self-end"
+                                >
+                                    <Button size="lg" disabled>
+                                        <GenerateIcon className="mr-2 h-4 w-4" />
+                                        {generateLabel}
+                                    </Button>
+                                </Tooltip>
                             ) : (
-                                <GenerateIcon className="mr-2 h-4 w-4" />
+                                <Button
+                                    size="lg"
+                                    disabled={isGenerating}
+                                    // Wrapped: login() takes an optional request
+                                    // object, so passing the ref directly would
+                                    // hand it the click event.
+                                    onClick={
+                                        needsSignIn ? () => login() : generate
+                                    }
+                                    className="self-end"
+                                >
+                                    {needsSignIn ? (
+                                        <LockIcon className="mr-2 h-4 w-4" />
+                                    ) : (
+                                        <GenerateIcon className="mr-2 h-4 w-4" />
+                                    )}
+                                    {isGenerating
+                                        ? "Generating…"
+                                        : needsSignIn
+                                          ? connectLabel
+                                          : generateLabel}
+                                </Button>
                             )}
-                            {isGenerating
-                                ? "Generating…"
-                                : needsSignIn
-                                  ? connectLabel
-                                  : generateLabel}
-                        </Button>
-                    )}
-                </div>
+                        </div>
 
-                {result && (
-                    <ResultPanel
-                        result={result}
-                        className="polli-playground-output-panel"
-                    />
+                        {result && (
+                            <ResultPanel
+                                result={result}
+                                className="polli-playground-output-panel"
+                            />
+                        )}
+                    </div>
                 )}
             </Surface>
         </div>
