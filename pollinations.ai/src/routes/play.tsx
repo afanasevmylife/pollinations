@@ -1,9 +1,4 @@
-import {
-    PolliProvider,
-    useAuthActions,
-    useAuthState,
-} from "@pollinations/sdk/react";
-import { LockIcon } from "@pollinations/ui";
+import { PolliProvider } from "@pollinations/sdk/react";
 import { AppUserMenu } from "@pollinations/ui/app-user-menu/sdk";
 import { createFileRoute } from "@tanstack/react-router";
 import { ENTER_URL, POLLI_APP_KEY } from "../config";
@@ -20,31 +15,14 @@ export const Route = createFileRoute("/play")({
  * Play controls, including the signed-in profile, use the shared UI treatment.
  */
 function SignInAction() {
-    const { isLoggedIn, isHydrated } = useAuthState();
-    const { login } = useAuthActions();
-    if (!isHydrated) {
-        return (
-            <ActionButton
-                as="button"
-                disabled
-                aria-label="Loading account"
-                data-theme="accent"
-            >
-                Checking…
-            </ActionButton>
-        );
-    }
-    return isLoggedIn ? (
+    return (
         <AppUserMenu
             dashboardHref={`${ENTER_URL}/keys`}
-            labels={{ topUpAccount: "Manage key" }}
-            triggerVariant="action"
+            labels={{
+                topUpAccount: "Manage access",
+                logout: "Disconnect",
+            }}
         />
-    ) : (
-        <ActionButton as="button" data-theme="accent" onClick={() => login()}>
-            <LockIcon className="mr-2 h-4 w-4" />
-            Connect
-        </ActionButton>
     );
 }
 
@@ -86,6 +64,11 @@ function PlayPage() {
                         </>
                     }
                 />
+                <div className="flex flex-wrap gap-3">
+                    <ActionButton href={`${ENTER_URL}/keys`}>
+                        Get an API key
+                    </ActionButton>
+                </div>
             </Hero>
             <Playground toolbarAction={<SignInAction />} />
         </PolliProvider>

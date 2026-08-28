@@ -40,7 +40,6 @@ import {
     useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { ActionButton } from "../site/kit";
 import { Chat } from "./Chat";
 
 type ViteImportMeta = ImportMeta & {
@@ -270,17 +269,17 @@ function AccessIcon({ paidOnly }: { paidOnly?: boolean }) {
 }
 
 const PLAYGROUND_CATEGORY_COLOR: Record<PlaygroundCategory, string> = {
-    text: "var(--polli-color-brand-accent)",
-    image: "var(--polli-color-modality-text)",
-    video: "var(--polli-color-modality-image)",
-    audio: "var(--polli-color-modality-video)",
+    text: "var(--polli-color-modality-text)",
+    image: "var(--polli-color-modality-image)",
+    video: "var(--polli-color-modality-video)",
+    audio: "var(--polli-color-modality-audio)",
 };
 
 const PLAYGROUND_CATEGORY_BACKGROUND: Record<PlaygroundCategory, string> = {
-    text: "var(--polli-color-bg-subtle)",
-    image: "var(--polli-color-modality-text-bg)",
-    video: "var(--polli-color-modality-image-bg)",
-    audio: "var(--polli-color-modality-video-bg)",
+    text: "var(--polli-color-modality-text-bg)",
+    image: "var(--polli-color-modality-image-bg)",
+    video: "var(--polli-color-modality-video-bg)",
+    audio: "var(--polli-color-modality-audio-bg)",
 };
 
 /** Modality tabs only switch modes; model selection belongs to the media card. */
@@ -289,10 +288,7 @@ function modalityButtonStyle(
     active: boolean,
 ): CSSProperties {
     const color = PLAYGROUND_CATEGORY_COLOR[category];
-    const labelColor =
-        category === "text"
-            ? "color-mix(in oklab, var(--polli-color-brand-accent) 70%, var(--polli-color-text-strong))"
-            : `color-mix(in oklab, ${color} 78%, var(--polli-color-text-strong))`;
+    const labelColor = `color-mix(in oklab, ${color} 78%, var(--polli-color-text-strong))`;
 
     return {
         "--playground-mode-background": active
@@ -301,29 +297,23 @@ function modalityButtonStyle(
         "--playground-mode-hover":
             "color-mix(in oklab, var(--polli-color-app-bg) 34%, var(--polli-color-bg-pale))",
         "--playground-mode-hover-text": labelColor,
-        borderColor: active
-            ? color
-            : "color-mix(in oklab, var(--polli-color-text-muted) 28%, transparent)",
         color: active ? "var(--polli-color-text-strong)" : labelColor,
     } as CSSProperties;
 }
 
-function playgroundThemeStyle(
-    category: PlaygroundCategory,
-): CSSProperties | undefined {
-    if (category === "text") return undefined;
-
+function playgroundThemeStyle(category: PlaygroundCategory): CSSProperties {
     const color = PLAYGROUND_CATEGORY_COLOR[category];
     const background = PLAYGROUND_CATEGORY_BACKGROUND[category];
+    const hover = `color-mix(in oklab, ${color} 28%, ${background})`;
 
     return {
         "--polli-color-bg-subtle": background,
         "--polli-color-bg-active": background,
-        "--polli-color-bg-hover": color,
+        "--polli-color-bg-hover": hover,
         "--polli-color-border": `color-mix(in oklab, ${color} 42%, transparent)`,
         "--polli-color-scrollbar-thumb": `color-mix(in oklab, ${color} 55%, transparent)`,
         "--polli-color-text-soft": `color-mix(in oklab, ${color} 58%, var(--polli-color-text-strong))`,
-        "--polli-color-text-hover": "var(--polli-color-text-on-accent)",
+        "--polli-color-text-hover": "var(--polli-color-text-strong)",
     } as CSSProperties;
 }
 
@@ -343,12 +333,10 @@ function ModalityTabs({
                 const active = category === activeCategory;
                 const CategoryIcon = CATEGORY_ICON[category];
                 return (
-                    <ActionButton
+                    <TabButton
                         key={category}
-                        as="button"
-                        tone="plain"
-                        size="md"
-                        aria-pressed={active}
+                        active={active}
+                        size="lg"
                         style={modalityButtonStyle(category, active)}
                         className="polli-playground-modality-button gap-2"
                         onClick={() => onSelectCategory(category)}
@@ -357,7 +345,7 @@ function ModalityTabs({
                         {category === "text"
                             ? "Agent"
                             : categoryLabel(category)}
-                    </ActionButton>
+                    </TabButton>
                 );
             })}
         </fieldset>

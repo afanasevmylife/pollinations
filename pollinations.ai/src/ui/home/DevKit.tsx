@@ -132,7 +132,7 @@ export function DevKit() {
                 {TOOLS.map((tool) => (
                     <Card key={tool.label} className="gap-2.5 p-7">
                         <PixelLabel>{tool.label}</PixelLabel>
-                        <h3 className="font-subheading text-xl text-theme-text-strong">
+                        <h3 className="font-body text-xl font-semibold text-theme-text-strong">
                             {tool.title}
                         </h3>
                         <p className="text-sm leading-relaxed text-theme-text-base">

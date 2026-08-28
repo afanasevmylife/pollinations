@@ -38,11 +38,10 @@ function NotFoundPage() {
  * while Apps used gap-14 and Play gap-10 — five values in five files, which
  * is what made a long page feel unstructured.
  *
- * The nav sits on the desk, outside the card. What stops it cutting content
- * is that it hides on the way down and only returns on the way up — so it is
- * almost never overlapping something you are reading, and when it is, that
- * was the gesture asking for it. A shadow appears only once it is over
- * content, so the overlap reads as layering rather than a slice.
+ * The desktop nav sits on the desk, outside the card. On phones, only its menu
+ * control floats over the sheet and takes no layout space. The chrome hides on
+ * the way down and returns on the way up, so it rarely overlaps content unless
+ * that was the gesture asking for it.
  *
  * Site chrome stays here rather than in @pollinations/ui: a marketing top bar
  * and enter's 240px dashboard rail are different information architectures.
@@ -54,7 +53,9 @@ function RootLayout() {
         <div className="flex min-h-dvh flex-col bg-app-bg font-body text-theme-text-base">
             <HeadContent />
             <SiteHeader />
-            <div className={`${SHELL} mb-6 flex flex-1 flex-col`}>
+            <div
+                className={`${SHELL} mb-6 flex flex-1 flex-col pt-4 min-[700px]:pt-0`}
+            >
                 <main className="flex flex-1 flex-col gap-12 overflow-clip rounded-[28px] bg-theme-bg-pale px-4 py-10 shadow-container sm:gap-18 sm:px-8 sm:py-16 md:px-18">
                     <Outlet />
                 </main>

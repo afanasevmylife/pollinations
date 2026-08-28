@@ -305,7 +305,7 @@ export function SectionHeader({
         <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="flex max-w-2xl flex-col gap-3">
                 <PixelLabel variant="eyebrow">{eyebrow}</PixelLabel>
-                <h2 className="font-heading text-3xl leading-tight text-theme-text-strong sm:text-4xl">
+                <h2 className="font-subheading text-3xl leading-tight text-theme-text-strong sm:text-4xl">
                     {title}
                 </h2>
                 {subtitle && (
@@ -506,7 +506,7 @@ export function CalloutPanel({
             )}
         >
             <div className="flex max-w-lg flex-col gap-2.5">
-                <h2 className="font-heading text-3xl leading-tight text-theme-text-strong sm:text-4xl">
+                <h2 className="font-subheading text-3xl leading-tight text-theme-text-strong sm:text-4xl">
                     {title}
                 </h2>
                 <p className="leading-relaxed text-theme-text-strong/75">

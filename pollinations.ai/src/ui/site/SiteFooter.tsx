@@ -1,4 +1,12 @@
-import { BrandLockup } from "@pollinations/ui";
+import {
+    BrandLockup,
+    Button,
+    DiscordIcon,
+    GitHubIcon,
+    InstagramIcon,
+    LinkedInIcon,
+    XSocialIcon,
+} from "@pollinations/ui";
 import { Link } from "@tanstack/react-router";
 import { ArrowLink, GUTTER, PixelLabel, SHELL } from "./kit";
 
@@ -14,28 +22,49 @@ const COLUMNS = [
     {
         heading: "Explore",
         links: [
+            { to: "/", label: "Hello" },
             { to: "/apps", label: "Apps" },
             { to: "/play", label: "Play" },
             { to: "/community", label: "Community" },
-            {
-                href: "https://discord.gg/pollinations-ai-885844321461485618",
-                label: "Discord",
-            },
         ],
     },
     {
         heading: "Project",
         links: [
-            {
-                href: "https://github.com/pollinations/pollinations",
-                label: "GitHub",
-            },
             { to: "/privacy", label: "Privacy" },
             { to: "/terms", label: "Terms" },
             // A real route with a real page that nothing linked to. Payment
             // providers generally require this to be reachable.
             { to: "/refunds", label: "Refunds" },
         ],
+    },
+] as const;
+
+const SOCIAL = [
+    {
+        href: "https://github.com/pollinations/pollinations",
+        label: "GitHub",
+        Icon: GitHubIcon,
+    },
+    {
+        href: "https://discord.gg/pollinations-ai-885844321461485618",
+        label: "Discord",
+        Icon: DiscordIcon,
+    },
+    {
+        href: "https://instagram.com/pollinations_ai",
+        label: "Instagram",
+        Icon: InstagramIcon,
+    },
+    {
+        href: "https://x.com/pollinations_ai",
+        label: "Twitter",
+        Icon: XSocialIcon,
+    },
+    {
+        href: "https://www.linkedin.com/company/pollinations-ai",
+        label: "LinkedIn",
+        Icon: LinkedInIcon,
     },
 ] as const;
 
@@ -59,6 +88,23 @@ export function SiteFooter() {
                             Built with the community, in the open
                         </span>
                     </p>
+                    <nav aria-label="Social links" className="flex gap-1">
+                        {SOCIAL.map(({ href, label, Icon }) => (
+                            <Button
+                                key={href}
+                                as="a"
+                                href={href}
+                                size="sm"
+                                aria-label={label}
+                                title={label}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="site-external-link h-8 w-8 shrink-0 p-0"
+                            >
+                                <Icon className="h-4 w-4" />
+                            </Button>
+                        ))}
+                    </nav>
                 </div>
                 <div className="flex flex-wrap gap-12">
                     {COLUMNS.map((column) => (

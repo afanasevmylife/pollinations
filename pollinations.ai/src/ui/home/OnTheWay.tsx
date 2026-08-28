@@ -29,7 +29,7 @@ export function OnTheWay() {
                         key={item.title}
                         className="flex flex-col gap-2 rounded-2xl border border-theme-border border-dashed bg-theme-bg-pale p-5"
                     >
-                        <h3 className="font-subheading text-lg text-theme-text-strong">
+                        <h3 className="font-body text-lg font-semibold text-theme-text-strong">
                             {item.title}
                         </h3>
                         <p className="text-sm leading-relaxed text-theme-text-base">

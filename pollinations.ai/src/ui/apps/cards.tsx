@@ -79,7 +79,7 @@ export function AppTile({
         >
             <AppCoverImage src={cover} className={imageClassName} />
             <div className="flex flex-col gap-1.5 px-5 py-4">
-                <span className="font-subheading text-lg text-theme-text-strong">
+                <span className="font-body text-lg font-semibold text-theme-text-strong">
                     {app.name}
                 </span>
                 <p className="line-clamp-2 text-sm leading-relaxed text-theme-text-base">
@@ -125,7 +125,7 @@ export function AppHero({
             />
             <div className="flex flex-1 flex-col gap-2 px-6.5 py-5.5">
                 <div className="flex items-center gap-2.5">
-                    <span className="font-subheading text-2xl text-theme-text-strong">
+                    <span className="font-body text-2xl font-semibold text-theme-text-strong">
                         {title}
                     </span>
                     <PixelBadge tone={badgeTone}>{badge}</PixelBadge>
@@ -157,7 +157,7 @@ export function AppCard({ app }: { app: DirectoryApp }) {
             <AppCoverImage src={cover} className="aspect-[2/1]" />
             <div className="flex flex-1 flex-col gap-2 p-5">
                 <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-subheading text-lg text-theme-text-strong">
+                    <h3 className="font-body text-lg font-semibold text-theme-text-strong">
                         {app.name}
                     </h3>
                     <span className="shrink-0 text-sm">{badgesFor(app)}</span>

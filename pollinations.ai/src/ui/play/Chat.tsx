@@ -12,6 +12,7 @@ import {
 } from "@pollinations/sdk/react";
 import {
     Alert,
+    BeakerIcon,
     Button,
     ChatIcon,
     ChevronIcon,
@@ -21,6 +22,7 @@ import {
     Dropdown,
     FileUpload,
     ImageIcon,
+    RobotIcon,
     RocketIcon,
     ScrollArea,
     Surface,
@@ -32,6 +34,7 @@ import {
 import { Markdown } from "@pollinations/ui/markdown";
 import {
     type ClipboardEvent,
+    type CSSProperties,
     type DragEvent,
     type FormEvent,
     type KeyboardEvent as ReactKeyboardEvent,
@@ -76,6 +79,23 @@ const ROUTING_LABELS: Record<ChatRoutingCapability, string> = {
     audio: "Audio",
 };
 
+function routingThemeStyle(): CSSProperties {
+    const color = "var(--polli-color-modality-text)";
+    const background = "var(--polli-color-modality-text-bg)";
+    const hover = `color-mix(in oklab, ${color} 28%, ${background})`;
+
+    return {
+        "--play-routing-accent": color,
+        "--polli-color-bg-subtle": background,
+        "--polli-color-bg-active": background,
+        "--polli-color-bg-hover": hover,
+        "--polli-color-border": `color-mix(in oklab, ${color} 42%, transparent)`,
+        "--polli-color-scrollbar-thumb": `color-mix(in oklab, ${color} 55%, transparent)`,
+        "--polli-color-text-soft": `color-mix(in oklab, ${color} 58%, var(--polli-color-text-strong))`,
+        "--polli-color-text-hover": "var(--polli-color-text-strong)",
+    } as CSSProperties;
+}
+
 const FLORET_MODEL_ID = "floret";
 const MAX_ATTACHMENTS = 6;
 const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
@@ -109,7 +129,7 @@ const WELCOME_MESSAGE: ConversationMessage = {
     id: "floret-welcome",
     role: "assistant",
     content:
-        "Hi — what would you like to create? I can help with text, images, video, audio, and search.",
+        "👋 Hi, I’m Floret — an AI agent. That means I can combine several tasks in one conversation: chat, search, and create text, images, video, or audio. What would you like to make? ✨",
     status: "complete",
     attachments: [],
 };
@@ -319,15 +339,19 @@ function MessageCard({
             )}
             aria-busy={message.status === "streaming"}
         >
-            <Text
-                as="div"
-                size="xs"
-                tone="muted"
-                weight="bold"
-                className="uppercase tracking-wide"
-            >
-                {isUser ? "You" : "Floret"}
-            </Text>
+            {isUser ? (
+                <Text
+                    as="div"
+                    size="xs"
+                    tone="muted"
+                    weight="bold"
+                    className="uppercase tracking-wide"
+                >
+                    You
+                </Text>
+            ) : (
+                <RobotIcon className="h-4 w-4 text-theme-text-strong" />
+            )}
             {isUser
                 ? rendered.markdown && (
                       <p className="whitespace-pre-wrap break-words">
@@ -408,6 +432,7 @@ function RoutingSelector({
     onChange: (model: string | null) => void;
 }) {
     const selected = choices.find((choice) => choice.id === value);
+    const themeStyle = routingThemeStyle();
     return (
         <div className="flex min-w-0 items-center gap-2">
             <Text
@@ -421,13 +446,17 @@ function RoutingSelector({
             </Text>
             <Dropdown
                 className="w-max max-w-[calc(100vw-2rem)] p-2"
+                panelStyle={themeStyle}
                 trigger={(open) => (
                     <Button
                         type="button"
                         size="sm"
                         intent={value === null ? "neutral" : undefined}
                         disabled={disabled}
-                        className="w-fit max-w-full justify-between gap-2"
+                        data-theme={value === null ? "neutral" : undefined}
+                        data-customized={value !== null}
+                        style={value === null ? undefined : themeStyle}
+                        className="play-routing-value w-fit max-w-full justify-between gap-2"
                         aria-label={`${ROUTING_LABELS[field]} routing: ${selected?.title ?? "Auto"}`}
                     >
                         <span className="truncate">
@@ -441,6 +470,7 @@ function RoutingSelector({
                     <ScrollArea className="max-h-72 pr-2">
                         <div className="flex flex-col gap-1">
                             <TabButton
+                                data-theme="neutral"
                                 active={value === null}
                                 size="sm"
                                 variant="ghost"
@@ -491,7 +521,7 @@ function RoutingPanel({
     return (
         <div
             id="play-chat-routing"
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
         >
             {CHAT_ROUTING_FIELDS.map((field) => (
                 <RoutingSelector
@@ -925,24 +955,28 @@ export function Chat() {
                                 disabled={sending}
                                 aria-expanded={advancedOpen}
                                 aria-controls="play-chat-routing"
-                                ariaLabel={`Routing${routingOverrideCount > 0 ? `, ${routingOverrideCount} customized` : ""}`}
+                                ariaLabel={`Routing, ${routingOverrideCount > 0 ? `${routingOverrideCount} customized` : "Auto"}`}
                                 onClick={() => setAdvancedOpen((open) => !open)}
-                                className="gap-2"
+                                className="play-routing-toggle h-12 gap-2"
                             >
+                                <BeakerIcon className="h-5 w-5" />
+                                <Chip
+                                    size="sm"
+                                    aria-label={
+                                        routingOverrideCount > 0
+                                            ? `${routingOverrideCount} routes customized`
+                                            : "Automatic routing"
+                                    }
+                                    className="play-routing-badge min-w-6 justify-center px-1.5"
+                                >
+                                    {routingOverrideCount > 0
+                                        ? routingOverrideCount
+                                        : "Auto"}
+                                </Chip>
                                 <ChevronIcon
                                     expanded={advancedOpen}
                                     className="h-4 w-4"
                                 />
-                                Routing
-                                {routingOverrideCount > 0 && (
-                                    <Chip
-                                        size="sm"
-                                        aria-label={`${routingOverrideCount} routes customized`}
-                                        className="min-w-6 justify-center px-1.5"
-                                    >
-                                        {routingOverrideCount}
-                                    </Chip>
-                                )}
                             </TabButton>
                             <span className="inline-flex">
                                 <input
@@ -979,7 +1013,7 @@ export function Chat() {
                                         fileInputRef.current?.click()
                                     }
                                 >
-                                    <CloudUploadIcon className="h-5 w-5" />
+                                    <CloudUploadIcon className="h-5 w-5 text-theme-text-strong" />
                                 </Button>
                             </span>
                             {(!isHydrated || sending) && (

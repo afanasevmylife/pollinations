@@ -1,25 +1,36 @@
 import {
+    AppIcon,
     BookIcon,
     BrandLockup,
     Button,
+    Chip,
     DiscordIcon,
     Dropdown,
     DropdownItem,
     GitHubIcon,
+    GlobeIcon,
+    InstagramIcon,
+    LinkedInIcon,
     LogInIcon,
     MenuIcon,
+    RocketIcon,
+    SproutIcon,
     TabButton,
     XIcon,
+    XSocialIcon,
 } from "@pollinations/ui";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useDiscordPresence, useRepoStars } from "../../data/community";
+import { compact } from "../../data/publicStats";
 import { GUTTER, SHELL } from "./kit";
 import { useHideOnScroll, useScrolled } from "./useHideOnScroll";
 
 const NAV = [
-    { to: "/play", label: "Play" },
-    { to: "/apps", label: "Apps" },
-    { to: "/community", label: "Community" },
+    { to: "/", label: "Hello", Icon: null },
+    { to: "/play", label: "Play", Icon: RocketIcon },
+    { to: "/apps", label: "Apps", Icon: AppIcon },
+    { to: "/community", label: "Community", Icon: GlobeIcon },
 ] as const;
 
 const EXTERNAL = [
@@ -37,11 +48,34 @@ const DESKTOP_UTILITIES = [
     { ...EXTERNAL[2], Icon: DiscordIcon },
 ] as const;
 
+const SOCIAL = [
+    {
+        href: "https://instagram.com/pollinations_ai",
+        label: "Instagram",
+        Icon: InstagramIcon,
+    },
+    {
+        href: "https://x.com/pollinations_ai",
+        label: "Twitter",
+        Icon: XSocialIcon,
+    },
+    {
+        href: "https://www.linkedin.com/company/pollinations-ai",
+        label: "LinkedIn",
+        Icon: LinkedInIcon,
+    },
+] as const;
+
 const isCurrent = (to: string, pathname: string) =>
     to === "/" ? pathname === "/" : pathname.startsWith(to);
 
 export function SiteHeader() {
     const [menuOpen, setMenuOpen] = useState(false);
+    const { data: repoStars } = useRepoStars({ enabled: menuOpen });
+    const { data: discordOnline } = useDiscordPresence({
+        enabled: menuOpen,
+        refreshMs: 30_000,
+    });
     const scrolled = useScrolled();
     const scrolledAway = useHideOnScroll();
     const pathname = useRouterState({
@@ -59,35 +93,37 @@ export function SiteHeader() {
 
     return (
         <header
-            className={`sticky top-0 z-30 bg-transparent py-4 transition-transform duration-300 focus-within:translate-y-0 sm:py-5 motion-reduce:transition-none ${
+            className={`pointer-events-none fixed inset-x-0 top-0 z-30 bg-transparent py-4 transition-transform duration-300 focus-within:translate-y-0 min-[700px]:pointer-events-auto min-[700px]:sticky sm:py-5 motion-reduce:transition-none ${
                 hidden ? "-translate-y-full" : "translate-y-0"
             }`}
         >
             <div
                 aria-hidden="true"
-                className={`site-header-dissolve pointer-events-none absolute inset-x-0 top-0 h-40 transition-opacity duration-300 motion-reduce:transition-none ${
+                className={`site-header-dissolve pointer-events-none absolute inset-x-0 top-0 hidden h-40 transition-opacity duration-300 min-[700px]:block motion-reduce:transition-none ${
                     scrolled && !hidden ? "opacity-100" : "opacity-0"
                 }`}
             />
             <div className={`${SHELL} relative z-10`}>
                 <div
-                    className={`${GUTTER} flex items-center justify-between gap-4 sm:gap-6`}
+                    className={`${GUTTER} site-header-gutter flex items-center justify-between gap-4 sm:gap-6`}
                 >
-                    <div className="flex min-w-0 items-center gap-9">
+                    <div className="site-home-nav-group flex min-w-0 items-center gap-4">
                         <Link
                             to="/"
-                            className="group relative flex items-center rounded-md text-theme-text-strong focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-theme-border"
+                            className="site-home-logo group relative hidden items-center rounded-md text-theme-text-strong transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-theme-border min-[700px]:flex motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                             aria-label="pollinations.ai — home"
                         >
-                            <span className="relative inline-flex sm:hidden">
-                                {pathname === "/" && (
-                                    <BrandLockup
-                                        variant="mark"
-                                        height={32}
-                                        label=""
-                                        className="absolute translate-x-[3px] translate-y-[3px] text-theme-bg-active"
-                                    />
-                                )}
+                            <span className="relative inline-flex min-[1080px]:hidden">
+                                <BrandLockup
+                                    variant="mark"
+                                    height={32}
+                                    label=""
+                                    className={`site-home-logo-accent absolute translate-x-[3px] translate-y-[3px] text-theme-bg-active transition-opacity duration-200 motion-reduce:transition-none ${
+                                        pathname === "/"
+                                            ? "opacity-100"
+                                            : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+                                    }`}
+                                />
                                 <BrandLockup
                                     variant="mark"
                                     height={32}
@@ -95,14 +131,16 @@ export function SiteHeader() {
                                     className="relative z-10"
                                 />
                             </span>
-                            <span className="relative hidden sm:inline-flex">
-                                {pathname === "/" && (
-                                    <BrandLockup
-                                        height={30}
-                                        label=""
-                                        className="absolute translate-x-[3px] translate-y-[3px] text-theme-bg-active"
-                                    />
-                                )}
+                            <span className="relative hidden min-[1080px]:inline-flex">
+                                <BrandLockup
+                                    height={30}
+                                    label=""
+                                    className={`site-home-logo-accent absolute translate-x-[3px] translate-y-[3px] text-theme-bg-active transition-opacity duration-200 motion-reduce:transition-none ${
+                                        pathname === "/"
+                                            ? "opacity-100"
+                                            : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+                                    }`}
+                                />
                                 <BrandLockup
                                     height={30}
                                     label=""
@@ -110,31 +148,45 @@ export function SiteHeader() {
                                 />
                             </span>
                         </Link>
-                        <nav className="hidden gap-1.5 lg:flex">
-                            {NAV.map((item) => (
-                                <TabButton
-                                    key={item.to}
-                                    as={Link}
-                                    to={item.to}
-                                    variant="ghost"
-                                    active={isCurrent(item.to, pathname)}
-                                >
-                                    {item.label}
-                                </TabButton>
-                            ))}
+                        <nav className="hidden gap-1.5 min-[700px]:flex">
+                            {NAV.map((item) => {
+                                const active = isCurrent(item.to, pathname);
+                                const { Icon } = item;
+                                return (
+                                    <TabButton
+                                        key={item.to}
+                                        as={Link}
+                                        to={item.to}
+                                        variant="ghost"
+                                        active={active}
+                                        className={`site-primary-nav-button ${
+                                            item.to === "/"
+                                                ? "site-home-nav-button"
+                                                : ""
+                                        }`}
+                                    >
+                                        {active && Icon && (
+                                            <Icon className="h-4 w-4 shrink-0" />
+                                        )}
+                                        {item.label}
+                                    </TabButton>
+                                );
+                            })}
                         </nav>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="pointer-events-auto flex items-center gap-2">
                         <Button
                             as="a"
                             href={EXTERNAL[0].href}
                             size="sm"
                             aria-label="Docs"
                             title="Docs"
-                            className="h-9 w-9 shrink-0 bg-surface-opaque p-0 text-theme-text-strong shadow-well transition-all duration-200 hover:-translate-y-0.5 hover:bg-theme-bg-hover hover:shadow-lg sm:w-auto sm:gap-1.5 sm:px-3 motion-reduce:hover:translate-y-0"
+                            className="hidden h-9 w-9 shrink-0 bg-surface-opaque p-0 text-theme-text-strong shadow-well transition-all duration-200 hover:-translate-y-0.5 hover:bg-theme-bg-hover hover:shadow-lg min-[700px]:inline-flex min-[800px]:w-auto min-[800px]:gap-1.5 min-[800px]:px-3 motion-reduce:hover:translate-y-0"
                         >
                             <BookIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Docs</span>
+                            <span className="hidden min-[800px]:inline">
+                                Docs
+                            </span>
                         </Button>
                         {DESKTOP_UTILITIES.map((item) => {
                             const { href, label, Icon } = item;
@@ -146,7 +198,7 @@ export function SiteHeader() {
                                     size="sm"
                                     aria-label={label}
                                     title={label}
-                                    className="hidden h-9 w-9 shrink-0 bg-surface-opaque p-0 text-theme-text-strong shadow-well transition-all duration-200 hover:-translate-y-0.5 hover:bg-theme-bg-hover hover:shadow-lg lg:inline-flex motion-reduce:hover:translate-y-0"
+                                    className="site-external-link hidden h-9 w-9 shrink-0 p-0 min-[900px]:inline-flex"
                                 >
                                     <Icon className="h-4 w-4" />
                                 </Button>
@@ -158,16 +210,18 @@ export function SiteHeader() {
                             size="sm"
                             aria-label="Login"
                             title="Login"
-                            className="h-9 shrink-0 gap-1.5 bg-surface-opaque px-3 text-theme-text-strong shadow-well transition-all duration-200 hover:-translate-y-0.5 hover:bg-theme-bg-hover hover:shadow-lg motion-reduce:hover:translate-y-0"
+                            className="hidden h-9 w-9 shrink-0 bg-surface-opaque p-0 text-theme-text-strong shadow-well transition-all duration-200 hover:-translate-y-0.5 hover:bg-theme-bg-hover hover:shadow-lg min-[700px]:inline-flex min-[800px]:w-auto min-[800px]:gap-1.5 min-[800px]:px-3 motion-reduce:hover:translate-y-0"
                         >
                             <LogInIcon className="h-4 w-4" />
-                            Login
+                            <span className="hidden min-[800px]:inline">
+                                Login
+                            </span>
                         </Button>
                         <Dropdown
                             align="end"
                             open={menuOpen}
                             onOpenChange={setMenuOpen}
-                            className="w-48 bg-surface-opaque p-2 shadow-well"
+                            className="w-64 bg-surface-opaque p-2 shadow-well"
                             trigger={(open) => (
                                 <Button
                                     aria-label={
@@ -175,7 +229,7 @@ export function SiteHeader() {
                                     }
                                     aria-expanded={open}
                                     aria-controls="site-menu"
-                                    className="h-11 w-11 min-w-11 p-0 [&>svg]:size-6 lg:hidden"
+                                    className="mt-2 h-11 w-11 min-w-11 p-0 min-[700px]:mt-0 min-[900px]:hidden [&>svg]:size-6"
                                 >
                                     {open ? <XIcon /> : <MenuIcon />}
                                 </Button>
@@ -184,40 +238,124 @@ export function SiteHeader() {
                             {(close) => (
                                 <nav
                                     id="site-menu"
-                                    className="flex max-h-[calc(100dvh-6rem)] flex-col gap-1 overflow-y-auto"
+                                    className="flex max-h-[calc(100dvh-6rem)] flex-col gap-1 overflow-x-hidden overflow-y-auto"
                                 >
-                                    {NAV.map((item) => (
-                                        <DropdownItem
-                                            key={item.to}
-                                            as={Link}
-                                            to={item.to}
-                                            onClick={close}
-                                            className={
-                                                isCurrent(item.to, pathname)
-                                                    ? "bg-theme-bg-active"
-                                                    : undefined
-                                            }
-                                        >
-                                            {item.label}
-                                        </DropdownItem>
-                                    ))}
-                                    <span className="mx-2 my-1 h-px bg-theme-border" />
+                                    <div className="contents min-[700px]:hidden">
+                                        <div className="flex items-center px-2 py-2">
+                                            <Link
+                                                to="/"
+                                                onClick={close}
+                                                aria-label="pollinations.ai — home"
+                                                className="rounded-md text-theme-text-strong focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-theme-border"
+                                            >
+                                                <BrandLockup
+                                                    height={24}
+                                                    label=""
+                                                />
+                                            </Link>
+                                        </div>
+                                        <span className="mx-2 my-1 h-px bg-theme-border" />
+                                        {NAV.map((item) => {
+                                            const active = isCurrent(
+                                                item.to,
+                                                pathname,
+                                            );
+                                            const { Icon } = item;
+                                            return (
+                                                <TabButton
+                                                    key={item.to}
+                                                    as={Link}
+                                                    to={item.to}
+                                                    variant="ghost"
+                                                    active={active}
+                                                    onClick={close}
+                                                    className="site-primary-nav-button w-full justify-start"
+                                                >
+                                                    {active &&
+                                                        (item.to === "/" ? (
+                                                            <SproutIcon className="h-4 w-4 shrink-0" />
+                                                        ) : Icon ? (
+                                                            <Icon className="h-4 w-4 shrink-0" />
+                                                        ) : null)}
+                                                    {item.label}
+                                                </TabButton>
+                                            );
+                                        })}
+                                        <span className="mx-2 my-1 h-px bg-theme-border" />
+                                    </div>
+                                    <DropdownItem
+                                        as="a"
+                                        href={EXTERNAL[0].href}
+                                        onClick={close}
+                                        className="site-external-link min-[700px]:hidden"
+                                    >
+                                        <BookIcon className="h-4 w-4 shrink-0" />
+                                        {EXTERNAL[0].label}
+                                    </DropdownItem>
+                                    <DropdownItem
+                                        as="a"
+                                        href="https://enter.pollinations.ai"
+                                        onClick={close}
+                                        className="min-[700px]:hidden"
+                                    >
+                                        <LogInIcon className="h-4 w-4 shrink-0" />
+                                        Login
+                                    </DropdownItem>
+                                    <span className="mx-2 my-1 h-px bg-theme-border min-[700px]:hidden" />
                                     <DropdownItem
                                         as="a"
                                         href={EXTERNAL[1].href}
                                         onClick={close}
+                                        className="site-external-link"
                                     >
                                         <GitHubIcon className="h-4 w-4 shrink-0" />
                                         {EXTERNAL[1].label}
+                                        {repoStars !== null && (
+                                            <Chip
+                                                intent="alpha"
+                                                size="sm"
+                                                className="ml-auto"
+                                            >
+                                                {compact(repoStars)} stars
+                                            </Chip>
+                                        )}
                                     </DropdownItem>
                                     <DropdownItem
                                         as="a"
                                         href={EXTERNAL[2].href}
                                         onClick={close}
+                                        className="site-external-link"
                                     >
                                         <DiscordIcon className="h-4 w-4 shrink-0" />
                                         {EXTERNAL[2].label}
+                                        {discordOnline !== null && (
+                                            <Chip
+                                                intent="info"
+                                                size="sm"
+                                                className="ml-auto"
+                                            >
+                                                {discordOnline} online
+                                            </Chip>
+                                        )}
                                     </DropdownItem>
+                                    <footer className="flex items-center gap-2 px-2 py-1">
+                                        {SOCIAL.map(({ href, label, Icon }) => (
+                                            <Button
+                                                key={href}
+                                                as="a"
+                                                href={href}
+                                                size="sm"
+                                                aria-label={label}
+                                                title={label}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={close}
+                                                className="site-external-link h-8 w-8 shrink-0 p-0"
+                                            >
+                                                <Icon className="h-4 w-4" />
+                                            </Button>
+                                        ))}
+                                    </footer>
                                 </nav>
                             )}
                         </Dropdown>
