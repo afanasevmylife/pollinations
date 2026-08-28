@@ -62,12 +62,15 @@ const SOCIAL = [
     },
 ] as const;
 
+const REPO_STARS_FALLBACK = 5_000;
+
 const isCurrent = (to: string, pathname: string) =>
     to === "/" ? pathname === "/" : pathname.startsWith(to);
 
 export function SiteHeader() {
     const [menuOpen, setMenuOpen] = useState(false);
-    const { data: repoStars } = useRepoStars({ enabled: menuOpen });
+    const { data: repoStars } = useRepoStars();
+    const displayedRepoStars = compact(repoStars ?? REPO_STARS_FALLBACK);
     const { data: discordOnline } = useDiscordPresence({
         enabled: menuOpen,
         refreshMs: 30_000,
@@ -176,6 +179,7 @@ export function SiteHeader() {
                         </Button>
                         {DESKTOP_UTILITIES.map((item) => {
                             const { href, label, Icon } = item;
+                            const showStars = label === "GitHub";
                             return (
                                 <Button
                                     key={href}
@@ -184,9 +188,18 @@ export function SiteHeader() {
                                     size="sm"
                                     aria-label={label}
                                     title={label}
-                                    className="site-external-link hidden h-9 w-9 shrink-0 p-0 min-[900px]:inline-flex"
+                                    className={`site-external-link hidden h-9 shrink-0 min-[900px]:inline-flex ${
+                                        showStars
+                                            ? "w-auto gap-1.5 px-2"
+                                            : "w-9 p-0"
+                                    }`}
                                 >
                                     <Icon className="h-4 w-4" />
+                                    {showStars && (
+                                        <span className="text-xs tabular-nums">
+                                            {displayedRepoStars}
+                                        </span>
+                                    )}
                                 </Button>
                             );
                         })}
@@ -296,15 +309,13 @@ export function SiteHeader() {
                                         <span className="site-drawer-social-label">
                                             {EXTERNAL[1].label}
                                         </span>
-                                        {repoStars !== null && (
-                                            <Chip
-                                                intent="alpha"
-                                                size="sm"
-                                                className="ml-auto"
-                                            >
-                                                {compact(repoStars)} stars
-                                            </Chip>
-                                        )}
+                                        <Chip
+                                            intent="alpha"
+                                            size="sm"
+                                            className="ml-auto"
+                                        >
+                                            {displayedRepoStars} stars
+                                        </Chip>
                                     </DropdownItem>
                                     <DropdownItem
                                         as="a"
