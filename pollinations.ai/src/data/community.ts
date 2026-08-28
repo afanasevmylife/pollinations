@@ -72,6 +72,30 @@ type Contributor = {
     commits: number;
 };
 
+/**
+ * Keep the section useful when GitHub's small unauthenticated API allowance is
+ * exhausted. Live data replaces this snapshot whenever the API is available.
+ */
+const FALLBACK_CONTRIBUTORS: Contributor[] = [
+    ["voodoohop", 5640],
+    ["ElliotEtag", 1640],
+    ["ale-rls", 262],
+    ["Itachi-1824", 189],
+    ["Circuit-Overtime", 154],
+    ["gokaykucuk", 140],
+    ["eulervoid", 95],
+    ["lauraibnz", 63],
+    ["fisventurous", 37],
+    ["alexreiling", 34],
+    ["CloudCompile", 26],
+    ["chakra-gold", 20],
+].map(([login, commits]) => ({
+    login: String(login),
+    avatarUrl: `https://github.com/${login}.png?size=80`,
+    profileUrl: `https://github.com/${login}`,
+    commits: Number(commits),
+}));
+
 /** Apps and CI accounts commit constantly and would otherwise take the top. */
 const isBot = (login: string) =>
     login.includes("[bot]") ||
@@ -87,22 +111,49 @@ type GhContributor = {
 };
 
 export function useContributors(limit = 12) {
-    return useAsync<Contributor[]>(async () => {
-        // One request, already ranked by commit count — the old page walked
-        // five pages of commits to rebuild the same ordering by hand.
-        const rows = await github<GhContributor[]>(
-            `/repos/${REPO}/contributors?per_page=${limit + 8}`,
+    return useAsync<Contributor[]>(
+        async () => {
+            // One request, already ranked by commit count — the old page walked
+            // five pages of commits to rebuild the same ordering by hand.
+            const rows = await github<GhContributor[]>(
+                `/repos/${REPO}/contributors?per_page=${limit + 8}`,
+            );
+            return rows
+                .filter((row) => row.type !== "Bot" && !isBot(row.login))
+                .slice(0, limit)
+                .map((row) => ({
+                    login: row.login,
+                    avatarUrl: row.avatar_url,
+                    profileUrl: row.html_url,
+                    commits: row.contributions,
+                }));
+        },
+        FALLBACK_CONTRIBUTORS.slice(0, limit),
+    );
+}
+
+/**
+ * An exact all-time repository contributor count without downloading every
+ * profile. Anonymous authors matter especially in the project's older commit
+ * history. With one result per page, GitHub's final pagination page is the
+ * total.
+ */
+export function useContributorCount() {
+    return useAsync<number | null>(async () => {
+        const response = await fetch(
+            `${GITHUB}/repos/${REPO}/contributors?per_page=1&anon=1`,
+            { headers: { Accept: "application/vnd.github+json" } },
         );
-        return rows
-            .filter((row) => row.type !== "Bot" && !isBot(row.login))
-            .slice(0, limit)
-            .map((row) => ({
-                login: row.login,
-                avatarUrl: row.avatar_url,
-                profileUrl: row.html_url,
-                commits: row.contributions,
-            }));
-    }, []);
+        if (!response.ok)
+            throw new Error(`github contributors: ${response.status}`);
+
+        const rows = (await response.json()) as GhContributor[];
+        const lastPage = response.headers
+            .get("link")
+            ?.match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/)?.[1];
+
+        return lastPage ? Number(lastPage) : rows.length;
+    }, null);
 }
 
 /* ── Open votes ─────────────────────────────────────────────────────────── */
@@ -169,8 +220,6 @@ type DiaryRange = {
     hasLater: boolean;
 };
 
-type GhContent = { name: string; type: "dir" | "file" };
-
 type DailySummary = {
     date: string;
     title: string;
@@ -179,6 +228,7 @@ type DailySummary = {
 };
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const FIRST_DIARY_DAY = "2026-02-05";
 
 function addDays(iso: string, amount: number): string {
     const date = new Date(`${iso}T00:00:00Z`);
@@ -195,43 +245,40 @@ function dateRange(end: string, days: number): string[] {
 export function useBuildDiary(days = 14, requestedEnd?: string) {
     return useAsync<DiaryRange>(
         async () => {
-            const folders = await github<GhContent[]>(
-                `/repos/${REPO}/contents/${NEWS_REPO_PATH}?ref=news`,
-            );
-            const dates = folders
-                .filter(
-                    (item) => item.type === "dir" && ISO_DAY.test(item.name),
-                )
-                .map((item) => item.name)
-                .sort();
-            const eligible = requestedEnd
-                ? dates.filter((date) => date <= requestedEnd)
-                : dates;
-            const latest = eligible[eligible.length - 1];
-            if (!latest) {
-                return { days: [], hasEarlier: false, hasLater: false };
+            const today = new Date().toISOString().slice(0, 10);
+            const summaries = new Map<string, Promise<DailySummary | null>>();
+            const loadSummary = (date: string) => {
+                const existing = summaries.get(date);
+                if (existing) return existing;
+                const request = fetch(`${NEWS_RAW}/${date}/summary.json`).then(
+                    async (response) => {
+                        // Not every calendar day has an entry. Raw GitHub
+                        // content is CDN-backed and does not consume the API quota.
+                        if (!response.ok) return null;
+                        return (await response.json()) as DailySummary;
+                    },
+                );
+                summaries.set(date, request);
+                return request;
+            };
+            let newest = today;
+            for (let offset = 0; offset < 7; offset += 1) {
+                const candidate = addDays(today, -offset);
+                if (await loadSummary(candidate)) {
+                    newest = candidate;
+                    break;
+                }
             }
-
+            const latest =
+                requestedEnd && ISO_DAY.test(requestedEnd)
+                    ? requestedEnd
+                    : newest;
             const range = dateRange(latest, days);
-            const available = new Set(dates);
-            const summaries = await Promise.all(
-                range.map(async (date) => {
-                    if (!available.has(date)) return null;
-                    const response = await fetch(
-                        `${NEWS_RAW}/${date}/summary.json`,
-                    );
-                    if (!response.ok) {
-                        throw new Error(
-                            `daily summary ${date}: ${response.status}`,
-                        );
-                    }
-                    return response.json() as Promise<DailySummary>;
-                }),
-            );
+            const dailySummaries = await Promise.all(range.map(loadSummary));
 
             return {
                 days: range.map((date, index) => {
-                    const daily = summaries[index];
+                    const daily = dailySummaries[index];
                     if (!daily) {
                         return {
                             date,
@@ -253,8 +300,8 @@ export function useBuildDiary(days = 14, requestedEnd?: string) {
                         url: `${REPO_URL}/tree/news/${NEWS_REPO_PATH}/${date}`,
                     };
                 }),
-                hasEarlier: dates.some((date) => date < range[0]),
-                hasLater: dates.some((date) => date > range[range.length - 1]),
+                hasEarlier: range[0] > FIRST_DIARY_DAY,
+                hasLater: latest < newest,
             };
         },
         { days: [], hasEarlier: false, hasLater: false },

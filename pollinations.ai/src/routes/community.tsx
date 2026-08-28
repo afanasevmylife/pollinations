@@ -6,23 +6,25 @@ import {
     REPO_URL,
     SUPPORTERS,
     useBuildDiary,
+    useContributorCount,
     useContributors,
     useDiscordPresence,
-    useRepoStars,
     useVotingIssues,
 } from "../data/community";
-import { compact, useAppShowcase } from "../data/publicStats";
+import {
+    compact,
+    useAppDirectory,
+    usePlatformStats,
+} from "../data/publicStats";
 import { routeHead } from "../routeMeta";
 import {
     ActionButton,
     ArrowLink,
     CalloutPanel,
     Card,
-    CardGrid,
     Hero,
     PageHeader,
     PixelLabel,
-    PixelRule,
     SectionHeader,
     StatRow,
 } from "../ui/site/kit";
@@ -58,6 +60,7 @@ const WAYS_IN = [
 ];
 
 const FEED_SKELETON_KEYS = ["first", "second", "third", "fourth"];
+const CONTRIBUTOR_COUNT_FALLBACK = 136;
 
 /**
  * Every feed on this page can fail — GitHub is rate-limited per visitor IP and
@@ -98,14 +101,60 @@ function FeedState({
     );
 }
 
-function OpenVotes() {
+function BuildWithCommunity() {
     const { data: issues, loading, failed } = useVotingIssues();
     const bare = loading || failed || issues.length === 0;
 
     return (
-        <div className="flex flex-col gap-4.5">
-            <SectionHeader eyebrow="Have your say" title="Open votes" />
-            <div className="flex flex-col gap-3">
+        <section className="flex flex-col gap-7">
+            <SectionHeader
+                eyebrow="Build together"
+                title="Build with the community"
+                subtitle="Ship what you made, improve the open source platform, join the conversation, and vote on what comes next."
+            />
+
+            <div className="grid grid-cols-1 gap-5 min-[700px]:grid-cols-3">
+                {WAYS_IN.map((way) => (
+                    <Card
+                        key={way.label}
+                        className="gap-2.5 p-7 min-[700px]:p-5 lg:p-7"
+                    >
+                        <PixelLabel>{way.label}</PixelLabel>
+                        <h3 className="font-body text-xl font-semibold text-theme-text-strong">
+                            {way.title}
+                        </h3>
+                        <p className="text-sm leading-relaxed text-theme-text-base">
+                            {way.body}
+                        </p>
+                        <ArrowLink href={way.href} className="mt-auto pt-2">
+                            {way.linkLabel}
+                        </ArrowLink>
+                    </Card>
+                ))}
+            </div>
+
+            <Surface
+                variant="card-themed"
+                className="flex flex-col gap-5 p-5 sm:p-6"
+            >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex max-w-xl flex-col gap-2">
+                        <PixelLabel>Have your say</PixelLabel>
+                        <h3 className="font-subheading text-2xl leading-tight text-theme-text-strong sm:text-3xl">
+                            Open votes
+                        </h3>
+                        <p className="text-sm leading-relaxed text-theme-text-base sm:text-base">
+                            Community feedback shapes the roadmap. Add your vote
+                            to the ideas you want the project to build next.
+                        </p>
+                    </div>
+                    {!bare && (
+                        <Chip size="sm" className="shrink-0 tabular-nums">
+                            {issues.length} open
+                        </Chip>
+                    )}
+                </div>
+
                 {bare ? (
                     <FeedState
                         loading={loading}
@@ -113,27 +162,36 @@ function OpenVotes() {
                         what="Open votes"
                     />
                 ) : (
-                    issues.map((issue) => (
-                        <Card
-                            key={issue.number}
-                            as="a"
-                            href={issue.url}
-                            className="flex-row items-center gap-4 rounded-2xl p-5"
-                        >
-                            <span className="flex-1 leading-snug text-theme-text-strong">
-                                {issue.title}
-                            </span>
-                            <PixelLabel
-                                variant="eyebrow"
-                                className="shrink-0 tabular-nums"
+                    <div className="grid grid-cols-1 gap-3 min-[700px]:grid-cols-3">
+                        {issues.map((issue) => (
+                            <Card
+                                key={issue.number}
+                                as="a"
+                                href={issue.url}
+                                className="group gap-5 rounded-2xl p-5"
                             >
-                                {issue.votes} ▲
-                            </PixelLabel>
-                        </Card>
-                    ))
+                                <span className="font-semibold leading-snug text-theme-text-strong">
+                                    {issue.title}
+                                </span>
+                                <span className="mt-auto flex items-center justify-between gap-3">
+                                    <PixelLabel
+                                        variant="chrome"
+                                        className="tabular-nums"
+                                    >
+                                        {issue.votes} vote
+                                        {issue.votes === 1 ? "" : "s"}
+                                    </PixelLabel>
+                                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-theme-text-soft group-hover:text-theme-text-strong">
+                                        Vote
+                                        <ArrowRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
+                                    </span>
+                                </span>
+                            </Card>
+                        ))}
+                    </div>
                 )}
-            </div>
-        </div>
+            </Surface>
+        </section>
     );
 }
 
@@ -398,7 +456,7 @@ function BuildDiary() {
 
 function Contributors() {
     const { data: people, loading, failed } = useContributors();
-    const bare = loading || failed || people.length === 0;
+    const bare = loading || people.length === 0;
 
     return (
         <section className="flex flex-col gap-5">
@@ -413,7 +471,7 @@ function Contributors() {
             {bare && (
                 <FeedState
                     loading={loading}
-                    failed={failed}
+                    failed={failed && people.length === 0}
                     what="Contributors"
                     rows={2}
                 />
@@ -451,21 +509,29 @@ function Contributors() {
 }
 
 function CommunityPage() {
-    const { data: stars } = useRepoStars();
     const { data: online } = useDiscordPresence();
-    const { data: apps } = useAppShowcase();
-    const totalApps = apps[0]?.total_apps ?? 0;
+    const { data: contributorCount } = useContributorCount();
+    const { data: platform } = usePlatformStats();
+    const { data: apps } = useAppDirectory();
+    const totalApps = apps.length;
 
     /** Only what we can actually measure — a missing feed drops its stat. */
     const stats = [
         online !== null && {
             value: String(online),
-            label: "online in Discord now",
+            label: "Discord online",
         },
-        stars !== null && { value: compact(stars), label: "GitHub stars" },
+        {
+            value: compact(contributorCount ?? CONTRIBUTOR_COUNT_FALLBACK),
+            label: "code contributors",
+        },
+        platform !== null && {
+            value: compact(platform.community),
+            label: "published models",
+        },
         totalApps > 0 && {
             value: String(totalApps),
-            label: "apps built",
+            label: "published apps",
         },
     ].filter((stat): stat is { value: string; label: string } => Boolean(stat));
 
@@ -487,7 +553,7 @@ function CommunityPage() {
                         </>
                     }
                 />
-                <StatRow stats={stats} />
+                <StatRow stats={stats} placeholders={4} />
                 <div className="flex flex-wrap gap-3">
                     <ActionButton href={DISCORD_URL}>Join Discord</ActionButton>
                     <ActionButton href={REPO_URL} tone="plain">
@@ -496,43 +562,7 @@ function CommunityPage() {
                 </div>
             </Hero>
 
-            <section className="flex flex-col gap-7">
-                <SectionHeader
-                    eyebrow="Ways in"
-                    title="Build with the community"
-                    subtitle="Meet other builders, talk with users, and work directly on the open source platform."
-                />
-                <CardGrid>
-                    {WAYS_IN.map((way) => (
-                        <Card key={way.label} className="gap-2.5 p-7">
-                            <PixelLabel>{way.label}</PixelLabel>
-                            <h3 className="font-body text-xl font-semibold text-theme-text-strong">
-                                {way.title}
-                            </h3>
-                            <p className="text-sm leading-relaxed text-theme-text-base">
-                                {way.body}
-                            </p>
-                            <ArrowLink href={way.href} className="mt-auto pt-2">
-                                {way.linkLabel}
-                            </ArrowLink>
-                        </Card>
-                    ))}
-                </CardGrid>
-                <div className="flex flex-wrap items-center gap-3.5 rounded-2xl bg-theme-bg-subtle px-5 py-4">
-                    <PixelLabel>Roadmap</PixelLabel>
-                    <p className="flex-1 text-sm text-theme-text-base">
-                        Community feedback shapes what gets built —{" "}
-                        <strong className="text-theme-text-strong">
-                            models, wallets, docs and developer tools
-                        </strong>{" "}
-                        all improve through what builders report and ship.
-                    </p>
-                </div>
-            </section>
-
-            <PixelRule />
-
-            <OpenVotes />
+            <BuildWithCommunity />
 
             <BuildDiary />
 
