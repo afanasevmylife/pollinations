@@ -3016,6 +3016,9 @@ main > * {
 /* Five-part animatic: each environment carries its own copy while the exact
    official cast and a slow side-scroll establish the eventual game movement. */
 .bee-story-stage--storyboard {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 4 / 3;
     background: var(--polli-color-bg-pale);
 }
 
@@ -3193,12 +3196,6 @@ main > * {
 }
 
 @media (max-width: 39.999rem) {
-    .bee-story-stage--storyboard {
-        height: auto;
-        min-height: 0;
-        aspect-ratio: 3 / 2;
-    }
-
     .bee-story-stage--storyboard .bee-story-sound {
         top: 0.45rem;
         right: 0.45rem;
