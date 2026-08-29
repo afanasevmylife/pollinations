@@ -327,7 +327,7 @@ function ModalityTabs({
     return (
         <fieldset
             aria-label="Modality"
-            className="order-2 m-0 flex min-w-0 basis-full flex-wrap gap-2 border-0 p-0 sm:order-none sm:basis-auto sm:flex-1"
+            className="m-0 flex min-w-0 flex-wrap gap-2 border-0 p-0"
         >
             {CATEGORY_ORDER.map((category) => {
                 const active = category === activeCategory;
@@ -1078,16 +1078,16 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                 variant="panel"
                 className="play-chat-shell flex flex-col overflow-hidden p-0"
             >
-                <div className="flex w-full flex-wrap items-center gap-3 px-3 pt-3 sm:px-4 sm:pt-4">
+                <div className="flex w-full flex-col gap-3 px-3 pt-3 sm:px-4 sm:pt-4">
+                    {toolbarAction && (
+                        <div className="relative z-10 flex w-full justify-end">
+                            {toolbarAction}
+                        </div>
+                    )}
                     <ModalityTabs
                         activeCategory={activeCategory}
                         onSelectCategory={selectCategory}
                     />
-                    {toolbarAction && (
-                        <div className="order-1 ml-auto shrink-0 sm:order-none">
-                            {toolbarAction}
-                        </div>
-                    )}
                 </div>
 
                 {activeCategory === "text" && <Chat />}
@@ -1102,7 +1102,7 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                                 </Alert>
                             </div>
                         )}
-                        <div className="polli-playground-input-panel flex flex-col gap-4 bg-surface-opaque p-4">
+                        <div className="polli-playground-input-panel flex flex-col gap-4 p-4">
                             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                                 {activeCategory === "audio" && (
                                     <AudioTaskPicker
@@ -1402,12 +1402,7 @@ export function Playground({ toolbarAction }: { toolbarAction?: ReactNode }) {
                             )}
                         </div>
 
-                        {result && (
-                            <ResultPanel
-                                result={result}
-                                className="polli-playground-output-panel"
-                            />
-                        )}
+                        {result && <ResultPanel result={result} />}
                     </div>
                 )}
             </Surface>

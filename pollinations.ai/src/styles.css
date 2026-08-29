@@ -3235,10 +3235,6 @@ body.polli-ui-shell #root {
     padding: 0;
 }
 
-.polli-playground-output-panel {
-    border-top: 1px solid var(--polli-color-border);
-}
-
 .polli-playground-audio {
     height: 2.5rem;
     border-radius: 9999px;
