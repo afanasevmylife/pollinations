@@ -1,115 +1,98 @@
-import type { ReactNode } from "react";
-import { usePlatformStats } from "../../data/publicStats";
 import {
-    ArrowLink,
-    Card,
-    CardGrid,
-    PixelLabel,
-    SectionHeader,
-} from "../site/kit";
+    AppIcon,
+    BeakerIcon,
+    CloudUploadIcon,
+    cn,
+    GenApiIcon,
+    type IconProps,
+    McpIcon,
+    RobotIcon,
+    TerminalIcon,
+    WalletIcon,
+} from "@pollinations/ui";
+import type { ComponentType } from "react";
+import { usePlatformStats } from "../../data/publicStats";
+import { ArrowLink, Card, PixelLabel, SectionHeader } from "../site/kit";
 
 type Tool = {
     label: string;
     title: string;
-    /** null when the card's body is computed from live data. */
-    body: ReactNode;
+    body: string | ((modelCount: number | null) => string);
     linkLabel: string;
     href: string;
+    icon: ComponentType<IconProps>;
+    wide?: boolean;
 };
 
-/**
- * "141 text, 51 image, 13 video, 18 audio", from the same /models response the
- * hero already fetches — no second request, and no number that can go stale.
- */
-function modelSummary(
-    byCategory: Record<string, number>,
-    community: number,
-): string {
-    const named = (["text", "image", "video", "audio"] as const)
-        .map((key) => (byCategory[key] ? `${byCategory[key]} ${key}` : null))
-        .filter(Boolean)
-        .join(", ");
-    const rest = ["embedding", "3d", "realtime"].reduce(
-        (sum, key) => sum + (byCategory[key] ?? 0),
-        0,
-    );
-    const tail = rest
-        ? `, plus ${rest} for embeddings, 3D and realtime voice`
-        : "";
-    return `${named}${tail}. ${community} are community models published through bring your own model (BYOM), so the catalog grows with its community.`;
-}
-
-/**
- * Six, not five. `minmax(320px,1fr)` resolves to 3 / 2 / 1 columns across
- * desktop, tablet and mobile, and six divides evenly at all three — five
- * always orphaned one. Wallet and Earn were cut because "Same API. Your
- * choice who pays." and "How the money moves" already tell that story twice;
- * Open source moved to /community, which opens with it.
- */
 const TOOLS: Tool[] = [
     {
-        label: "Generate",
-        // Counted live — see modelSummary() below. The old copy said "69 text,
-        // 28 image … 86 more" against a real 141/51/95, so it understated the
-        // catalog by half while publicStats.ts claimed nothing was hardcoded.
-        title: "All the models",
-        body: null,
-        linkLabel: "Browse the model list",
-        href: "https://gen.pollinations.ai/models",
-    },
-    {
-        label: "Connect",
-        title: "Connect with Pollinations",
-        body: "OAuth 2.1 with PKCE, plus device flow for CLIs and desktop apps. Users approve once and spend from their own wallet — with a budget and expiry they set, revocable any time.",
-        linkLabel: "Read the BYOP guide",
-        href: "https://github.com/pollinations/pollinations/blob/main/BRING_YOUR_OWN_POLLEN.md",
-    },
-    {
-        label: "Drop-in",
-        title: "Works with your OpenAI SDK",
-        body: "Change the base URL and keep your client. OpenAI-compatible streaming, with tool calling, structured output and image input.",
-        linkLabel: "See the API reference",
+        label: "API",
+        title: "One API, every model",
+        body: (modelCount) =>
+            `Build text, image, video, audio and multimodal features through one OpenAI-compatible API${modelCount ? ` across ${modelCount} models` : ""}.`,
+        linkLabel: "Explore the API",
         href: "https://gen.pollinations.ai/docs",
+        icon: GenApiIcon,
+        wide: true,
     },
     {
-        label: "SDK",
-        title: "Typed client, React hooks",
-        body: (
-            <>
-                <code className="font-pixel">@pollinations/sdk</code> covers
-                every modality, plus balance, keys and OAuth. React hooks for
-                auth, balance and the model catalog.
-            </>
-        ),
-        linkLabel: "Read the SDK docs",
-        href: "https://www.npmjs.com/package/@pollinations/sdk",
+        label: "Wallet",
+        title: "Embed the Pollinations wallet",
+        body: "Let users bring their own Pollen and control their budget, expiry and access. You avoid payment infrastructure and the usage bill—and can earn from their activity.",
+        linkLabel: "Connect Wallet",
+        href: "https://gen.pollinations.ai/docs#tag/connect-user-wallets",
+        icon: WalletIcon,
+        wide: true,
     },
     {
-        label: "Terminal",
-        title: "Generate from the shell",
-        body: (
-            <>
-                <code className="font-pixel">polli</code> does every modality,
-                plus keys, usage and Quests.{" "}
-                <code className="font-pixel">--json</code> on stdout and
-                built-in agent instructions, so coding agents can drive it.
-            </>
-        ),
-        linkLabel: "Install polli CLI",
-        href: "https://www.npmjs.com/package/@pollinations/cli",
+        label: "Apps",
+        title: "Publish an app",
+        body: "Join the app directory, reach the Pollinations community and earn from connected usage.",
+        linkLabel: "Publish an app",
+        href: "https://github.com/pollinations/pollinations/issues/new?template=APP-SUBMISSION.yml",
+        icon: AppIcon,
+    },
+    {
+        label: "Models",
+        title: "Publish a model",
+        body: "Connect your endpoint privately, or publish it in the catalog with your own price and earn from usage.",
+        linkLabel: "Publish a model",
+        href: "https://gen.pollinations.ai/docs#tag/publish-a-model",
+        icon: BeakerIcon,
     },
     {
         label: "Agents",
-        title: "MCP server",
-        body: (
-            <>
-                <code className="font-pixel">@pollinations/mcp</code> exposes
-                generation, vision, search, speech and your balance as tools.
-                Runs with npx in Claude Code, Cursor or Codex.
-            </>
-        ),
-        linkLabel: "Add the MCP server",
-        href: "https://www.npmjs.com/package/@pollinations/mcp",
+        title: "Publish an agent",
+        body: "Combine instructions, a base model and Pollinations tools into a reusable model without hosting an agent server.",
+        linkLabel: "Publish an agent",
+        href: "https://gen.pollinations.ai/docs#tag/publish-an-agent",
+        icon: RobotIcon,
+    },
+    {
+        label: "Media",
+        title: "Media hosting",
+        body: "Upload generated images, audio and video and receive reusable URLs for apps, agents and workflows.",
+        linkLabel: "Store media",
+        href: "https://gen.pollinations.ai/docs#tag/media-storage",
+        icon: CloudUploadIcon,
+    },
+    {
+        label: "Terminal",
+        title: "Pollinations CLI",
+        body: "Generate every modality, inspect models and manage access, published models and agents from the shell.",
+        linkLabel: "Use the CLI",
+        href: "https://gen.pollinations.ai/docs#tag/cli",
+        icon: TerminalIcon,
+        wide: true,
+    },
+    {
+        label: "AI tools",
+        title: "Pollinations MCP",
+        body: "Bring generation, media, model discovery and account tools into Codex, Claude, Cursor and any MCP-capable product.",
+        linkLabel: "Connect the MCP",
+        href: "https://gen.pollinations.ai/docs#tag/mcp-server",
+        icon: McpIcon,
+        wide: true,
     },
 ];
 
@@ -120,36 +103,57 @@ export function DevKit() {
         <section className="flex flex-col gap-7">
             <SectionHeader
                 eyebrow="Dev kit"
-                title="Everything already in your hands."
+                title="Everything you need to build."
+                subtitle="Create, connect, publish and automate with Pollinations."
                 action={
                     <ArrowLink href="https://gen.pollinations.ai/docs">
-                        Need the details? Read the API docs
+                        Read the developer docs
                     </ArrowLink>
                 }
             />
 
-            <CardGrid>
-                {TOOLS.map((tool) => (
-                    <Card key={tool.label} className="gap-2.5 p-7">
-                        <PixelLabel>{tool.label}</PixelLabel>
-                        <h3 className="font-body text-xl font-semibold text-theme-text-strong">
-                            {tool.title}
-                        </h3>
-                        <p className="text-sm leading-relaxed text-theme-text-base">
-                            {tool.body ??
-                                (data
-                                    ? modelSummary(
-                                          data.byCategory,
-                                          data.community,
-                                      )
-                                    : "Text, image, video and audio models, plus embeddings, 3D and realtime voice — with more published through bring your own model (BYOM).")}
-                        </p>
-                        <ArrowLink href={tool.href} className="mt-auto pt-2">
-                            {tool.linkLabel}
-                        </ArrowLink>
-                    </Card>
-                ))}
-            </CardGrid>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {TOOLS.map((tool) => {
+                    const Icon = tool.icon;
+                    const body =
+                        typeof tool.body === "function"
+                            ? tool.body(data?.models ?? null)
+                            : tool.body;
+
+                    return (
+                        <Card
+                            key={tool.label}
+                            className={cn(
+                                "gap-5 p-5 sm:p-6",
+                                tool.wide && "sm:col-span-2",
+                            )}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-theme-bg-subtle text-theme-text-strong">
+                                    <Icon className="size-6" />
+                                </div>
+                                <div className="flex min-w-0 flex-col gap-1">
+                                    <PixelLabel>{tool.label}</PixelLabel>
+                                    <h3 className="font-body text-lg font-semibold leading-tight text-theme-text-strong sm:text-xl">
+                                        {tool.title}
+                                    </h3>
+                                </div>
+                            </div>
+
+                            <p className="flex-1 text-sm leading-relaxed text-theme-text-base">
+                                {body}
+                            </p>
+
+                            <ArrowLink
+                                href={tool.href}
+                                className="mt-auto pt-1"
+                            >
+                                {tool.linkLabel}
+                            </ArrowLink>
+                        </Card>
+                    );
+                })}
+            </div>
         </section>
     );
 }
